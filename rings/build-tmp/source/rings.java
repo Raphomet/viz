@@ -5,6 +5,7 @@ import processing.opengl.*;
 
 import ddf.minim.analysis.*; 
 import ddf.minim.*; 
+import java.util.LinkedList; 
 
 import java.util.HashMap; 
 import java.util.ArrayList; 
@@ -15,11 +16,12 @@ import java.io.InputStream;
 import java.io.OutputStream; 
 import java.io.IOException; 
 
-public class fft extends PApplet {
+public class rings extends PApplet {
 
 // Template for vizualizing zones in log-averaged FFT
 // Based on examples: http://code.compartmental.net/minim/fft_method_logaverages.html
 //                and http://www.openprocessing.org/sketch/101123
+
 
 
 
@@ -49,6 +51,8 @@ float signalScale = 4;
 
 // visualization-dependent variables
 float visualScale = 4;
+int numRings = 100;
+LinkedList lineWidths = new LinkedList();
 
 public void setup() {
   
@@ -78,41 +82,30 @@ public void setup() {
    * Set up viz
    */ 
 
-  rectMode(CORNERS);
-  noStroke();
-  textSize( 18 );
+  // rectMode(CORNERS);
+  for (int i = 0; i < numRings; i++) {
+    lineWidths.offer(0);
+  }
 }
+
 
 public void draw() {
   background(0);
 
   float[] signals = getAdjustedFftSignals();
 
-  for (int i = 0; i < signals.length; i++) {
-    float boxWidth = width / signals.length;
-    
-    int xl = (int)(boxWidth * i);
-    int xr = (int)(boxWidth * (i + 1) - 1);
-    
-    // if the mouse is inside of this average's rectangle
-    // print the center frequency and set the fill color to red
-    if (mouseX >= xl && mouseX < xr) {
-      fill(255, 128);
-      text("Average Center Frequency: " + fft.getAverageCenterFrequency(i), 5, 25);
-      fill(255, 0, 0);
-    }
-    else {
-      fill(255);
-    }
+  translate(width / 2, height / 2);
 
-    // draw a rectangle for each signal value
-    noStroke();
-    rect(xl, height, xr, height - signals[i] * visualScale);
+  lineWidths.offer((float)(signals[0] / 10.0f));
+  lineWidths.poll();
 
-    // draw constraint
-    strokeWeight(1);
-    stroke(0xffFF0000);
-    line(0, height - constraintCeiling * visualScale, width, height - constraintCeiling * visualScale);
+  for (int i = 0; i < numRings; i++) {
+    strokeWeight((int)lineWidths.get(i)); // TODO: respond to bass?
+    noFill();
+    stroke(255);
+
+    float diameter = i * 10;
+    ellipse(-diameter / 4, -diameter / 4, diameter, diameter);
   }
 }
 
@@ -130,8 +123,6 @@ public float[] getAdjustedFftSignals() {
     signals[i] = constrainedAvg;
   }
 
-  println(signals);
-
   return signals;
 }
 
@@ -140,7 +131,7 @@ public float[] getAdjustedFftSignals() {
 
   public void settings() {  size(640, 640); }
   static public void main(String[] passedArgs) {
-    String[] appletArgs = new String[] { "fft" };
+    String[] appletArgs = new String[] { "rings" };
     if (passedArgs != null) {
       PApplet.main(concat(appletArgs, passedArgs));
     } else {

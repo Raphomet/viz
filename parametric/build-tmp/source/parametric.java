@@ -15,11 +15,9 @@ import java.io.InputStream;
 import java.io.OutputStream; 
 import java.io.IOException; 
 
-public class circle extends PApplet {
+public class parametric extends PApplet {
 
-// Template for vizualizing zones in log-averaged FFT
-// Based on examples: http://code.compartmental.net/minim/fft_method_logaverages.html
-//                and http://www.openprocessing.org/sketch/101123
+// Try: Fast Eddie - Hip House
 
 
 
@@ -39,15 +37,19 @@ int fftBandsPerOctave = 1;
 // song-dependent variables
 String filePath       = "/Users/raph/Music/iTunes/iTunes Music/Simian Mobile Disco/Bugged Out_ Suck My Deck/01 Joakim - Drumtrax.mp3";
 int startPosition     = 30000; // milliseconds
+
 float expBase         = 1.75f; // exponent base for "amplifying" band values
-int constraintCeiling = 100;
+int constraintCeiling = 80;
 WindowFunction window = FFT.HAMMING;
 
+float scale = 250;
 
-// visualization-dependent variables
-float spectrumScale = 2;
+// void settings() {
+//   // fullScreen();
+// }
 
 public void setup() {
+  // surface.setSize(640,640);
   
 
   minim = new Minim(this);
@@ -63,30 +65,84 @@ public void setup() {
   fft.logAverages(fftBaseFrequency, fftBandsPerOctave);
 
   if(window != null) {
-    fft.window(window);
+    fft.window(FFT.HAMMING);
   }
-  
-  rectMode(CORNERS);
-  noStroke();
-  textSize( 18 );
+
+  colorMode(HSB, 256);
+
+  background(0);
 }
 
 public void draw() {
-  background(0);
 
-  // float[] signals = getAdjustedFftSignals();
   translate(width / 2, height / 2);
 
-  for (int ring = 1; ring <= 10; ring++) {
+  // Draw shapes
+  // noStroke();
+  // fill(0, 256, 256);
+  // ellipse(x1(frameCount), y1(frameCount), 5, 5);
+  // fill(128, 256, 256);
+  // ellipse(x2(frameCount), y2(frameCount), 5, 5);
 
-    float t = frameCount * (TWO_PI / 500);
-    float radius = ring * 30;
+  // Draw lines
+  int lines = 10;
 
-    noStroke();
-    fill(-1);
-    ellipse(radius * cos(t), radius * sin(t), 10, 10);
+  background(0);
+
+  float[] signals = getAdjustedFftSignals();
+
+  for(int i = 0; i < (int) map(signals[0], 0, constraintCeiling / 2, 0, 50); i++) {
+    // strokeWeight(5);
+
+    strokeWeight(pow(map(signals[5], 0, constraintCeiling, 0, 7), 2));
+    strokeCap(SQUARE);
+
+    stroke((frameCount + i) % 256, 256, 256, map(signals[5], 0, constraintCeiling, 100, 255));
+    line(x1(frameCount + i), y1(frameCount + i), x2(frameCount + i), y2(frameCount + i));
   }
 }
+
+public float x1(float t) {
+  return cos(t / 13) * scale + sin(t / 80) * 30;
+}
+
+public float y1(float t) {
+  return sin(t / 10) * scale;
+}
+
+public float x2(float t) {
+  return cos(t / 5) * scale + cos(t / 7) * 2;
+}
+
+public float y2(float t) {
+  return sin(t / 20) * scale + cos(t / 9) * 30;
+}
+
+
+// void drawRose() {
+//   pushMatrix();
+//   translate(width / 2, height / 2);
+
+//   for(float t = 0; t < TWO_PI * 10; t += (TWO_PI / 1000)) {
+
+//     float scale = 200;
+
+//     float p = 19;
+//     float q = (float)ceil(mouseX / (width / 10));
+//     float k = p / q;
+
+//     float x = (cos(k * t) * cos(t)) * scale;
+//     float y = (cos(k * t) * sin(t)) * scale;
+
+//     noStroke();
+//     fill(100);
+//     ellipse(x, y, 5, 5);
+//   }
+
+//   popMatrix();
+// }
+
+
 
 // Boost FFT signals in each band, constrain them to a ceiling.
 // Return adjusted results in array.
@@ -110,7 +166,7 @@ public float[] getAdjustedFftSignals() {
 
   public void settings() {  size(640, 640); }
   static public void main(String[] passedArgs) {
-    String[] appletArgs = new String[] { "circle" };
+    String[] appletArgs = new String[] { "parametric" };
     if (passedArgs != null) {
       PApplet.main(concat(appletArgs, passedArgs));
     } else {

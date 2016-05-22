@@ -17,10 +17,6 @@ import java.io.IOException;
 
 public class simple_bars extends PApplet {
 
-// Template for vizualizing zones in log-averaged FFT
-// Based on examples: http://code.compartmental.net/minim/fft_method_logaverages.html
-//                and http://www.openprocessing.org/sketch/101123
-
 
 
 
@@ -41,7 +37,6 @@ int constraintCeiling = 100;
 WindowFunction window = FFT.HAMMING;
 
 // visualization-dependent variables
-float spectrumScale = 2;
 
 public void setup() {
   
@@ -57,7 +52,6 @@ public void setup() {
     fft.window(FFT.HAMMING);
   }
   
-  rectMode(CORNERS);
   noStroke();
   textSize( 18 );
 }
@@ -67,31 +61,49 @@ public void draw() {
 
   float[] signals = getAdjustedFftSignals();
 
+  // I only care about signals in bands:
+  // 0 (bass)
+  // 7 (hi-hat)
+
+  int padding    = 176;
+  int barWidth   = 96 * 3;
+  int barHeight  = 96;
+  int barSpacing = 96;
+
+  noStroke();
+  rectMode(CENTER);
+
   for (int i = 0; i < signals.length; i++) {
-    float boxWidth = width / signals.length;
-    
-    int xl = (int)(boxWidth * i);
-    int xr = (int)(boxWidth * (i + 1) - 1);
-    
-    // if the mouse is inside of this average's rectangle
-    // print the center frequency and set the fill color to red
-    if (mouseX >= xl && mouseX < xr) {
-      fill(255, 128);
-      text("Logarithmic Average Center Frequency: " + fft.getAverageCenterFrequency(i), 5, 25);
-      fill(255, 0, 0);
-    }
-    else {
-      fill(255);
+    if (i != 0 && i != 7) {
+      continue;
     }
 
-    // draw a rectangle for each signal value
-    noStroke();
-    rect(xl, height, xr, height - signals[i] * spectrumScale);
+    if (i == 7) {
+      pushMatrix();
+      translate(width / 2, padding + barHeight / 2);
 
-    // draw constraint
-    strokeWeight(1);
-    stroke(0xffFF0000);
-    line(0, height - constraintCeiling * spectrumScale, width, height - constraintCeiling * spectrumScale);
+      fill(200);
+      float boost = 0;
+      if(signals[i] > 20) {
+        boost = signals[i];
+      }
+      rect(0, 0, barWidth + boost, barHeight + boost);
+
+      popMatrix();
+    }
+    else if (i == 0) { // bass
+      pushMatrix();
+      translate(width / 2, padding + barHeight + barSpacing + barHeight / 2);
+
+      fill(100);
+      float boost = 0;
+      if(signals[i] > 20) {
+        boost = signals[i];
+      }
+      rect(0, 0, barWidth + boost, barHeight + boost);
+
+      popMatrix();
+    }
   }
 }
 
@@ -115,7 +127,7 @@ public float[] getAdjustedFftSignals() {
 
 
 
-  public void settings() {  size(512, 240); }
+  public void settings() {  size(640, 640); }
   static public void main(String[] passedArgs) {
     String[] appletArgs = new String[] { "simple_bars" };
     if (passedArgs != null) {

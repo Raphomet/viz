@@ -4,6 +4,7 @@
 
 import ddf.minim.analysis.*;
 import ddf.minim.*;
+import java.util.LinkedList;
 
 Minim minim;
 FFT fft;
@@ -20,16 +21,25 @@ int fftBandsPerOctave = 1;
 // song-dependent variables
 String filePath       = "/Users/raph/Music/iTunes/iTunes Music/Simian Mobile Disco/Bugged Out_ Suck My Deck/01 Joakim - Drumtrax.mp3";
 int startPosition     = 30000; // milliseconds
-float expBase         = 1.75; // exponent base for "amplifying" band values
+float expBase         = 1.75; // exponent base for "amplifying" band values // 1.75 works well for logAverages
 int constraintCeiling = 100;
 WindowFunction window = FFT.HAMMING;
 
 
+// signal
+float signalScale = 4;
+
 // visualization-dependent variables
-float spectrumScale = 2;
+float visualScale = 4;
+int numRings = 100;
+LinkedList lineWidths = new LinkedList();
 
 void setup() {
   size(640, 640);
+
+  /*
+   * Set up sound processing
+   */ 
 
   minim = new Minim(this);
 
@@ -42,30 +52,40 @@ void setup() {
     
   fft = new FFT(in.bufferSize(), in.sampleRate());
   fft.logAverages(fftBaseFrequency, fftBandsPerOctave);
+  // fft.linAverages(30);
 
   if(window != null) {
     fft.window(window);
   }
   
-  rectMode(CORNERS);
-  noStroke();
-  textSize( 18 );
+  /*
+   * Set up viz
+   */ 
+
+  // rectMode(CORNERS);
+  for (int i = 0; i < numRings; i++) {
+    lineWidths.offer(0);
+  }
 }
+
 
 void draw() {
   background(0);
 
-  // float[] signals = getAdjustedFftSignals();
+  float[] signals = getAdjustedFftSignals();
+
   translate(width / 2, height / 2);
 
-  for (int ring = 1; ring <= 10; ring++) {
+  lineWidths.offer((float)(signals[0] / 10.0));
+  lineWidths.poll();
 
-    float t = frameCount * (TWO_PI / 500);
-    float radius = ring * 30;
+  for (int i = 0; i < numRings; i++) {
+    strokeWeight(lineWidths.get(i)); // TODO: respond to bass?
+    noFill();
+    stroke(255);
 
-    noStroke();
-    fill(-1);
-    ellipse(radius * cos(t), radius * sin(t), 10, 10);
+    float diameter = i * 10;
+    ellipse(-diameter / 4, -diameter / 4, diameter, diameter);
   }
 }
 
@@ -77,7 +97,7 @@ float[] getAdjustedFftSignals() {
   fft.forward(in.mix);
   for(int i = 0; i < fft.avgSize(); i++) {
     // adjust and constrain signal value
-    float adjustedAvg    = fft.getAvg(i) * pow(expBase, i);
+    float adjustedAvg    = fft.getAvg(i) * pow(expBase, i) * signalScale;
     float constrainedAvg = constrain(adjustedAvg, 0, constraintCeiling);
 
     signals[i] = constrainedAvg;

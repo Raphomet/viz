@@ -5,6 +5,7 @@ import processing.opengl.*;
 
 import ddf.minim.analysis.*; 
 import ddf.minim.*; 
+import java.util.LinkedList; 
 
 import java.util.HashMap; 
 import java.util.ArrayList; 
@@ -15,11 +16,11 @@ import java.io.InputStream;
 import java.io.OutputStream; 
 import java.io.IOException; 
 
-public class fft extends PApplet {
+public class landscape extends PApplet {
 
-// Template for vizualizing zones in log-averaged FFT
-// Based on examples: http://code.compartmental.net/minim/fft_method_logaverages.html
-//                and http://www.openprocessing.org/sketch/101123
+// Try: Glow & Glare
+
+
 
 
 
@@ -36,26 +37,34 @@ int bufferSize = 512;
 int fftBaseFrequency = 86;
 int fftBandsPerOctave = 1;
 
+int bands = 30;
+
 // song-dependent variables
 String filePath       = "/Users/raph/Music/iTunes/iTunes Music/Simian Mobile Disco/Bugged Out_ Suck My Deck/01 Joakim - Drumtrax.mp3";
 int startPosition     = 30000; // milliseconds
-float expBase         = 1.75f; // exponent base for "amplifying" band values // 1.75 works well for logAverages
+float expBase         = 1.1f; // exponent base for "amplifying" band values
 int constraintCeiling = 100;
 WindowFunction window = FFT.HAMMING;
 
+float signalScale = 10;
 
-// signal
-float signalScale = 4;
 
 // visualization-dependent variables
-float visualScale = 4;
+int rows = 30;
+int cols = bands;
+
+int w = 1200;
+int h = 1200;
+
+float zBoost = 2;
+
+// queue (y) of arrays of size cols, containing z-height info
+LinkedList terrain = new LinkedList();
+
+float flying = 0;
 
 public void setup() {
   
-
-  /*
-   * Set up sound processing
-   */ 
 
   minim = new Minim(this);
 
@@ -67,20 +76,21 @@ public void setup() {
   // in.play(startPosition);
     
   fft = new FFT(in.bufferSize(), in.sampleRate());
-  fft.logAverages(fftBaseFrequency, fftBandsPerOctave);
-  // fft.linAverages(30);
+  fft.linAverages(bands);
 
   if(window != null) {
     fft.window(window);
   }
-  
-  /*
-   * Set up viz
-   */ 
 
-  rectMode(CORNERS);
-  noStroke();
-  textSize( 18 );
+  // initialize terrain
+  terrain = new LinkedList();
+  for (int y = 0; y < rows; y++) {
+    float[] terrainRow = new float[cols];
+    for (int x = 0; x < cols; x++) {
+      terrainRow[x] = 0;
+    }
+    terrain.offer(terrainRow);
+  }
 }
 
 public void draw() {
@@ -88,31 +98,43 @@ public void draw() {
 
   float[] signals = getAdjustedFftSignals();
 
-  for (int i = 0; i < signals.length; i++) {
-    float boxWidth = width / signals.length;
-    
-    int xl = (int)(boxWidth * i);
-    int xr = (int)(boxWidth * (i + 1) - 1);
-    
-    // if the mouse is inside of this average's rectangle
-    // print the center frequency and set the fill color to red
-    if (mouseX >= xl && mouseX < xr) {
-      fill(255, 128);
-      text("Average Center Frequency: " + fft.getAverageCenterFrequency(i), 5, 25);
-      fill(255, 0, 0);
-    }
-    else {
-      fill(255);
-    }
+  translate(width / 2, height / 2);
+  rotateX(PI / 3);
 
-    // draw a rectangle for each signal value
-    noStroke();
-    rect(xl, height, xr, height - signals[i] * visualScale);
+  translate(-w / 2, -h / 2);
 
-    // draw constraint
-    strokeWeight(1);
-    stroke(0xffFF0000);
-    line(0, height - constraintCeiling * visualScale, width, height - constraintCeiling * visualScale);
+  // calculate z
+  // flying -= 0.1;
+  // float yoff = flying;
+  // for (int y = 0; y < rows; y++) {
+  //   float xoff = 0;
+  //   for (int x = 0; x < cols; x++) {
+  //     z[x][y] = map(noise(xoff, yoff), 0, 1, -100, 100);
+
+  //     xoff += 0.2;
+  //   }
+
+  //   yoff += 0.2;
+  // }
+
+  // push new fft signals onto tail of terrain
+  if (frameCount % 2 == 0) {
+    terrain.offer(signals);
+    terrain.poll();
+  }
+
+  // draw triangle strips
+  for (int y = 0; y < rows - 1; y++) {
+    beginShape(TRIANGLE_STRIP);
+    stroke(255);
+    noFill();
+
+    float[] terrainRow = (float[])terrain.get(terrain.size() - y - 1);
+    for (int x = 0; x < cols; x++) {
+      vertex(x * (w / cols), y * (h / rows), terrainRow[x] * zBoost);
+      vertex(x * (w / cols), (y + 1) * (h / rows), terrainRow[x] * zBoost);
+    }
+    endShape();
   }
 }
 
@@ -130,17 +152,15 @@ public float[] getAdjustedFftSignals() {
     signals[i] = constrainedAvg;
   }
 
-  println(signals);
-
   return signals;
 }
 
 
 
 
-  public void settings() {  size(640, 640); }
+  public void settings() {  size(640, 640, P3D); }
   static public void main(String[] passedArgs) {
-    String[] appletArgs = new String[] { "fft" };
+    String[] appletArgs = new String[] { "landscape" };
     if (passedArgs != null) {
       PApplet.main(concat(appletArgs, passedArgs));
     } else {

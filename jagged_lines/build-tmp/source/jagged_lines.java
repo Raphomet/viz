@@ -15,11 +15,9 @@ import java.io.InputStream;
 import java.io.OutputStream; 
 import java.io.IOException; 
 
-public class fft extends PApplet {
+public class jagged_lines extends PApplet {
 
-// Template for vizualizing zones in log-averaged FFT
-// Based on examples: http://code.compartmental.net/minim/fft_method_logaverages.html
-//                and http://www.openprocessing.org/sketch/101123
+// Turn on Billie
 
 
 
@@ -45,17 +43,25 @@ WindowFunction window = FFT.HAMMING;
 
 
 // signal
-float signalScale = 4;
+float signalScale = 3;
 
 // visualization-dependent variables
-float visualScale = 4;
+int   background = 0xffDCD6B2;
+int[] palette = new int[] { 0xff4E7989, 0xffA9011B, 0xff80944E }; // colorlisa - picasso - the dream
+
+int numLines = 15;
+int[] lineColorIndex;
+
+int lineSpacing = 20;
+float segmentLength = 40;
+
+float minLineThickness = 1;
+float maxLineThickness = 10;
+
+float lineWidth; // determined by stage width
 
 public void setup() {
   
-
-  /*
-   * Set up sound processing
-   */ 
 
   minim = new Minim(this);
 
@@ -68,51 +74,57 @@ public void setup() {
     
   fft = new FFT(in.bufferSize(), in.sampleRate());
   fft.logAverages(fftBaseFrequency, fftBandsPerOctave);
-  // fft.linAverages(30);
 
   if(window != null) {
     fft.window(window);
   }
   
-  /*
-   * Set up viz
-   */ 
+  lineColorIndex = new int[numLines];
 
-  rectMode(CORNERS);
-  noStroke();
-  textSize( 18 );
+  for (int i = 0; i < numLines; i++) {
+    lineColorIndex[i] = (int)random(palette.length);
+  }
+
+  lineWidth = width * 1.5f;
 }
 
 public void draw() {
-  background(0);
+  background(background);
 
   float[] signals = getAdjustedFftSignals();
 
-  for (int i = 0; i < signals.length; i++) {
-    float boxWidth = width / signals.length;
-    
-    int xl = (int)(boxWidth * i);
-    int xr = (int)(boxWidth * (i + 1) - 1);
-    
-    // if the mouse is inside of this average's rectangle
-    // print the center frequency and set the fill color to red
-    if (mouseX >= xl && mouseX < xr) {
-      fill(255, 128);
-      text("Average Center Frequency: " + fft.getAverageCenterFrequency(i), 5, 25);
-      fill(255, 0, 0);
-    }
-    else {
-      fill(255);
-    }
+  noFill();
 
-    // draw a rectangle for each signal value
-    noStroke();
-    rect(xl, height, xr, height - signals[i] * visualScale);
+  int segments = (int)(lineWidth / segmentLength);
 
-    // draw constraint
-    strokeWeight(1);
-    stroke(0xffFF0000);
-    line(0, height - constraintCeiling * visualScale, width, height - constraintCeiling * visualScale);
+  // translate(0, (height / 2) - (lineSpacing * numLines / 2));
+
+  translate(width / 2, height / 2);
+  rotate((float)frameCount / 300);
+
+  for (int l = 0; l < numLines; l++) {
+
+    float lineY = l * lineSpacing - (numLines * lineSpacing ) / 2;
+    stroke(palette[lineColorIndex[l]]);
+
+    // strokeWeight(4);
+    // float yoff = sin((float)frameCount / 20) * segmentLength / 2;
+    // float yoff = sin(frameCount / 10.0 + l * 0.1) * segmentLength / 2;
+    // float yoff = sin(frameCount / 10.0) * segmentLength / 2; yoff *= (1 + 0.2 * l);
+
+    float yoff = map(signals[5], 0, 100, 0, segmentLength * 1.5f);
+    strokeWeight(map(signals[0], 0, 100, minLineThickness, maxLineThickness));
+
+    beginShape();
+    for (int i = 0; i <= segments; i++) {
+      if (i % 2 == 0) {
+        vertex(i * segmentLength - (lineWidth / 2), lineY + yoff);
+      }
+      else {
+        vertex(i * segmentLength - (lineWidth / 2), lineY - yoff); 
+      }
+    }
+    endShape();
   }
 }
 
@@ -138,9 +150,13 @@ public float[] getAdjustedFftSignals() {
 
 
 
+
+
+
+
   public void settings() {  size(640, 640); }
   static public void main(String[] passedArgs) {
-    String[] appletArgs = new String[] { "fft" };
+    String[] appletArgs = new String[] { "jagged_lines" };
     if (passedArgs != null) {
       PApplet.main(concat(appletArgs, passedArgs));
     } else {
