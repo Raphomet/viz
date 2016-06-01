@@ -5,6 +5,7 @@ import processing.opengl.*;
 
 import ddf.minim.analysis.*; 
 import ddf.minim.*; 
+import controlP5.*; 
 import java.util.LinkedList; 
 
 import java.util.HashMap; 
@@ -16,11 +17,8 @@ import java.io.InputStream;
 import java.io.OutputStream; 
 import java.io.IOException; 
 
-public class rings extends PApplet {
+public class lissajous extends PApplet {
 
-// Template for vizualizing zones in log-averaged FFT
-// Based on examples: http://code.compartmental.net/minim/fft_method_logaverages.html
-//                and http://www.openprocessing.org/sketch/101123
 
 
 
@@ -45,21 +43,28 @@ float expBase         = 1.75f; // exponent base for "amplifying" band values // 
 int constraintCeiling = 100;
 WindowFunction window = FFT.HAMMING;
 
-
 // signal
-float signalScale = 4;
+float signalScale = 3;
+float[] signals; // global?
 
 // visualization-dependent variables
-float visualScale = 4;
-int numRings = 100;
-LinkedList lineWidths = new LinkedList();
+int   background = 0xffFFFFFF;
+
+int matrixWidth = 30;
+int matrixHeight = 6;
+
+LinkedList dotMatrix = new LinkedList();
+
+ControlFrame cf;
+int cfWidth = 1000;
+int cfHeight = 600;
+
+
+public void settings() {
+  size(640, 640);
+}
 
 public void setup() {
-  
-
-  /*
-   * Set up sound processing
-   */ 
 
   minim = new Minim(this);
 
@@ -72,41 +77,51 @@ public void setup() {
     
   fft = new FFT(in.bufferSize(), in.sampleRate());
   fft.logAverages(fftBaseFrequency, fftBandsPerOctave);
-  // fft.linAverages(30);
 
-  if(window != null) {
+  if (window != null) {
     fft.window(window);
   }
   
-  /*
-   * Set up viz
-   */ 
 
-  // rectMode(CORNERS);
-  for (int i = 0; i < numRings; i++) {
-    lineWidths.offer(0);
-  }
+  // viz setup
+
 }
 
+int a = 0;
+ArrayList<PVector> points = new ArrayList<PVector>();
 
 public void draw() {
-  background(0);
+  background(background);
 
-  float[] signals = getAdjustedFftSignals();
+  // signals = getAdjustedFftSignals();
 
-  translate(width / 2, height / 2);
+  translate(width/2, height/2);
 
-  lineWidths.offer((float)(signals[0] / 10.0f));
-  lineWidths.poll();
+  int speed = 2;
+  float x = sin(radians(frameCount * speed))*cos(radians(frameCount * 4 * speed))*width/3;
+  float y = cos(radians(frameCount * speed))*width/3;  
 
-  for (int i = 0; i < numRings; i++) {
-    strokeWeight(lineWidths.get(i)); // TODO: respond to bass?
-    noFill();
-    stroke(255);
-
-    float diameter = i * 10;
-    ellipse(-diameter / 4, -diameter / 4, diameter, diameter);
+  points.add(new PVector(x, y));
+  if (points.size() > 100) {
+    points.remove(0);
   }
+
+  points.add(new PVector(-x, y));
+  if (points.size() > 10) {
+    points.remove(0);
+  }
+
+  noStroke();
+  beginShape(TRIANGLE_STRIP);
+  for (int i = 0; i < points.size(); i++) {
+    PVector point = points.get(i);
+
+    // ellipse(point.x, point.y, 5, 5);
+    // fill(10);
+    fill(0, 0, 0, map((float)i / points.size(), 0, 1, 0, 255));
+    vertex(point.x, point.y);
+  }
+  endShape();
 }
 
 // Boost FFT signals in each band, constrain them to a ceiling.
@@ -129,9 +144,42 @@ public float[] getAdjustedFftSignals() {
 
 
 
-  public void settings() {  size(640, 640); }
+class ControlFrame extends PApplet {
+
+  int w, h;
+  PApplet parent;
+  ControlP5 cp5;
+
+  public ControlFrame(PApplet _parent, int _w, int _h, String _name) {
+    super();   
+    parent = _parent;
+    w=_w;
+    h=_h;
+    PApplet.runSketch(new String[]{this.getClass().getName()}, this);
+  }
+
+  public void settings() {
+    size(w, h);
+  }
+
+  public void setup() {
+    surface.setLocation(10, 10);
+    cp5 = new ControlP5(this);
+
+    // cp5.addNumberbox("numLines")
+    //    .plugTo(parent, "numLines")
+    //    .setRange(minLines, maxLines)
+    //    .setValue(15)
+    //    .setPosition(100, 10)
+    //    .setSize(100, 20);
+  }
+
+  public void draw() {
+    background(0);    
+  }
+}
   static public void main(String[] passedArgs) {
-    String[] appletArgs = new String[] { "rings" };
+    String[] appletArgs = new String[] { "lissajous" };
     if (passedArgs != null) {
       PApplet.main(concat(appletArgs, passedArgs));
     } else {

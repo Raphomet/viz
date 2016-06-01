@@ -1,5 +1,3 @@
-// Try: Glow & Glare
-
 import ddf.minim.analysis.*;
 import ddf.minim.*;
 
@@ -9,8 +7,8 @@ Minim minim;
 FFT fft;
 
 // line in vs. file
-AudioInput  in;
-// AudioPlayer in;
+// AudioInput  in;
+AudioPlayer in;
 
 // FFT parameters
 int bufferSize = 512;
@@ -20,8 +18,8 @@ int fftBandsPerOctave = 1;
 int bands = 30;
 
 // song-dependent variables
-String filePath       = "/Users/raph/Music/iTunes/iTunes Music/Simian Mobile Disco/Bugged Out_ Suck My Deck/01 Joakim - Drumtrax.mp3";
-int startPosition     = 30000; // milliseconds
+String filePath       = "/Users/raph/Music/iTunes/iTunes Music/Jazzanova/In Between/16 Takes You Back (unexpected dub).mp3";
+int startPosition     = 35000; // milliseconds
 float expBase         = 1.1; // exponent base for "amplifying" band values
 int constraintCeiling = 100;
 WindowFunction window = FFT.HAMMING;
@@ -43,17 +41,18 @@ LinkedList terrain = new LinkedList();
 
 float flying = 0;
 
+
 void setup() {
   size(640, 640, P3D);
 
   minim = new Minim(this);
 
   // if using line in
-  in = minim.getLineIn(Minim.STEREO, 512);
+  // in = minim.getLineIn(Minim.STEREO, 512);
 
   // if using file
-  // in = minim.loadFile(filePath, bufferSize);
-  // in.play(startPosition);
+  in = minim.loadFile(filePath, bufferSize);
+  in.play(startPosition);
     
   fft = new FFT(in.bufferSize(), in.sampleRate());
   fft.linAverages(bands);

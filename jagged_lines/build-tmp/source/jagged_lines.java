@@ -5,6 +5,7 @@ import processing.opengl.*;
 
 import ddf.minim.analysis.*; 
 import ddf.minim.*; 
+import controlP5.*; 
 
 import java.util.HashMap; 
 import java.util.ArrayList; 
@@ -22,12 +23,13 @@ public class jagged_lines extends PApplet {
 
 
 
+
 Minim minim;
 FFT fft;
 
 // line in vs. file
-AudioInput  in;
-// AudioPlayer in;
+// AudioInput  in;
+AudioPlayer in;
 
 // FFT parameters
 int bufferSize = 512;
@@ -35,8 +37,8 @@ int fftBaseFrequency = 86;
 int fftBandsPerOctave = 1;
 
 // song-dependent variables
-String filePath       = "/Users/raph/Music/iTunes/iTunes Music/Simian Mobile Disco/Bugged Out_ Suck My Deck/01 Joakim - Drumtrax.mp3";
-int startPosition     = 30000; // milliseconds
+String filePath       = "/Users/raph/Music/iTunes/iTunes Music/Pierces, The/Thirteen tales of love and revenge/06 Turn on Billie.mp3";
+int startPosition     = 0; // milliseconds
 float expBase         = 1.75f; // exponent base for "amplifying" band values // 1.75 works well for logAverages
 int constraintCeiling = 100;
 WindowFunction window = FFT.HAMMING;
@@ -50,6 +52,8 @@ int   background = 0xffDCD6B2;
 int[] palette = new int[] { 0xff4E7989, 0xffA9011B, 0xff80944E }; // colorlisa - picasso - the dream
 
 int numLines = 15;
+int minLines = 1;
+int maxLines = 30;
 int[] lineColorIndex;
 
 int lineSpacing = 20;
@@ -60,17 +64,27 @@ float maxLineThickness = 10;
 
 float lineWidth; // determined by stage width
 
+
+ControlFrame cf;
+
+public void settings() {
+  // size(640, 640);
+  fullScreen();
+}
+
 public void setup() {
-  
+  surface.setSize(640, 640);
+
+  // cf = new ControlFrame(this, 400, 800, "Controls");
 
   minim = new Minim(this);
 
   // if using line in
-  in = minim.getLineIn(Minim.STEREO, 512);
+  // in = minim.getLineIn(Minim.STEREO, 512);
 
   // if using file
-  // in = minim.loadFile(filePath, bufferSize);
-  // in.play(startPosition);
+  in = minim.loadFile(filePath, bufferSize);
+  in.play(startPosition);
     
   fft = new FFT(in.bufferSize(), in.sampleRate());
   fft.logAverages(fftBaseFrequency, fftBandsPerOctave);
@@ -79,9 +93,9 @@ public void setup() {
     fft.window(window);
   }
   
-  lineColorIndex = new int[numLines];
+  lineColorIndex = new int[maxLines];
 
-  for (int i = 0; i < numLines; i++) {
+  for (int i = 0; i < maxLines; i++) {
     lineColorIndex[i] = (int)random(palette.length);
   }
 
@@ -150,11 +164,40 @@ public float[] getAdjustedFftSignals() {
 
 
 
+class ControlFrame extends PApplet {
 
+  int w, h;
+  PApplet parent;
+  ControlP5 cp5;
 
+  public ControlFrame(PApplet _parent, int _w, int _h, String _name) {
+    super();   
+    parent = _parent;
+    w=_w;
+    h=_h;
+    PApplet.runSketch(new String[]{this.getClass().getName()}, this);
+  }
 
+  public void settings() {
+    size(w, h);
+  }
 
-  public void settings() {  size(640, 640); }
+  public void setup() {
+    surface.setLocation(10, 10);
+    cp5 = new ControlP5(this);
+    
+    cp5.addNumberbox("numLines")
+       .plugTo(parent, "numLines")
+       .setRange(minLines, maxLines)
+       .setValue(15)
+       .setPosition(100, 10)
+       .setSize(100, 20);
+  }
+
+  public void draw() {
+    background(190);
+  }
+}
   static public void main(String[] passedArgs) {
     String[] appletArgs = new String[] { "jagged_lines" };
     if (passedArgs != null) {
