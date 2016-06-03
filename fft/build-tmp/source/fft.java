@@ -47,7 +47,7 @@ WindowFunction window = FFT.HAMMING;
 // signal
 float signalScale = 4;
 
-// visualization-dependent variables
+// visualization-dependent variables 
 float visualScale = 4;
 
 public void setup() {
