@@ -2,9 +2,12 @@ import ddf.minim.analysis.*;
 import ddf.minim.*;
 import controlP5.*;
 import java.util.*;
+import themidibus.*;
 
 Minim minim;
 FFT fft;
+MidiBus kontrol;
+int kontrolChannel = 0; // this may change?
 
 // line in vs. file
 AudioInput  in;
@@ -42,6 +45,9 @@ void setup() {
   surface.setSize(640, 640);
   surface.setLocation(100, 100);
 
+  // set up korg nanokontrol2
+  kontrol = new MidiBus(this, kontrolChannel, -1);
+
   // set up minim/FFT
   minim = new Minim(this);
 
@@ -65,38 +71,70 @@ void setup() {
   
   //adding each of our nested Applets to the list.
   apps.add(new ParametricLines(this));
+  apps.add(new Hexagons(this));
+  apps.add(new TwinkleToph(this));
+  apps.add(new Planets(this));
   apps.add(new Jags(this));
   apps.add(new DotMatrix(this));
-  
+
+  List<String> appNames = new ArrayList<String>();
+  for (VizBase app : apps) {
+    appNames.add(app.getName());
+  }
+
+  // set up control panel
+  cf = new ControlFrame(this, cfWidth, cfHeight, "Controls", defaultExpBase, defaultSignalScale, appNames);
+
   //calling the initialization function on each
   //Applet in the list.
   for(VizBase a : apps) {
+    a.setControlFrame(cf);
     a.init();
   }
   
   selected = 0;
-
-  // set up control panel
-  cf = new ControlFrame(this, cfWidth, cfHeight, "Controls");
 }
 
 void draw() {
   signals = getAdjustedFftSignals();
+  cf.setSignals(signals);
+
   apps.get(selected).display(signals);
 }
 
-/**
- * Here we use key presses to determine which
- * app to display. 
- **/
-// void keyPressed() {
-//   if(key == '0') {
-//     selected = 0;
-//   }
-//   if(key == '1') {
-//     selected = 1;
-//   }
-// }
+void sendExpBase(int value) {
+  float normalizedExpBase = map(value, 0, 127, 0, 3.0);
+
+  cf.setExpBase(normalizedExpBase);
+  setExpBase(normalizedExpBase);
+}
+
+void setExpBase(float _expBase) {
+  expBase = _expBase;
+}
+
+void sendSignalScale(int value) {
+  float normalizedSignalScale = map(value, 0, 127, 0.5, 8);
+
+  cf.setSignalScale(normalizedSignalScale);
+  setSignalScale(normalizedSignalScale);
+}
+
+void setSignalScale(float _signalScale) {
+  signalScale = _signalScale;
+}
+
+void setSelected(int _selected) {
+  selected = _selected;
+  cf.initializeAppControls(getCurrentSketch());
+}
+
+// TODO: rename apps to sketches
+VizBase getCurrentSketch() {
+  return apps.get(selected);
+}
+
+
 
 // Boost FFT signals in each band, constrain them to a ceiling.
 // Return adjusted results in array.
@@ -118,152 +156,84 @@ float[] getAdjustedFftSignals() {
 
 
 
-
-
-
-
-class ControlFrame extends PApplet {
-
-  int w, h;
-  PApplet parent;
-  ControlP5 cp5;
-
-  float visualScale = 1;
-
-  public ControlFrame(PApplet _parent, int _w, int _h, String _name) {
-    super();   
-    parent = _parent;
-    w=_w;
-    h=_h;
-    PApplet.runSketch(new String[]{this.getClass().getName()}, this);
-  }
-
-  public void settings() {
-    size(w, h);
-  }
-
-  public void setup() {
-    surface.setLocation(800, 100);
-    cp5 = new ControlP5(this);
-
-    // fft adjustment controls
-    cp5.addSlider("expBase")
-      .setPosition(20, 140)
-      .setSize(200, 20)
-      .setValue(defaultExpBase)
-      .setRange(0, 3);
-
-    cp5.addSlider("signalScale")
-      .setPosition(20, 180)
-      .setSize(200, 20)
-      .setRange(0.5, 8)
-      .setValue(defaultSignalScale);
-
-    // viz switcher
-    List<String> appNames = new ArrayList<String>();
-    for (VizBase app : apps) {
-      appNames.add(app.getName());
-    }
-    println(appNames);
-    cp5.addScrollableList("currentViz")
-       .setPosition(350, 20)
-       .setSize(300, 300)
-       .setBarHeight(20)
-       .setItemHeight(20)
-       .setOpen(false)
-       .addItems(appNames)
-       .setValue(0);
-
-
-    // add control boxes
-    cp5.addTextlabel("alpha")
-      .setText("ALPHA")
-      .setPosition(350, 50);
-
-    cp5.addScrollableList("alphaChannel")
-       .setPosition(350, 80)
-       .setSize(100, 300)
-       .setBarHeight(20)
-       .setItemHeight(20)
-       .setOpen(false)
-       .addItems(java.util.Arrays.asList("0","1","2","3","4","5","6","7","8"))
-       .setValue(0);
-  }
-
-  void draw() {
-    background(0);
-
-    // wait for master class's draw() to populate signals
-    if (signals == null) {
-      return;
-    }
-
-    // draw FFT area
-
-    int fftWidth = 300;
-    int fftHeight = 100;
-
-    pushMatrix();
-    translate(20, 20);
-    for (int i = 0; i < signals.length; i++) {
-
-      rectMode(CORNERS);
-
-      float boxWidth = fftWidth / signals.length;
-      
-      int xl = (int)(boxWidth * i);
-      int xr = (int)(boxWidth * (i + 1) - 1);
-      
-      // if the mouse is inside of this average's rectangle
-      // print the center frequency and set the fill color to red
-      if (mouseX >= xl && mouseX < xr) {
-        fill(255, 128);
-        text("Average Center Frequency: " + fft.getAverageCenterFrequency(i), 5, 25);
-        fill(255, 0, 0);
-      }
-      else {
-        fill(255);
-      }
-
-      // draw a rectangle for each signal value
-      noStroke();
-      rect(xl, fftHeight, xr, fftHeight - signals[i] * visualScale);
-
-      // label each rectangle 
-      fill(128);
-      text(i, xl + 12, fftHeight - 8);
-    }
-
-    // draw constraint
-    strokeWeight(1);
-    stroke(#FF0000);
-    line(0, 0, fftWidth, 0);
-
-    popMatrix();
-
-    
-  }
-
-  void controlEvent(ControlEvent theEvent) {
-    switch(theEvent.getController().getName()) {
-      case "expBase":
-        expBase = theEvent.getController().getValue();
+void controllerChange(int channel, int number, int value) {
+  if (channel == kontrolChannel) {
+    switch (number) {
+      // sliders
+      case 0: // leftmost slider
+        sendExpBase(value);
         break;
-      case "signalScale":
-        signalScale = theEvent.getController().getValue();
+      case 1: // second slider from left
+        // apps.get(selected).setBpm(value, false);
         break;
-      case "currentViz":
-        int selectedIndex = (int)theEvent.getController().getValue();
-        selected = selectedIndex;
-        // TODO: set all controllers to viz defaults
+      case 2: // third slider from left
+        // apps.get(selected).setSize0(value, false);
         break;
+      case 3: // fourth slider from left
+        // apps.get(selected).setColorPalette(value, false);
+        break;
+      case 4: // fifth slider from left
+        // apps.get(selected).setMode(value, false);
+        break;
+      case 5: // third-rightmost slider
+        // apps.get(selected).setX0(value, false);
+        break;
+      case 6: // second-rightmost slider
+        // apps.get(selected).setY0(value, false);
+        break;
+      case 7: // rightmost slider
+        // apps.get(selected).setZ0(value, false);
+        break;
+
+      // knobs
+      case 16: // leftmost knob
+        sendSignalScale(value);
+        break;
+      case 17: // second knob from left
+        // apps.get(selected).setSpeed(value, false);
+        break;
+      case 18: // third knob from left
+        // apps.get(selected).setSize1(value, false);
+        break;
+      case 19: // fourth knob from left
+        // apps.get(selected).setColorAdjustment(value, false);
+        break;
+      case 20: // fifth knob from left
+        float newValue = apps.get(selected).setAlpha(value, false);
+        cf.setAlpha(newValue);
+        break;
+      case 21: // third-rightmost knob
+        // apps.get(selected).setX1(value, false);
+        break;
+      case 22: // second-rightmost knob
+        // apps.get(selected).setY1(value, false);
+        break;
+      case 23: // rightmost knob
+        // apps.get(selected).setZ1(value, false);
+        break;
+
+      // other buttons
+
+      // "S": 32-39, ltr
+      // "M": 48-55
+      // "R": 64-71
+      // rewind: 43
+      // ff: 44
+      // stop: 42
+      // play: 41
+      // record: 45
+      // track back: 58
+      // track fwd: 59
+      // cycle: 46
+      // set: 60
+      // marker back: 61
+      // marker fwd: 62
     }
+
+    // update control panel
+    // cf.controllerChange(channel, number, value);
   }
 }
-
-
-
-
 
 
 
