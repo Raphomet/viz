@@ -30,13 +30,13 @@ public abstract class VizBase {
   // the sketch is responsible for remapping the value (0-127 from nanokontrol2)
   // to something that makes sense within its own domain.
   // public void setBpm(int value, boolean normalized) {};
-  // public void setSpeed(int value, boolean normalized) {};
-  // public void setSize0(int value, boolean normalized) {};
-  // public void setSize1(int value, boolean normalized) {};
-  // public void setColorPalette(int value, boolean normalized) {};
-  // public void setColorAdjustment(int value, boolean normalized) {};
-  // public void setMode(int value, boolean normalized) {};
-  public float setAlpha(float value, boolean normalized) { return (float)0.0; };
+  // public void setSpeed(float value, boolean normalized) {};
+  public float setSize0(float value, boolean normalized) { return (float)0.0; }
+  public float setSize1(float value, boolean normalized) { return (float)0.0; }
+  public float setColorPalette(float value, boolean normalized) { return (float)0.0; }
+  public float setColorAdjustment(float value, boolean normalized) { return (float)0.0; }
+  public float setMode(float value, boolean normalized) { return (float)0.0; }
+  public float setAlpha(float value, boolean normalized) { return (float)0.0; }
   // public void setX0(int value, boolean normalized) {};
   // public void setX1(int value, boolean normalized) {};
   // public void setY0(int value, boolean normalized) {};
@@ -44,8 +44,85 @@ public abstract class VizBase {
   // public void setZ0(int value, boolean normalized) {};
   // public void setZ1(int value, boolean normalized) {};
 
+
+  // speed
+
+  protected boolean usesSpeed = false;
+  protected float defaultSpeed = 50;
+  protected float speed = defaultSpeed;
+
+  public void setSpeed(float _speed) {
+    speed = _speed;
+  }
+
+  public boolean usesSpeed() {
+    return usesSpeed;
+  }
+
+  public float getDefaultSpeed() {
+    return defaultSpeed;
+  }
+
+
+  // size0
+  protected boolean usesSize0  = false;
+  protected float minSize0;
+  protected float maxSize0;
+  protected float defaultSize0;
+  protected int size0Signal    = 0;
+
+  public float getMinSize0()     { return minSize0; }
+  public float getMaxSize0()     { return maxSize0; }
+  public float getDefaultSize0() { return defaultSize0; }
+  public boolean usesSize0()     { return usesSize0; }
+  public int getSize0Signal()    { return size0Signal; }
+
+
+  // size1
+  protected boolean usesSize1  = false;
+  protected float minSize1;
+  protected float maxSize1;
+  protected float defaultSize1;
+  protected int size1Signal    = 0;
+
+  public float getMinSize1()     { return minSize1; }
+  public float getMaxSize1()     { return maxSize1; }
+  public float getDefaultSize1() { return defaultSize1; }
+  public boolean usesSize1()     { return usesSize1; }
+  public int getSize1Signal()    { return size1Signal; }
+
+
+  // color palette
+  protected boolean usesColorPalette = false;
+  protected int   numColorPalettes = 1;
+
+  public boolean usesColorPalette() { return usesColorPalette; }
+  public int getNumColorPalettes()  { return numColorPalettes; }
+
+
+  // color adjustment
+  protected boolean usesColorAdjustment  = false;
+  protected float minColorAdjustment;
+  protected float maxColorAdjustment;
+  protected float defaultColorAdjustment;
+
+  public boolean usesColorAdjustment() { return usesColorAdjustment; }
+  public float getMinColorAdjustment() { return minColorAdjustment; }
+  public float getMaxColorAdjustment() { return maxColorAdjustment; }
+  public float getDefaultColorAdjustment() { return defaultColorAdjustment; }
+
+
+  // mode
+  protected boolean usesMode = false;
+  protected int numModes = 1;
+
+  public boolean usesMode() { return usesMode; }
+  public int getNumModes()  { return numModes; }
+
+
+  // alpha
+
   public void setAlphaSignal(int value) {};
-  // public void setAlphaSignal(int value) {};
 
   protected boolean usesAlpha = false;
   protected float minAlpha;
@@ -74,22 +151,9 @@ public abstract class VizBase {
   }
 
 
-  public void resetControls() {
-    // setBpm(0);
-    // setSpeed(0);
-    // setSize0(0);
-    // setSize1(0);
-    // setColorPalette(0);
-    // setColorAdjustment(0);
-    // setMode(0);
-    // setAlpha(0);
-    // setX0(0);
-    // setX1(0);
-    // setY0(0);
-    // setY1(0);
-    // setZ0(0);
-    // setZ1(0);
-  };
+
+
+
 }
 
 

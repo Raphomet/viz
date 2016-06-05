@@ -32,7 +32,7 @@ WindowFunction defaultWindow = FFT.HAMMING;
 WindowFunction window = defaultWindow;
 
 ControlFrame cf;
-int cfWidth = 1000;
+int cfWidth = 1200;
 int cfHeight = 600;
 
 float[] signals;
@@ -157,6 +157,9 @@ float[] getAdjustedFftSignals() {
 
 
 void controllerChange(int channel, int number, int value) {
+
+  float newValue;
+
   if (channel == kontrolChannel) {
     switch (number) {
       // sliders
@@ -164,16 +167,20 @@ void controllerChange(int channel, int number, int value) {
         sendExpBase(value);
         break;
       case 1: // second slider from left
-        // apps.get(selected).setBpm(value, false);
+        getCurrentSketch().setSpeed(value);
+        cf.setSpeed(value);
         break;
       case 2: // third slider from left
-        // apps.get(selected).setSize0(value, false);
+        newValue = getCurrentSketch().setSize0((float)value, false);
+        cf.setSize0(newValue);
         break;
       case 3: // fourth slider from left
-        // apps.get(selected).setColorPalette(value, false);
+        newValue = getCurrentSketch().setColorPalette((float)value, false);
+        cf.setColorPalette(newValue);
         break;
       case 4: // fifth slider from left
-        // apps.get(selected).setMode(value, false);
+        newValue = getCurrentSketch().setMode((float)value, false);
+        cf.setMode(newValue);
         break;
       case 5: // third-rightmost slider
         // apps.get(selected).setX0(value, false);
@@ -190,16 +197,18 @@ void controllerChange(int channel, int number, int value) {
         sendSignalScale(value);
         break;
       case 17: // second knob from left
-        // apps.get(selected).setSpeed(value, false);
+        // apps.get(selected).setBpm(value, false);
         break;
       case 18: // third knob from left
-        // apps.get(selected).setSize1(value, false);
+        newValue = getCurrentSketch().setSize1((float)value, false);
+        cf.setSize1(newValue);
         break;
       case 19: // fourth knob from left
-        // apps.get(selected).setColorAdjustment(value, false);
+        newValue = getCurrentSketch().setColorAdjustment((float)value, false);
+        cf.setColorAdjustment(newValue);
         break;
       case 20: // fifth knob from left
-        float newValue = apps.get(selected).setAlpha(value, false);
+        newValue = getCurrentSketch().setAlpha((float)value, false);
         cf.setAlpha(newValue);
         break;
       case 21: // third-rightmost knob
