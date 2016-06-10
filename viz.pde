@@ -72,17 +72,18 @@ void setup() {
   apps = new ArrayList<VizBase>();
   
   //adding each of our nested Applets to the list.
-  // apps.add(new Text(this));
-
-  // apps.add(new Arcs(this));
-  // apps.add(new Rings(this));
-  // apps.add(new ParametricLines(this));
-  // apps.add(new Jags(this));
-  // apps.add(new TwinkleToph(this));
+  apps.add(new Text(this));
+  apps.add(new Arcs(this));
+  apps.add(new Rings(this));
+  apps.add(new ParametricLines(this));
+  apps.add(new Jags(this));
+  apps.add(new TwinkleToph(this));
 
   // apps.add(new DotMatrix(this));
   // apps.add(new Planets(this));
-  // apps.add(new Diamonds?(this));
+  // apps.add(new Diamonds(this));
+
+  // flyover ;_;
 
   List<String> appNames = new ArrayList<String>();
   for (VizBase app : apps) {
@@ -169,7 +170,7 @@ void controllerChange(int channel, int number, int value) {
     switch (number) {
       // sliders
       case 0: // leftmost slider
-        sendExpBase(value);
+        sendSignalScale(value);
         break;
       case 1: // second slider from left
         newValue = getCurrentSketch().setSpeed((float)value, false);
@@ -202,7 +203,7 @@ void controllerChange(int channel, int number, int value) {
 
       // knobs
       case 16: // leftmost knob
-        sendSignalScale(value);
+        sendExpBase(value);
         break;
       case 17: // second knob from left
         newValue = getCurrentSketch().setSensitivity((float)value, false);
@@ -234,6 +235,12 @@ void controllerChange(int channel, int number, int value) {
         break;
 
       // other buttons
+
+      case 35: // color palette "S"
+        if (value == 127) {
+          getCurrentSketch().buttonShufflePressed();
+        }
+        break;
 
       // "S": 32-39, ltr
       // "M": 48-55

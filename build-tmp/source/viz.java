@@ -15,11 +15,9 @@ import processing.core.*;
 import processing.core.*; 
 import processing.core.*; 
 import processing.core.*; 
-import processing.core.*; 
 import java.util.*; 
 import processing.core.*; 
 import java.util.*; 
-import processing.core.*; 
 import processing.core.*; 
 import geomerative.*; 
 import processing.core.*; 
@@ -109,16 +107,18 @@ public void setup() {
   apps = new ArrayList<VizBase>();
   
   //adding each of our nested Applets to the list.
-  // apps.add(new Text(this));
-
-  // apps.add(new Arcs(this));
-  // apps.add(new Rings(this));
-  // apps.add(new ParametricLines(this));
-  // apps.add(new Jags(this));
+  apps.add(new Text(this));
+  apps.add(new Arcs(this));
+  apps.add(new Rings(this));
+  apps.add(new ParametricLines(this));
+  apps.add(new Jags(this));
+  apps.add(new TwinkleToph(this));
 
   // apps.add(new DotMatrix(this));
-  apps.add(new TwinkleToph(this));
   // apps.add(new Planets(this));
+  // apps.add(new Diamonds(this));
+
+  // flyover ;_;
 
   List<String> appNames = new ArrayList<String>();
   for (VizBase app : apps) {
@@ -205,7 +205,7 @@ public void controllerChange(int channel, int number, int value) {
     switch (number) {
       // sliders
       case 0: // leftmost slider
-        sendExpBase(value);
+        sendSignalScale(value);
         break;
       case 1: // second slider from left
         newValue = getCurrentSketch().setSpeed((float)value, false);
@@ -238,7 +238,7 @@ public void controllerChange(int channel, int number, int value) {
 
       // knobs
       case 16: // leftmost knob
-        sendSignalScale(value);
+        sendExpBase(value);
         break;
       case 17: // second knob from left
         newValue = getCurrentSketch().setSensitivity((float)value, false);
@@ -270,6 +270,12 @@ public void controllerChange(int channel, int number, int value) {
         break;
 
       // other buttons
+
+      case 35: // color palette "S"
+        if (value == 127) {
+          getCurrentSketch().buttonShufflePressed();
+        }
+        break;
 
       // "S": 32-39, ltr
       // "M": 48-55
@@ -358,7 +364,7 @@ public class Arcs extends VizBase
     x1 = defaultX1;
 
     usesY0 = true;
-    minY0 = 1;
+    minY0 = 25;
     maxY0 = 100;
     defaultY0 = 50;
     y0 = defaultY0;
@@ -845,95 +851,38 @@ public class DotMatrix extends VizBase {
 
 
 
-// IDEAS
-// - populate from center in spiral
-// - hexagon splits into six triangles that can move independently?
-// - spin canvas
-// - zoom canvas
-
-
-
-public class Hexagons extends VizBase
-{  
-  Gon[][] gons;
-
-  public Hexagons(PApplet parentApplet) {
-    super(parentApplet);
-    name = "Hexagons";
-  }
-  
-  @Override
-  public void init() {
-    background(0);
-
-    gons = new Gon[5][5];
-
-    for (int i = 0; i < 5; i++) {
-      for (int j = 0; j < 5; j++) {
-        gons[i][j] = new Gon();
-      }
-    }
-
-  }
-
-  public @Override
-  void display(float[] signals) {
-    float x = 0;
-    float y = 0;
-
-    for (int i = 0; i < 5; i++) {
-      for (int j = 0; j < 5; j++) {
-        Gon gon = gons[i][j];
-
-        float y2 = y;
-        if (x % 2 == 1) {
-          y2 += 50;
-        }
-        gon.display(x, y2, 40);
-        println(i + " " + j + " " + x + " " + y2);
-
-        y += 100;
-      }
-      y = 0;
-      x += 100;
-    }
-
-  }
-
-  class Gon {
-
-    int myColor;
-
-    public Gon() {
-      myColor = 0xffff0000;
-    }
-
-    // some shit
-    public void display(float centerX, float centerY, float radius) {
-      float angle = TWO_PI / 6;
-      beginShape();
-      for (float a = 0; a < TWO_PI; a += angle) {
-        float sx = centerX + cos(a) * radius;
-        float sy = centerY + sin(a) * radius;
-        vertex(sx, sy);
-      }
-      endShape(CLOSE);
-    }
-
-  }
-}
-
 
 
 public class Jags extends VizBase {
   // colors: must be 4, first one is always background
   // color[] palette = new color[] { #DCD6B2, #4E7989, #A9011B, #80944E };
-
+  // shared color palettes
   int[][] palettes = {
-    { 0xffDCD6B2, 0xff4E7989, 0xffA9011B, 0xff80944E },  // colorlisa - picasso - the dream
-    { 0xff3F6F76, 0xff69B7CE, 0xffC65840, 0xffF4CE4B },  // colorlisa - chagall
-    { 0xffFFFFFF, 0xffFF0061, 0xffE80058, 0xffCE004E },  // colorfriends - sexual addiction
+    { 0xffDCD6B2, 0xff4E7989, 0xffA9011B, 0xff80944E, 0xffDCD6B2 },  // colorlisa - picasso - the dream
+    { 0xff3F6F76, 0xff69B7CE, 0xffC65840, 0xffF4CE4B, 0xff62496F },  // colorlisa - chagall
+    { 0xff69D2E7, 0xffA7DBD8, 0xffE0E4CC, 0xffF38630, 0xffFA6900 },
+    { 0xffFE4365, 0xffFC9D9A, 0xffF9CDAD, 0xffC8C8A9, 0xff83AF9B },
+    { 0xffECD078, 0xffD95B43, 0xffC02942, 0xff542437, 0xff53777A },
+    { 0xff556270, 0xff4ECDC4, 0xffC7F464, 0xffFF6B6B, 0xffC44D58 },
+    { 0xff774F38, 0xffE08E79, 0xffF1D4AF, 0xffECE5CE, 0xffC5E0DC },
+    { 0xffE8DDCB, 0xffCDB380, 0xff036564, 0xff033649, 0xff031634 },
+    { 0xff594F4F, 0xff547980, 0xff45ADA8, 0xff9DE0AD, 0xffE5FCC2 },
+    { 0xff00A0B0, 0xff6A4A3C, 0xffCC333F, 0xffEB6841, 0xffEDC951 },
+    { 0xffE94E77, 0xffD68189, 0xffC6A49A, 0xffC6E5D9, 0xffF4EAD5 },
+    { 0xff3FB8AF, 0xff7FC7AF, 0xffDAD8A7, 0xffFF9E9D, 0xffFF3D7F },
+    { 0xffD9CEB2, 0xff948C75, 0xffD5DED9, 0xff7A6A53, 0xff99B2B7 },
+    { 0xffFFFFFF, 0xffCBE86B, 0xffF2E9E1, 0xff1C140D, 0xffCBE86B },
+    { 0xffEFFFCD, 0xffDCE9BE, 0xff555152, 0xff2E2633, 0xff99173C },
+    { 0xff343838, 0xff005F6B, 0xff008C9E, 0xff00B4CC, 0xff00DFFC },
+    { 0xff413E4A, 0xff73626E, 0xffB38184, 0xffF0B49E, 0xffF7E4BE },
+    { 0xff99B898, 0xffFECEA8, 0xffFF847C, 0xffE84A5F, 0xff2A363B },
+    { 0xffFF4E50, 0xffFC913A, 0xffF9D423, 0xffEDE574, 0xffE1F5C4 },
+    { 0xff655643, 0xff80BCA3, 0xffF6F7BD, 0xffE6AC27, 0xffBF4D28 },
+    { 0xff351330, 0xff424254, 0xff64908A, 0xffE8CAA4, 0xffCC2A41 },
+    { 0xff00A8C6, 0xff40C0CB, 0xffF9F2E7, 0xffAEE239, 0xff8FBE00 },
+    { 0xff554236, 0xffF77825, 0xffD3CE3D, 0xffF1EFA5, 0xff60B99A }
   };
+
 
   int[] lineColorIndex;
 
@@ -978,6 +927,7 @@ public class Jags extends VizBase {
 
     // TODO: modes: jags, sines...
 
+    shuffleCurrentColors();
   }
   
   @Override
@@ -1029,6 +979,27 @@ public class Jags extends VizBase {
         }
       }
       endShape();
+    }
+  }
+
+  @Override
+  public void buttonShufflePressed() {
+    println("every day i'm shufflin'");
+    shuffleCurrentColors();
+  }
+
+
+  private void shuffleCurrentColors()
+  {
+    int[] ar = palettes[colorPalette];
+    Random rnd = new Random();
+    for (int i = ar.length - 1; i > 0; i--)
+    {
+      int index = rnd.nextInt(i + 1);
+      // Simple swap
+      int a = ar[index];
+      ar[index] = ar[i];
+      ar[i] = a;
     }
   }
 
@@ -1718,40 +1689,6 @@ public class Rings extends VizBase
 
 
 
-public class Speaker extends VizBase
-{  
-  public Speaker(PApplet parentApplet) {
-    super(parentApplet);
-    name = "Speaker";
-  }
-  
-  @Override
-  public void init() {
-  }
-
-  public @Override
-  void display(float[] signals) {
-    background(0);
-
-    translate(width / 2, height / 2);
-    ellipseMode(RADIUS);
-
-    colorMode(HSB);
-    stroke(255);
-    strokeWeight(1);
-    fill(100, 255, 100, map(signals[0], 0, 100, 0, 255));
-
-    for (float i = 0; i < TWO_PI; i += TWO_PI / 30) {
-      pushMatrix();
-      rotate(i);
-      ellipse(100, 0, 100, 100);
-      popMatrix();
-    }
-  }
-}
-
-
-
 
 public class Text extends VizBase
 {  
@@ -1773,7 +1710,7 @@ public class Text extends VizBase
 
     // displayText
     usesDisplayText = true;
-    defaultDisplayText = "HOWDY";
+    defaultDisplayText = "";
     displayText = defaultDisplayText;
 
     // fontSize
@@ -1913,13 +1850,6 @@ public class Text extends VizBase
 
 
 
-/*
- * - don't squish the image
- * - switch between images
- * - use different shape masks
- * - use different color schemes
- */
-
 public class TwinkleToph extends VizBase
 {  
 
@@ -1938,6 +1868,13 @@ public class TwinkleToph extends VizBase
 
     usesMode = true;
     numModes = 6;
+
+    // channel
+    usesX0 = true;
+    minX0 = 0;
+    maxX0 = 8;
+    defaultX0 = 0;
+    x0 = defaultX0;
 
   }
   
@@ -2027,8 +1964,12 @@ public class TwinkleToph extends VizBase
     return sensitivity;
   }
 
-
-
+  @Override
+  public float setX0(float value, boolean normalized) {
+    x0 = normalized ? value : map(value, 0, 127, minX0, maxX0);
+    println("x0 changed to " + x0);
+    return x0;
+  }
 }
 
   public void settings() {  size(600, 600); }

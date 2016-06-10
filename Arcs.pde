@@ -62,7 +62,7 @@ public class Arcs extends VizBase
     x1 = defaultX1;
 
     usesY0 = true;
-    minY0 = 1;
+    minY0 = 25;
     maxY0 = 100;
     defaultY0 = 50;
     y0 = defaultY0;

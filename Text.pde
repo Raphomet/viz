@@ -21,7 +21,7 @@ public class Text extends VizBase
 
     // displayText
     usesDisplayText = true;
-    defaultDisplayText = "HOWDY";
+    defaultDisplayText = "";
     displayText = defaultDisplayText;
 
     // fontSize

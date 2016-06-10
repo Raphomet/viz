@@ -1,15 +1,32 @@
 import processing.core.*;
 
 public class Jags extends VizBase {
-  // colors: must be 4, first one is always background
-  // color[] palette = new color[] { #DCD6B2, #4E7989, #A9011B, #80944E };
-
   color[][] palettes = {
-    { #DCD6B2, #4E7989, #A9011B, #80944E },  // colorlisa - picasso - the dream
-    { #3F6F76, #69B7CE, #C65840, #F4CE4B },  // colorlisa - chagall
-    { #FFFFFF, #FF0061, #E80058, #CE004E },  // colorfriends - sexual addiction
+    { #DCD6B2, #4E7989, #A9011B, #80944E, #DCD6B2 },  // colorlisa - picasso - the dream
+    { #3F6F76, #69B7CE, #C65840, #F4CE4B, #62496F },  // colorlisa - chagall
+    { #69D2E7, #A7DBD8, #E0E4CC, #F38630, #FA6900 },
+    { #FE4365, #FC9D9A, #F9CDAD, #C8C8A9, #83AF9B },
+    { #ECD078, #D95B43, #C02942, #542437, #53777A },
+    { #556270, #4ECDC4, #C7F464, #FF6B6B, #C44D58 },
+    { #774F38, #E08E79, #F1D4AF, #ECE5CE, #C5E0DC },
+    { #E8DDCB, #CDB380, #036564, #033649, #031634 },
+    { #594F4F, #547980, #45ADA8, #9DE0AD, #E5FCC2 },
+    { #00A0B0, #6A4A3C, #CC333F, #EB6841, #EDC951 },
+    { #E94E77, #D68189, #C6A49A, #C6E5D9, #F4EAD5 },
+    { #3FB8AF, #7FC7AF, #DAD8A7, #FF9E9D, #FF3D7F },
+    { #D9CEB2, #948C75, #D5DED9, #7A6A53, #99B2B7 },
+    { #FFFFFF, #CBE86B, #F2E9E1, #1C140D, #CBE86B },
+    { #EFFFCD, #DCE9BE, #555152, #2E2633, #99173C },
+    { #343838, #005F6B, #008C9E, #00B4CC, #00DFFC },
+    { #413E4A, #73626E, #B38184, #F0B49E, #F7E4BE },
+    { #99B898, #FECEA8, #FF847C, #E84A5F, #2A363B },
+    { #FF4E50, #FC913A, #F9D423, #EDE574, #E1F5C4 },
+    { #655643, #80BCA3, #F6F7BD, #E6AC27, #BF4D28 },
+    { #351330, #424254, #64908A, #E8CAA4, #CC2A41 },
+    { #00A8C6, #40C0CB, #F9F2E7, #AEE239, #8FBE00 },
+    { #554236, #F77825, #D3CE3D, #F1EFA5, #60B99A }
   };
-
+  
   int[] lineColorIndex;
 
   int lineSpacing = 20;
@@ -53,6 +70,7 @@ public class Jags extends VizBase {
 
     // TODO: modes: jags, sines...
 
+    shuffleCurrentColors();
   }
   
   @Override
@@ -107,6 +125,26 @@ public class Jags extends VizBase {
     }
   }
 
+  private void shuffleCurrentColors()
+  {
+    color[] ar = palettes[colorPalette];
+    Random rnd = new Random();
+    for (int i = ar.length - 1; i > 0; i--)
+    {
+      int index = rnd.nextInt(i + 1);
+      // Simple swap
+      color a = ar[index];
+      ar[index] = ar[i];
+      ar[i] = a;
+    }
+  }
+
+
+  @Override
+  public void buttonShufflePressed() {
+    println("every day i'm shufflin'");
+    shuffleCurrentColors();
+  }
 
   @Override
   public float setSpeed(float value, boolean normalized) {

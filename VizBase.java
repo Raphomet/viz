@@ -2,6 +2,9 @@ import processing.core.*;
 import controlP5.*;
 
 public abstract class VizBase {
+  // TODO: move shared color palettes in here
+  // TODO: move var setter methods in here
+
   protected PApplet parent;
   protected ControlFrame cf;
   protected String name;
@@ -45,6 +48,7 @@ public abstract class VizBase {
   public float setZ0(float value, boolean normalized) { return (float)0.0; }
   public float setZ1(float value, boolean normalized) { return (float)0.0; }
 
+  public void buttonShufflePressed() { };
 
 
   protected String displayText;
