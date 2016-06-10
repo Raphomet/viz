@@ -15,6 +15,7 @@ public class ParametricLines extends VizBase
   private int colorPalette = 0;
   private float colorAdjustment;
   private int mode = 0;
+  private float x0;
   // private int size0Signal = 0; // length of tail
   // private int size1Signal = 0; // thickness
   
@@ -52,7 +53,13 @@ public class ParametricLines extends VizBase
     alpha = defaultAlpha;
 
     usesMode = true;
-    numModes = 2;
+    numModes = 4;
+
+    usesX0 = true;
+    minX0 = 1;
+    maxX0 = 30;
+    defaultX0 = 13;
+    x0 = defaultX0;
   }
   
   @Override
@@ -73,27 +80,63 @@ public class ParametricLines extends VizBase
     }
     background(backgroundColor);
 
-    for(int i = 0; i < (int) map(signals[size0Signal], 0, 100, 0, size0); i++) {
-      // strokeWeight(5);
-
-      if (mode == 0) {
-        strokeWeight(pow(map(signals[5], 0, 100, 0, sqrt(size1)), 2));
-        strokeCap(SQUARE);
-        stroke((frameCount + i) % 256, colorAdjustment, 256, map(signals[alphaSignal], 0, 100, alpha, 255));
-        line(x1(frameCount + i), y1(frameCount + i), x2(frameCount + i), y2(frameCount + i));
-      }
-      else if (mode == 1) {
-        noStroke();
-        fill((frameCount + i) % 256, colorAdjustment, 256, map(signals[alphaSignal], 0, 100, alpha, 255));
-        ellipse(x1(frameCount + i), y1(frameCount + i), size1, size1);
-        ellipse(x2(frameCount + i), y2(frameCount + i), size1, size1);
-      }
-      // TODO: triangle strip?
+    if (mode == 2) {
+      beginShape(TRIANGLE_STRIP);
     }
+
+    if (mode == 3) {
+      beginShape();
+      noFill();
+      strokeWeight(5);
+
+      stroke(255, 255, 255);
+      for (float i = 0; i < TWO_PI * 100; i += PI / 10) {
+        vertex(x1(i), y1(i));
+      }
+
+      stroke(64, 255, 255);
+      for (float i = 0; i < TWO_PI * 100; i += PI / 10) {
+        vertex(x2(i), y2(i));
+      }
+
+      endShape();
+    }
+    else {
+      for(int i = 0; i < (int) map(signals[size0Signal], 0, 100, 0, size0); i++) {
+        // strokeWeight(5);
+        if (mode == 0) {
+          noFill();
+          strokeWeight(pow(map(signals[5], 0, 100, 0, sqrt(size1)), 2));
+          strokeCap(SQUARE);
+          stroke((frameCount + i) % 256, colorAdjustment, 256, map(signals[alphaSignal], 0, 100, alpha, 255));
+          line(x1(frameCount + i), y1(frameCount + i), x2(frameCount + i), y2(frameCount + i));
+        }
+        else if (mode == 1) {
+          noStroke();
+          fill((frameCount + i) % 256, colorAdjustment, 256, map(signals[alphaSignal], 0, 100, alpha, 255));
+          ellipse(x1(frameCount + i), y1(frameCount + i), size1, size1);
+          ellipse(x2(frameCount + i), y2(frameCount + i), size1, size1);
+        }
+        else if (mode == 2) {
+          noFill();
+          strokeWeight(pow(map(signals[5], 0, 100, 0, sqrt(size1)), 2));
+          strokeCap(SQUARE);
+          stroke((frameCount + i) % 256, colorAdjustment, 256, map(signals[alphaSignal], 0, 100, alpha, 255));
+          vertex(x1(frameCount + i), y1(frameCount + i));
+          vertex(x2(frameCount + i), y2(frameCount + i));
+        }
+      }
+    }
+
+
+    if (mode == 2) {
+      endShape();
+    }
+
   }
 
   float x1(float t) {
-    return cos(t / 13) * scale + sin(t / 80) * 30;
+    return cos(t / x0) * scale + sin(t / 80) * 30;
   }
 
   float y1(float t) {
@@ -109,7 +152,10 @@ public class ParametricLines extends VizBase
   }
 
 
-  // control mappings
+
+
+
+
 
   @Override
   public float setSize0(float value, boolean normalized) {
@@ -121,7 +167,7 @@ public class ParametricLines extends VizBase
   @Override
   public float setSize1(float value, boolean normalized) {
     size1 = normalized ? value : map(value, 0, 127, minSize1, maxSize1);
-    println("size1 changed to " + size0);
+    println("size1 changed to " + size1);
     return size1;
   }
 
@@ -138,8 +184,6 @@ public class ParametricLines extends VizBase
     println("color adjustment changed to " + colorAdjustment);
     return colorAdjustment;
   }
-
-
 
   @Override
   public float setAlpha(float value, boolean normalized) {
@@ -158,6 +202,13 @@ public class ParametricLines extends VizBase
     mode = normalized ? round(value) : round(map(value, 0, 127, 0, numModes - 1));
     println("mode changed to " + mode);
     return (float)mode;
+  }
+
+  @Override
+  public float setX0(float value, boolean normalized) {
+    x0 = normalized ? value : map(value, 0, 127, minX0, maxX0);
+    println("x0 changed to " + x0);
+    return x0;
   }
 
 

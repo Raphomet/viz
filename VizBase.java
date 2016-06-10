@@ -29,39 +29,76 @@ public abstract class VizBase {
   // controls
   // the sketch is responsible for remapping the value (0-127 from nanokontrol2)
   // to something that makes sense within its own domain.
-  // public void setBpm(int value, boolean normalized) {};
-  // public void setSpeed(float value, boolean normalized) {};
+  public void setDisplayText(String displayText) {};
+  public float setSpeed(float value, boolean normalized) { return (float) 0.0; }
+  public float setSensitivity(float value, boolean normalized) { return (float) 0.0; }
   public float setSize0(float value, boolean normalized) { return (float)0.0; }
   public float setSize1(float value, boolean normalized) { return (float)0.0; }
   public float setColorPalette(float value, boolean normalized) { return (float)0.0; }
   public float setColorAdjustment(float value, boolean normalized) { return (float)0.0; }
   public float setMode(float value, boolean normalized) { return (float)0.0; }
   public float setAlpha(float value, boolean normalized) { return (float)0.0; }
-  // public void setX0(int value, boolean normalized) {};
-  // public void setX1(int value, boolean normalized) {};
-  // public void setY0(int value, boolean normalized) {};
-  // public void setY1(int value, boolean normalized) {};
-  // public void setZ0(int value, boolean normalized) {};
-  // public void setZ1(int value, boolean normalized) {};
+  public float setX0(float value, boolean normalized) { return (float)0.0; }
+  public float setX1(float value, boolean normalized) { return (float)0.0; }
+  public float setY0(float value, boolean normalized) { return (float)0.0; }
+  public float setY1(float value, boolean normalized) { return (float)0.0; }
+  public float setZ0(float value, boolean normalized) { return (float)0.0; }
+  public float setZ1(float value, boolean normalized) { return (float)0.0; }
+
+
+
+  protected String displayText;
+  protected float alpha;
+  protected float size0;
+  protected float size1;
+  protected int colorPalette = 0;
+  protected float colorAdjustment;
+  protected int mode = 0;
+  protected float speed;
+  protected float sensitivity;
+  protected float x0;
+  protected float x1;
+  protected float y0;
+  protected float y1;
+  protected float z0;
+  protected float z1;
+
+
+
+  // displayText
+  protected boolean usesDisplayText = false;
+  protected String defaultDisplayText = "YO";
+
+  public boolean usesDisplayText() { return usesDisplayText; }
+  public String getDefaultDisplayText() { return defaultDisplayText; }
 
 
   // speed
 
   protected boolean usesSpeed = false;
-  protected float defaultSpeed = 50;
-  protected float speed = defaultSpeed;
+  protected float minSpeed;
+  protected float maxSpeed;
+  protected float defaultSpeed;
 
-  public void setSpeed(float _speed) {
-    speed = _speed;
-  }
+  public boolean usesSpeed() { return usesSpeed; }
+  public float getDefaultSpeed() { return defaultSpeed; }
+  public float getMinSpeed() { return minSpeed; }
+  public float getMaxSpeed() { return maxSpeed; }
 
-  public boolean usesSpeed() {
-    return usesSpeed;
-  }
 
-  public float getDefaultSpeed() {
-    return defaultSpeed;
-  }
+  // sensitivity
+
+  protected boolean usesSensitivity = false;
+  protected float minSensitivity;
+  protected float maxSensitivity;
+  protected float defaultSensitivity;
+
+  public boolean usesSensitivity() { return usesSensitivity; }
+  public float getDefaultSensitivity() { return defaultSensitivity; }
+  public float getMinSensitivity() { return minSensitivity; }
+  public float getMaxSensitivity() { return maxSensitivity; }
+
+
 
 
   // size0
@@ -76,7 +113,6 @@ public abstract class VizBase {
   public float getDefaultSize0() { return defaultSize0; }
   public boolean usesSize0()     { return usesSize0; }
   public int getSize0Signal()    { return size0Signal; }
-
 
   // size1
   protected boolean usesSize1  = false;
@@ -149,6 +185,67 @@ public abstract class VizBase {
   public int getAlphaSignal() {
     return alphaSignal;
   }
+
+
+  protected boolean usesX0 = false;
+  protected float minX0;
+  protected float maxX0;
+  protected float defaultX0;
+
+  public boolean usesX0() { return usesX0; }
+  public float getDefaultX0() { return defaultX0; }
+  public float getMinX0() { return minX0; }
+  public float getMaxX0() { return maxX0; }
+
+  protected boolean usesX1 = false;
+  protected float minX1;
+  protected float maxX1;
+  protected float defaultX1;
+
+  public boolean usesX1() { return usesX1; }
+  public float getDefaultX1() { return defaultX1; }
+  public float getMinX1() { return minX1; }
+  public float getMaxX1() { return maxX1; }
+
+  protected boolean usesY0 = false;
+  protected float minY0;
+  protected float maxY0;
+  protected float defaultY0;
+
+  public boolean usesY0() { return usesY0; }
+  public float getDefaultY0() { return defaultY0; }
+  public float getMinY0() { return minY0; }
+  public float getMaxY0() { return maxY0; }
+
+  protected boolean usesY1 = false;
+  protected float minY1;
+  protected float maxY1;
+  protected float defaultY1;
+
+  public boolean usesY1() { return usesY1; }
+  public float getDefaultY1() { return defaultY1; }
+  public float getMinY1() { return minY1; }
+  public float getMaxY1() { return maxY1; }
+
+  protected boolean usesZ0 = false;
+  protected float minZ0;
+  protected float maxZ0;
+  protected float defaultZ0;
+
+  public boolean usesZ0() { return usesZ0; }
+  public float getDefaultZ0() { return defaultZ0; }
+  public float getMinZ0() { return minZ0; }
+  public float getMaxZ0() { return maxZ0; }
+
+  protected boolean usesZ1 = false;
+  protected float minZ1;
+  protected float maxZ1;
+  protected float defaultZ1;
+
+  public boolean usesZ1() { return usesZ1; }
+  public float getDefaultZ1() { return defaultZ1; }
+  public float getMinZ1() { return minZ1; }
+  public float getMaxZ1() { return maxZ1; }
 
 
 

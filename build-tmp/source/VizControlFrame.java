@@ -75,11 +75,20 @@ class ControlFrame extends PApplet {
       .setDragDirection(Knob.VERTICAL)
       .changeValue(50);
 
+    cp5.addKnob("sensitivity")
+      .setRange(0,127)
+      .setPosition(180,220)
+      .setRadius(50)
+      .setDragDirection(Knob.VERTICAL)
+      .changeValue(50);
 
+    cp5.addTextfield("displayText")
+       .setPosition(20,350)
+       .setSize(200,40)
+       .setAutoClear(false);
 
 
     // add control boxes
-
 
     cp5.addTextlabel("size1SectionLabel")
       .setText("SIZE 1")
@@ -232,6 +241,116 @@ class ControlFrame extends PApplet {
 
 
 
+    // X1
+
+    cp5.addTextlabel("x1Label")
+      .setText("X1")
+      .setPosition(controlGridLeftX + 0 * controlGridSectionWidth, controlGridUpY + controlGridSectionHeight * 3);
+
+    cp5.addTextlabel("x1Value")
+      .setText("value")
+      .setPosition(controlGridLeftX + 0 * controlGridSectionWidth, controlGridUpY + controlGridSectionHeight * 3 + controlGridSectionSpacing + controlGridSectionLabelOffset);
+
+    cp5.addSlider("x1")
+      .setLabelVisible(true)
+      .setPosition(controlGridLeftX + 0 * controlGridSectionWidth + 50, controlGridUpY + controlGridSectionHeight * 3 + controlGridSectionSpacing)
+      .setSize(100, 20)
+      .setRange(0, 1)
+      .changeValue(0);
+
+
+    // X0
+
+    cp5.addTextlabel("x0Label")
+      .setText("X0")
+      .setPosition(controlGridLeftX + 0 * controlGridSectionWidth, controlGridSectionHeight * 4 + controlGridUpY);
+
+    cp5.addTextlabel("x0Value")
+      .setText("value")
+      .setPosition(controlGridLeftX + 0 * controlGridSectionWidth, controlGridSectionHeight * 4 + controlGridUpY + controlGridSectionSpacing + controlGridSectionLabelOffset);
+
+    cp5.addSlider("x0")
+      .setLabelVisible(true)
+      .setPosition(controlGridLeftX + 0 * controlGridSectionWidth + 50, controlGridSectionHeight * 4 + controlGridUpY + controlGridSectionSpacing)
+      .setSize(100, 20)
+      .setRange(0, 1)
+      .changeValue(0);
+
+
+    // Y1
+
+    cp5.addTextlabel("y1Label")
+      .setText("Y1")
+      .setPosition(controlGridLeftX + 1 * controlGridSectionWidth, controlGridUpY + controlGridSectionHeight * 3);
+
+    cp5.addTextlabel("y1Value")
+      .setText("value")
+      .setPosition(controlGridLeftX + 1 * controlGridSectionWidth, controlGridUpY + controlGridSectionHeight * 3 + controlGridSectionSpacing + controlGridSectionLabelOffset);
+
+    cp5.addSlider("y1")
+      .setLabelVisible(true)
+      .setPosition(controlGridLeftX + 1 * controlGridSectionWidth + 50, controlGridUpY + controlGridSectionHeight * 3 + controlGridSectionSpacing)
+      .setSize(100, 20)
+      .setRange(0, 1)
+      .changeValue(0);
+
+
+    // Y0
+
+    cp5.addTextlabel("y0Label")
+      .setText("Y0")
+      .setPosition(controlGridLeftX + 1 * controlGridSectionWidth, 4 * controlGridSectionHeight + controlGridUpY);
+
+    cp5.addTextlabel("y0Value")
+      .setText("value")
+      .setPosition(controlGridLeftX + 1 * controlGridSectionWidth, 4 * controlGridSectionHeight + controlGridUpY + controlGridSectionSpacing + controlGridSectionLabelOffset);
+
+    cp5.addSlider("y0")
+      .setLabelVisible(true)
+      .setPosition(controlGridLeftX + 1 * controlGridSectionWidth + 50, 4 * controlGridSectionHeight + controlGridUpY + controlGridSectionSpacing)
+      .setSize(100, 20)
+      .setRange(0, 1)
+      .changeValue(0);
+
+
+    // Z1
+
+    cp5.addTextlabel("z1Label")
+      .setText("Z1")
+      .setPosition(controlGridLeftX + 2 * controlGridSectionWidth, controlGridUpY + controlGridSectionHeight * 3);
+
+    cp5.addTextlabel("z1Value")
+      .setText("value")
+      .setPosition(controlGridLeftX + 2 * controlGridSectionWidth, controlGridUpY + controlGridSectionHeight * 3 + controlGridSectionSpacing + controlGridSectionLabelOffset);
+
+    cp5.addSlider("z1")
+      .setLabelVisible(true)
+      .setPosition(controlGridLeftX + 2 * controlGridSectionWidth + 50, controlGridUpY + controlGridSectionHeight * 3 + controlGridSectionSpacing)
+      .setSize(100, 20)
+      .setRange(0, 1)
+      .changeValue(0);
+
+
+    // Z0
+
+    cp5.addTextlabel("z0Label")
+      .setText("Z0")
+      .setPosition(controlGridLeftX + 2 * controlGridSectionWidth, 4 * controlGridSectionHeight + controlGridUpY);
+
+    cp5.addTextlabel("z0Value")
+      .setText("value")
+      .setPosition(controlGridLeftX + 2 * controlGridSectionWidth, 4 * controlGridSectionHeight + controlGridUpY + controlGridSectionSpacing + controlGridSectionLabelOffset);
+
+    cp5.addSlider("z0")
+      .setLabelVisible(true)
+      .setPosition(controlGridLeftX + 2 * controlGridSectionWidth + 50, 4 * controlGridSectionHeight + controlGridUpY + controlGridSectionSpacing)
+      .setSize(100, 20)
+      .setRange(0, 1)
+      .changeValue(0);
+
+
+
+
 
 
     // end of controls
@@ -243,9 +362,9 @@ class ControlFrame extends PApplet {
        .setItemHeight(20)
        .setOpen(false)
        .addItems(appNames)
-       .setValue(0); // has side effect: initializes app controls for sketch
+       .setValue(0);
 
-    // initializeAppControls(parent.getCurrentSketch());
+    initializeAppControls(parent.getCurrentSketch());
   }
 
   public void setSignals(float[] _signals) {
@@ -312,6 +431,9 @@ class ControlFrame extends PApplet {
     float value  = c.getValue();
 
     switch(theEvent.getController().getName()) {
+      case "displayText":
+        sketch.setDisplayText(c.getStringValue());
+        break;
       case "expBase":
         expBase = theEvent.getController().getValue();
         parent.setExpBase(expBase);
@@ -319,6 +441,9 @@ class ControlFrame extends PApplet {
       case "signalScale":
         signalScale = theEvent.getController().getValue();
         parent.setSignalScale(signalScale);
+        break;
+      case "speed":
+        sketch.setSpeed(value, true);
         break;
       case "currentViz":
         int selectedIndex = (int)theEvent.getController().getValue();
@@ -330,7 +455,6 @@ class ControlFrame extends PApplet {
       case "alpha":
         sketch.setAlpha(value, true);
         break;
-        // TODO: size0, size1 SIGNALS
       case "size0":
         sketch.setSize0(value, true);
         break;
@@ -345,6 +469,24 @@ class ControlFrame extends PApplet {
         break;
       case "colorAdjustment":
         sketch.setColorAdjustment(value, true);
+        break;
+      case "x0":
+        sketch.setX0(value, true);
+        break;
+      case "x1":
+        sketch.setX1(value, true);
+        break;
+      case "y0":
+        sketch.setY0(value, true);
+        break;
+      case "y1":
+        sketch.setY1(value, true);
+        break;
+      case "z0":
+        sketch.setZ0(value, true);
+        break;
+      case "z1":
+        sketch.setZ1(value, true);
         break;
     }
   }
@@ -361,6 +503,23 @@ class ControlFrame extends PApplet {
   }
 
   public void initializeAppControls(VizBase sketch) {
+
+    if (sketch.usesDisplayText()) {
+      // TextField cDisplayText = (TextField)cp5.getController("displayText");
+      setDisplayText(sketch.getDefaultDisplayText());
+    }
+
+    if (sketch.usesSpeed()) {
+      Knob cSpeed = (Knob)cp5.getController("speed");
+      cSpeed.setRange(sketch.getMinSpeed(), sketch.getMaxSpeed());
+      setSpeed(sketch.getDefaultSpeed());
+    }
+
+    if (sketch.usesSensitivity()) {
+      Knob cSensitivity = (Knob)cp5.getController("sensitivity");
+      cSensitivity.setRange(sketch.getMinSensitivity(), sketch.getMaxSensitivity());
+      setSensitivity(sketch.getDefaultSensitivity());
+    }
 
     if (sketch.usesSize0()) {
       Slider cSize0 = (Slider)cp5.getController("size0");
@@ -397,10 +556,54 @@ class ControlFrame extends PApplet {
       cAlpha.setRange(sketch.getMinAlpha(), sketch.getMaxAlpha());
       setAlpha(sketch.getDefaultAlpha());
     }
+
+    if (sketch.usesX0()) {
+      Slider cX0 = (Slider)cp5.getController("x0");
+      cX0.setRange(sketch.getMinX0(), sketch.getMaxX0());
+      setX0(sketch.getDefaultX0());
+    }
+
+    if (sketch.usesX1()) {
+      Slider cX1 = (Slider)cp5.getController("x1");
+      cX1.setRange(sketch.getMinX1(), sketch.getMaxX1());
+      setX1(sketch.getDefaultX1());
+    }
+
+    if (sketch.usesY0()) {
+      Slider cY0 = (Slider)cp5.getController("y0");
+      cY0.setRange(sketch.getMinY0(), sketch.getMaxY0());
+      setY0(sketch.getDefaultY0());
+    }
+
+    if (sketch.usesY1()) {
+      Slider cY1 = (Slider)cp5.getController("y1");
+      cY1.setRange(sketch.getMinY1(), sketch.getMaxY1());
+      setY1(sketch.getDefaultY1());
+    }
+
+    if (sketch.usesZ0()) {
+      Slider cZ0 = (Slider)cp5.getController("z0");
+      cZ0.setRange(sketch.getMinZ0(), sketch.getMaxZ0());
+      setZ0(sketch.getDefaultZ0());
+    }
+
+    if (sketch.usesZ1()) {
+      Slider cZ1 = (Slider)cp5.getController("z1");
+      cZ1.setRange(sketch.getMinZ1(), sketch.getMaxZ1());
+      setZ1(sketch.getDefaultZ1());
+    }
+  }
+
+  void setDisplayText(String text) {
+    cp5.getController("displayText").setStringValue(text);
   }
 
   void setSpeed(float value) {
     cp5.getController("speed").changeValue(value);
+  }
+
+  void setSensitivity(float value) {
+    cp5.getController("sensitivity").changeValue(value);
   }
 
   void setSize0(float value) {
@@ -426,4 +629,29 @@ class ControlFrame extends PApplet {
   void setAlpha(float value) {
     cp5.getController("alpha").changeValue(value);
   }
+
+  void setX0(float value) {
+    cp5.getController("x0").changeValue(value);
+  }
+
+  void setX1(float value) {
+    cp5.getController("x1").changeValue(value);
+  }
+
+  void setY0(float value) {
+    cp5.getController("y0").changeValue(value);
+  }
+
+  void setY1(float value) {
+    cp5.getController("y1").changeValue(value);
+  }
+
+  void setZ0(float value) {
+    cp5.getController("z0").changeValue(value);
+  }
+
+  void setZ1(float value) {
+    cp5.getController("z1").changeValue(value);
+  }
+
 }

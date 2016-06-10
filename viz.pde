@@ -41,9 +41,11 @@ ArrayList<VizBase> apps;
 int selected;
 
 void setup() {
-  size(640, 640);
-  surface.setSize(640, 640);
+  size(600, 600);
+  // surface.setSize(600, 600);
   surface.setLocation(100, 100);
+
+  // fullScreen(2);
 
   // set up korg nanokontrol2
   kontrol = new MidiBus(this, kontrolChannel, -1);
@@ -70,12 +72,17 @@ void setup() {
   apps = new ArrayList<VizBase>();
   
   //adding each of our nested Applets to the list.
-  apps.add(new ParametricLines(this));
-  apps.add(new Hexagons(this));
-  apps.add(new TwinkleToph(this));
-  apps.add(new Planets(this));
-  apps.add(new Jags(this));
-  apps.add(new DotMatrix(this));
+  // apps.add(new Text(this));
+
+  // apps.add(new Arcs(this));
+  // apps.add(new Rings(this));
+  // apps.add(new ParametricLines(this));
+  // apps.add(new Jags(this));
+  // apps.add(new TwinkleToph(this));
+
+  // apps.add(new DotMatrix(this));
+  // apps.add(new Planets(this));
+  // apps.add(new Diamonds?(this));
 
   List<String> appNames = new ArrayList<String>();
   for (VizBase app : apps) {
@@ -88,7 +95,7 @@ void setup() {
   //calling the initialization function on each
   //Applet in the list.
   for(VizBase a : apps) {
-    a.setControlFrame(cf);
+    a.setControlFrame(cf); // attach controlframe to each app
     a.init();
   }
   
@@ -134,8 +141,6 @@ VizBase getCurrentSketch() {
   return apps.get(selected);
 }
 
-
-
 // Boost FFT signals in each band, constrain them to a ceiling.
 // Return adjusted results in array.
 float[] getAdjustedFftSignals() {
@@ -147,7 +152,7 @@ float[] getAdjustedFftSignals() {
     float adjustedAvg    = fft.getAvg(i) * pow(expBase, i) * signalScale;
     float constrainedAvg = constrain(adjustedAvg, 0, 100);
 
-    signals[i] = constrainedAvg;
+    signals[i]           = constrainedAvg;
   }
 
   return signals;
@@ -167,8 +172,8 @@ void controllerChange(int channel, int number, int value) {
         sendExpBase(value);
         break;
       case 1: // second slider from left
-        getCurrentSketch().setSpeed(value);
-        cf.setSpeed(value);
+        newValue = getCurrentSketch().setSpeed((float)value, false);
+        cf.setSpeed(newValue);
         break;
       case 2: // third slider from left
         newValue = getCurrentSketch().setSize0((float)value, false);
@@ -183,13 +188,16 @@ void controllerChange(int channel, int number, int value) {
         cf.setMode(newValue);
         break;
       case 5: // third-rightmost slider
-        // apps.get(selected).setX0(value, false);
+        newValue = getCurrentSketch().setX0((float)value, false);
+        cf.setX0(newValue);
         break;
       case 6: // second-rightmost slider
-        // apps.get(selected).setY0(value, false);
+        newValue = getCurrentSketch().setY0((float)value, false);
+        cf.setY0(newValue);
         break;
       case 7: // rightmost slider
-        // apps.get(selected).setZ0(value, false);
+        newValue = getCurrentSketch().setZ0((float)value, false);
+        cf.setZ0(newValue);
         break;
 
       // knobs
@@ -197,7 +205,8 @@ void controllerChange(int channel, int number, int value) {
         sendSignalScale(value);
         break;
       case 17: // second knob from left
-        // apps.get(selected).setBpm(value, false);
+        newValue = getCurrentSketch().setSensitivity((float)value, false);
+        cf.setSensitivity(newValue);
         break;
       case 18: // third knob from left
         newValue = getCurrentSketch().setSize1((float)value, false);
@@ -212,13 +221,16 @@ void controllerChange(int channel, int number, int value) {
         cf.setAlpha(newValue);
         break;
       case 21: // third-rightmost knob
-        // apps.get(selected).setX1(value, false);
+        newValue = getCurrentSketch().setX1((float)value, false);
+        cf.setX1(newValue);
         break;
       case 22: // second-rightmost knob
-        // apps.get(selected).setY1(value, false);
+        newValue = getCurrentSketch().setY1((float)value, false);
+        cf.setY1(newValue);
         break;
       case 23: // rightmost knob
-        // apps.get(selected).setZ1(value, false);
+        newValue = getCurrentSketch().setZ1((float)value, false);
+        cf.setZ1(newValue);
         break;
 
       // other buttons
