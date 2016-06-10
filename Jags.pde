@@ -63,14 +63,12 @@ public class Jags extends VizBase {
 
     // adjust rotation speed
     usesSpeed = true;
-    minSpeed = -30;
-    maxSpeed = 30;
-    defaultSpeed = 5;
+    minSpeed = -10;
+    maxSpeed = 10;
+    defaultSpeed = 0;
     speed = defaultSpeed;
 
     // TODO: modes: jags, sines...
-
-    shuffleCurrentColors();
   }
   
   @Override
@@ -141,8 +139,7 @@ public class Jags extends VizBase {
 
 
   @Override
-  public void buttonShufflePressed() {
-    println("every day i'm shufflin'");
+  public void buttonShuffleColorsPressed() {
     shuffleCurrentColors();
   }
 

@@ -271,9 +271,16 @@ public void controllerChange(int channel, int number, int value) {
 
       // other buttons
 
+      case 33: // speed "S"
+        if (value == 127) {
+          getCurrentSketch().buttonResetSpeedPressed();
+        }
+        break;
+
+
       case 35: // color palette "S"
         if (value == 127) {
-          getCurrentSketch().buttonShufflePressed();
+          getCurrentSketch().buttonShuffleColorsPressed();
         }
         break;
 
@@ -305,12 +312,42 @@ public void controllerChange(int channel, int number, int value) {
 
 public class Arcs extends VizBase
 {  
+
+  int[][] palettes = {
+    {}, //dummy 0
+    {}, //dummy 1
+    {}, //dummy 2
+    { 0xffDCD6B2, 0xff4E7989, 0xffA9011B, 0xff80944E, 0xffDCD6B2 },  // colorlisa - picasso - the dream
+    { 0xff3F6F76, 0xff69B7CE, 0xffC65840, 0xffF4CE4B, 0xff62496F },  // colorlisa - chagall
+    { 0xff69D2E7, 0xffA7DBD8, 0xffE0E4CC, 0xffF38630, 0xffFA6900 },
+    { 0xffFE4365, 0xffFC9D9A, 0xffF9CDAD, 0xffC8C8A9, 0xff83AF9B },
+    { 0xffECD078, 0xffD95B43, 0xffC02942, 0xff542437, 0xff53777A },
+    { 0xff556270, 0xff4ECDC4, 0xffC7F464, 0xffFF6B6B, 0xffC44D58 },
+    { 0xff774F38, 0xffE08E79, 0xffF1D4AF, 0xffECE5CE, 0xffC5E0DC },
+    { 0xffE8DDCB, 0xffCDB380, 0xff036564, 0xff033649, 0xff031634 },
+    { 0xff594F4F, 0xff547980, 0xff45ADA8, 0xff9DE0AD, 0xffE5FCC2 },
+    { 0xff00A0B0, 0xff6A4A3C, 0xffCC333F, 0xffEB6841, 0xffEDC951 },
+    { 0xffE94E77, 0xffD68189, 0xffC6A49A, 0xffC6E5D9, 0xffF4EAD5 },
+    { 0xff3FB8AF, 0xff7FC7AF, 0xffDAD8A7, 0xffFF9E9D, 0xffFF3D7F },
+    { 0xffD9CEB2, 0xff948C75, 0xffD5DED9, 0xff7A6A53, 0xff99B2B7 },
+    { 0xffFFFFFF, 0xffCBE86B, 0xffF2E9E1, 0xff1C140D, 0xffCBE86B },
+    { 0xffEFFFCD, 0xffDCE9BE, 0xff555152, 0xff2E2633, 0xff99173C },
+    { 0xff343838, 0xff005F6B, 0xff008C9E, 0xff00B4CC, 0xff00DFFC },
+    { 0xff413E4A, 0xff73626E, 0xffB38184, 0xffF0B49E, 0xffF7E4BE },
+    { 0xff99B898, 0xffFECEA8, 0xffFF847C, 0xffE84A5F, 0xff2A363B },
+    { 0xffFF4E50, 0xffFC913A, 0xffF9D423, 0xffEDE574, 0xffE1F5C4 },
+    { 0xff655643, 0xff80BCA3, 0xffF6F7BD, 0xffE6AC27, 0xffBF4D28 },
+    { 0xff351330, 0xff424254, 0xff64908A, 0xffE8CAA4, 0xffCC2A41 },
+    { 0xff00A8C6, 0xff40C0CB, 0xffF9F2E7, 0xffAEE239, 0xff8FBE00 },
+    { 0xff554236, 0xffF77825, 0xffD3CE3D, 0xffF1EFA5, 0xff60B99A }
+  };
+
   public Arcs(PApplet parentApplet) {
     super(parentApplet);
     name = "Arcs";
 
     usesColorPalette = true;
-    numColorPalettes = 3;
+    numColorPalettes = palettes.length;
 
     usesColorAdjustment = true;
     minColorAdjustment = 0;
@@ -340,7 +377,7 @@ public class Arcs extends VizBase
     sensitivity = defaultSensitivity;
 
     usesMode = true;
-    numModes = 1;
+    numModes = 2;
 
     // arc completion speed
     usesSpeed = true;
@@ -364,7 +401,7 @@ public class Arcs extends VizBase
     x1 = defaultX1;
 
     usesY0 = true;
-    minY0 = 25;
+    minY0 = 5;
     maxY0 = 100;
     defaultY0 = 50;
     y0 = defaultY0;
@@ -410,8 +447,13 @@ public class Arcs extends VizBase
 
   public @Override
   void display(float[] signals) {
+    if (colorPalette > 2) {
+      background(palettes[colorPalette][0]);
+    }
+    else {
+      background(0);
+    }
 
-    background(0);
     pushMatrix();
 
     translate(width / 2 - (((int)x0 - 1) * y1) / 2, height / 2 - (((int)x0 - 1) * y1) / 2);
@@ -435,6 +477,26 @@ public class Arcs extends VizBase
   }
 
 
+
+  private void shuffleCurrentColors()
+  {
+    int[] ar = palettes[colorPalette];
+    Random rnd = new Random();
+    for (int i = ar.length - 1; i > 0; i--)
+    {
+      int index = rnd.nextInt(i + 1);
+      // Simple swap
+      int a = ar[index];
+      ar[index] = ar[i];
+      ar[i] = a;
+    }
+  }
+
+
+  @Override
+  public void buttonShuffleColorsPressed() {
+    shuffleCurrentColors();
+  }
 
 
   @Override
@@ -556,6 +618,10 @@ public class Arcs extends VizBase
         stroke(colorAdjustment, 255, 255 * ((x0 - i) / x0));
       }
 
+      if (mode == 0 && colorPalette > 2) {
+        stroke(palettes[colorPalette][(i * 141 + j) % 4 + 1]);
+      }
+
       // draw each arc
       for (int k = 0; k < size0; k++) {
         noFill();
@@ -564,6 +630,10 @@ public class Arcs extends VizBase
         if (colorPalette == 1) {
           stroke(colorAdjustment, 255, 255 * ((size0 - k) / size0));
         }
+        else if (mode == 1 && colorPalette > 2) {
+          stroke(palettes[colorPalette][(i * 141 + j + k * k) % 4 + 1]);
+        }
+
 
         if ((int)((millis() * speed) + (x1 * k) + (z0 * i) + (z1 * j)) / 1000 % 2 == 0) {
           arc(0, 0, y0 * (k + 1), y0 * (k + 1), 0, TWO_PI * (((millis() * speed) + (x1 * k) + (z0 * i) + (z1 * j)) % 1000) / 1000.0f);
@@ -854,9 +924,6 @@ public class DotMatrix extends VizBase {
 
 
 public class Jags extends VizBase {
-  // colors: must be 4, first one is always background
-  // color[] palette = new color[] { #DCD6B2, #4E7989, #A9011B, #80944E };
-  // shared color palettes
   int[][] palettes = {
     { 0xffDCD6B2, 0xff4E7989, 0xffA9011B, 0xff80944E, 0xffDCD6B2 },  // colorlisa - picasso - the dream
     { 0xff3F6F76, 0xff69B7CE, 0xffC65840, 0xffF4CE4B, 0xff62496F },  // colorlisa - chagall
@@ -882,8 +949,7 @@ public class Jags extends VizBase {
     { 0xff00A8C6, 0xff40C0CB, 0xffF9F2E7, 0xffAEE239, 0xff8FBE00 },
     { 0xff554236, 0xffF77825, 0xffD3CE3D, 0xffF1EFA5, 0xff60B99A }
   };
-
-
+  
   int[] lineColorIndex;
 
   int lineSpacing = 20;
@@ -920,14 +986,12 @@ public class Jags extends VizBase {
 
     // adjust rotation speed
     usesSpeed = true;
-    minSpeed = -30;
-    maxSpeed = 30;
-    defaultSpeed = 5;
+    minSpeed = -10;
+    maxSpeed = 10;
+    defaultSpeed = 0;
     speed = defaultSpeed;
 
     // TODO: modes: jags, sines...
-
-    shuffleCurrentColors();
   }
   
   @Override
@@ -982,13 +1046,6 @@ public class Jags extends VizBase {
     }
   }
 
-  @Override
-  public void buttonShufflePressed() {
-    println("every day i'm shufflin'");
-    shuffleCurrentColors();
-  }
-
-
   private void shuffleCurrentColors()
   {
     int[] ar = palettes[colorPalette];
@@ -1003,6 +1060,11 @@ public class Jags extends VizBase {
     }
   }
 
+
+  @Override
+  public void buttonShuffleColorsPressed() {
+    shuffleCurrentColors();
+  }
 
   @Override
   public float setSpeed(float value, boolean normalized) {
@@ -1692,6 +1754,33 @@ public class Rings extends VizBase
 
 public class Text extends VizBase
 {  
+  int[][] palettes = {
+    { 0xffDCD6B2, 0xff4E7989, 0xffA9011B, 0xff80944E, 0xffDCD6B2 },  // colorlisa - picasso - the dream
+    { 0xff3F6F76, 0xff69B7CE, 0xffC65840, 0xffF4CE4B, 0xff62496F },  // colorlisa - chagall
+    { 0xff69D2E7, 0xffA7DBD8, 0xffE0E4CC, 0xffF38630, 0xffFA6900 },
+    { 0xffFE4365, 0xffFC9D9A, 0xffF9CDAD, 0xffC8C8A9, 0xff83AF9B },
+    { 0xffECD078, 0xffD95B43, 0xffC02942, 0xff542437, 0xff53777A },
+    { 0xff556270, 0xff4ECDC4, 0xffC7F464, 0xffFF6B6B, 0xffC44D58 },
+    { 0xff774F38, 0xffE08E79, 0xffF1D4AF, 0xffECE5CE, 0xffC5E0DC },
+    { 0xffE8DDCB, 0xffCDB380, 0xff036564, 0xff033649, 0xff031634 },
+    { 0xff594F4F, 0xff547980, 0xff45ADA8, 0xff9DE0AD, 0xffE5FCC2 },
+    { 0xff00A0B0, 0xff6A4A3C, 0xffCC333F, 0xffEB6841, 0xffEDC951 },
+    { 0xffE94E77, 0xffD68189, 0xffC6A49A, 0xffC6E5D9, 0xffF4EAD5 },
+    { 0xff3FB8AF, 0xff7FC7AF, 0xffDAD8A7, 0xffFF9E9D, 0xffFF3D7F },
+    { 0xffD9CEB2, 0xff948C75, 0xffD5DED9, 0xff7A6A53, 0xff99B2B7 },
+    { 0xffFFFFFF, 0xffCBE86B, 0xffF2E9E1, 0xff1C140D, 0xffCBE86B },
+    { 0xffEFFFCD, 0xffDCE9BE, 0xff555152, 0xff2E2633, 0xff99173C },
+    { 0xff343838, 0xff005F6B, 0xff008C9E, 0xff00B4CC, 0xff00DFFC },
+    { 0xff413E4A, 0xff73626E, 0xffB38184, 0xffF0B49E, 0xffF7E4BE },
+    { 0xff99B898, 0xffFECEA8, 0xffFF847C, 0xffE84A5F, 0xff2A363B },
+    { 0xffFF4E50, 0xffFC913A, 0xffF9D423, 0xffEDE574, 0xffE1F5C4 },
+    { 0xff655643, 0xff80BCA3, 0xffF6F7BD, 0xffE6AC27, 0xffBF4D28 },
+    { 0xff351330, 0xff424254, 0xff64908A, 0xffE8CAA4, 0xffCC2A41 },
+    { 0xff00A8C6, 0xff40C0CB, 0xffF9F2E7, 0xffAEE239, 0xff8FBE00 },
+    { 0xff554236, 0xffF77825, 0xffD3CE3D, 0xffF1EFA5, 0xff60B99A }
+  };
+  
+
   RFont font;
   PImage img;
 
@@ -1706,7 +1795,7 @@ public class Text extends VizBase
     img = loadImage("igortransparent.png");
 
     usesMode = true;
-    numModes = 3;
+    numModes = 5;
 
     // displayText
     usesDisplayText = true;
@@ -1733,11 +1822,23 @@ public class Text extends VizBase
     maxSensitivity = 1;
     defaultSensitivity = 0.5f;
     sensitivity = defaultSensitivity;
+
+    // switch color palettes
+    usesColorPalette = true;
+    numColorPalettes = palettes.length;
+
+
+    // adjust rotation speed
+    usesSpeed = true;
+    minSpeed = 0;
+    maxSpeed = 0.05f;
+    defaultSpeed = 0;
+    speed = defaultSpeed;
+
   }
   
   @Override
   public void init() {
-    // allways initialize the library in setup
     font = new RFont("FreeSans.ttf", fontSize, RFont.CENTER);
 
     RCommand.setSegmentLength(11);
@@ -1746,7 +1847,7 @@ public class Text extends VizBase
 
   public @Override
   void display(float[] signals) {
-    if (mode == 2) {
+    if (mode == 4 ) {
       colorMode(HSB, 255);
       background(millis() / 10.0f % 255, 100, 200);
     }
@@ -1761,6 +1862,13 @@ public class Text extends VizBase
 
     translate(width / 2, height / 2 + fontSize / 3);
 
+
+    int channelOffset = 0;
+
+    if (speed != 0) {
+      channelOffset = (int)(millis() * speed);
+    }
+
     if (displayText.length() > 0) {
       // get the points on font outline
       RGroup grp;
@@ -1768,40 +1876,69 @@ public class Text extends VizBase
       grp = grp.toPolygonGroup();
       RPoint[] pnts = grp.getPoints();
 
-      // // lines
-      // stroke(181, 157, 0);
-      // strokeWeight(1.0);
-      // for (int i = 0; i < pnts.length; i++ ) {
-      //   float l = 5;
-      //   line(pnts[i].x-l, pnts[i].y-l, pnts[i].x+l, pnts[i].y+l);
-      // }
-
       // dots
       if (mode == 0) {
         fill(255);
         noStroke();
       }
-      else if (mode == 1) {
+      if (mode == 1) {
+        noStroke();
+      }
+      else if (mode == 2) {
         noFill();
         stroke(255);
       }
+      else if (mode == 3) {
+        noFill();
+      }
       for (int i = 0; i < pnts.length; i++ ) {
-        float diameter = signals[i % 9] * sensitivity + size1;
+        float diameter = signals[(i + channelOffset) % 9] * sensitivity + size1;
+        if (mode == 2 || mode == 3) {
+          strokeWeight(signals[(i + channelOffset) % 9] / 10.0f * sensitivity);
+        }
+
         if (mode == 1) {
-          strokeWeight(signals[i % 9] / 10.0f * sensitivity);
+          fill(palettes[colorPalette][i % 5]);
         }
 
-        if (mode == 0 || mode == 1) {
-          ellipse(pnts[i].x, pnts[i].y, diameter, diameter);
+        if (mode == 3) {
+          stroke(palettes[colorPalette][i % 5]);
         }
-        else if (mode == 2) {
+
+        if (mode == 4) {
           float imgWidth = diameter;
-
           image(img, pnts[i].x - imgWidth / 2, pnts[i].y - imgWidth / 2, imgWidth, imgWidth);
-          // image(img, pnts[i].x, pnts[i].y);
+        }
+        else {
+          ellipse(pnts[i].x, pnts[i].y, diameter, diameter);
         }
       }
     }
+  }
+
+  private void shuffleCurrentColors()
+  {
+    int[] ar = palettes[colorPalette];
+    Random rnd = new Random();
+    for (int i = ar.length - 1; i > 0; i--)
+    {
+      int index = rnd.nextInt(i + 1);
+      // Simple swap
+      int a = ar[index];
+      ar[index] = ar[i];
+      ar[i] = a;
+    }
+  }
+
+
+  @Override
+  public void buttonShuffleColorsPressed() {
+    shuffleCurrentColors();
+  }
+
+  @Override
+  public void buttonResetSpeedPressed() {
+    speed = defaultSpeed;
   }
 
 
@@ -1810,6 +1947,13 @@ public class Text extends VizBase
     displayText = text;
   }
 
+
+  @Override
+  public float setSpeed(float value, boolean normalized) {
+    speed = normalized ? value : map(value, 0, 127, minSpeed, maxSpeed);
+    println("speed changed to " + speed);
+    return speed;
+  }
 
 
 
@@ -1845,6 +1989,14 @@ public class Text extends VizBase
     println("sensitivity changed to " + sensitivity);
     return sensitivity;
   }
+
+  @Override
+  public float setColorPalette(float value, boolean normalized) {
+    colorPalette = normalized ? round(value) : round(map(value, 0, 127, 0, numColorPalettes - 1));
+    println("color palette changed to " + colorPalette);
+    return (float)colorPalette;
+  }
+
 
 }
 

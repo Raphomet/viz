@@ -236,9 +236,16 @@ void controllerChange(int channel, int number, int value) {
 
       // other buttons
 
+      case 33: // speed "S"
+        if (value == 127) {
+          getCurrentSketch().buttonResetSpeedPressed();
+        }
+        break;
+
+
       case 35: // color palette "S"
         if (value == 127) {
-          getCurrentSketch().buttonShufflePressed();
+          getCurrentSketch().buttonShuffleColorsPressed();
         }
         break;
 

@@ -3,12 +3,42 @@ import java.util.*;
 
 public class Arcs extends VizBase
 {  
+
+  color[][] palettes = {
+    {}, //dummy 0
+    {}, //dummy 1
+    {}, //dummy 2
+    { #DCD6B2, #4E7989, #A9011B, #80944E, #DCD6B2 },  // colorlisa - picasso - the dream
+    { #3F6F76, #69B7CE, #C65840, #F4CE4B, #62496F },  // colorlisa - chagall
+    { #69D2E7, #A7DBD8, #E0E4CC, #F38630, #FA6900 },
+    { #FE4365, #FC9D9A, #F9CDAD, #C8C8A9, #83AF9B },
+    { #ECD078, #D95B43, #C02942, #542437, #53777A },
+    { #556270, #4ECDC4, #C7F464, #FF6B6B, #C44D58 },
+    { #774F38, #E08E79, #F1D4AF, #ECE5CE, #C5E0DC },
+    { #E8DDCB, #CDB380, #036564, #033649, #031634 },
+    { #594F4F, #547980, #45ADA8, #9DE0AD, #E5FCC2 },
+    { #00A0B0, #6A4A3C, #CC333F, #EB6841, #EDC951 },
+    { #E94E77, #D68189, #C6A49A, #C6E5D9, #F4EAD5 },
+    { #3FB8AF, #7FC7AF, #DAD8A7, #FF9E9D, #FF3D7F },
+    { #D9CEB2, #948C75, #D5DED9, #7A6A53, #99B2B7 },
+    { #FFFFFF, #CBE86B, #F2E9E1, #1C140D, #CBE86B },
+    { #EFFFCD, #DCE9BE, #555152, #2E2633, #99173C },
+    { #343838, #005F6B, #008C9E, #00B4CC, #00DFFC },
+    { #413E4A, #73626E, #B38184, #F0B49E, #F7E4BE },
+    { #99B898, #FECEA8, #FF847C, #E84A5F, #2A363B },
+    { #FF4E50, #FC913A, #F9D423, #EDE574, #E1F5C4 },
+    { #655643, #80BCA3, #F6F7BD, #E6AC27, #BF4D28 },
+    { #351330, #424254, #64908A, #E8CAA4, #CC2A41 },
+    { #00A8C6, #40C0CB, #F9F2E7, #AEE239, #8FBE00 },
+    { #554236, #F77825, #D3CE3D, #F1EFA5, #60B99A }
+  };
+
   public Arcs(PApplet parentApplet) {
     super(parentApplet);
     name = "Arcs";
 
     usesColorPalette = true;
-    numColorPalettes = 3;
+    numColorPalettes = palettes.length;
 
     usesColorAdjustment = true;
     minColorAdjustment = 0;
@@ -38,7 +68,7 @@ public class Arcs extends VizBase
     sensitivity = defaultSensitivity;
 
     usesMode = true;
-    numModes = 1;
+    numModes = 2;
 
     // arc completion speed
     usesSpeed = true;
@@ -62,7 +92,7 @@ public class Arcs extends VizBase
     x1 = defaultX1;
 
     usesY0 = true;
-    minY0 = 25;
+    minY0 = 5;
     maxY0 = 100;
     defaultY0 = 50;
     y0 = defaultY0;
@@ -108,8 +138,13 @@ public class Arcs extends VizBase
 
   @Override
   void display(float[] signals) {
+    if (colorPalette > 2) {
+      background(palettes[colorPalette][0]);
+    }
+    else {
+      background(0);
+    }
 
-    background(0);
     pushMatrix();
 
     translate(width / 2 - (((int)x0 - 1) * y1) / 2, height / 2 - (((int)x0 - 1) * y1) / 2);
@@ -133,6 +168,26 @@ public class Arcs extends VizBase
   }
 
 
+
+  private void shuffleCurrentColors()
+  {
+    color[] ar = palettes[colorPalette];
+    Random rnd = new Random();
+    for (int i = ar.length - 1; i > 0; i--)
+    {
+      int index = rnd.nextInt(i + 1);
+      // Simple swap
+      color a = ar[index];
+      ar[index] = ar[i];
+      ar[i] = a;
+    }
+  }
+
+
+  @Override
+  public void buttonShuffleColorsPressed() {
+    shuffleCurrentColors();
+  }
 
 
   @Override
@@ -254,6 +309,10 @@ public class Arcs extends VizBase
         stroke(colorAdjustment, 255, 255 * ((x0 - i) / x0));
       }
 
+      if (mode == 0 && colorPalette > 2) {
+        stroke(palettes[colorPalette][(i * 141 + j) % 4 + 1]);
+      }
+
       // draw each arc
       for (int k = 0; k < size0; k++) {
         noFill();
@@ -262,6 +321,10 @@ public class Arcs extends VizBase
         if (colorPalette == 1) {
           stroke(colorAdjustment, 255, 255 * ((size0 - k) / size0));
         }
+        else if (mode == 1 && colorPalette > 2) {
+          stroke(palettes[colorPalette][(i * 141 + j + k * k) % 4 + 1]);
+        }
+
 
         if ((int)((millis() * speed) + (x1 * k) + (z0 * i) + (z1 * j)) / 1000 % 2 == 0) {
           arc(0, 0, y0 * (k + 1), y0 * (k + 1), 0, TWO_PI * (((millis() * speed) + (x1 * k) + (z0 * i) + (z1 * j)) % 1000) / 1000.0);

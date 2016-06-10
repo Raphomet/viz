@@ -48,7 +48,8 @@ public abstract class VizBase {
   public float setZ0(float value, boolean normalized) { return (float)0.0; }
   public float setZ1(float value, boolean normalized) { return (float)0.0; }
 
-  public void buttonShufflePressed() { };
+  public void buttonShuffleColorsPressed() { };
+  public void buttonResetSpeedPressed() { };
 
 
   protected String displayText;
