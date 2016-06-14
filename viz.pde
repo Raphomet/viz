@@ -4,6 +4,9 @@ import controlP5.*;
 import java.util.*;
 import themidibus.*;
 
+import processing.video.*;
+
+
 Minim minim;
 FFT fft;
 MidiBus kontrol;
@@ -41,11 +44,13 @@ ArrayList<VizBase> apps;
 int selected;
 
 void setup() {
-  size(600, 600);
-  // surface.setSize(600, 600);
-  surface.setLocation(100, 100);
+  // size(600, 600);
+  // surface.setLocation(100, 100);
 
-  // fullScreen(2);
+  fullScreen(2);
+
+  // smooth(2);
+  noSmooth();
 
   // set up korg nanokontrol2
   kontrol = new MidiBus(this, kontrolChannel, -1);
@@ -75,9 +80,10 @@ void setup() {
   apps.add(new Text(this));
   apps.add(new Arcs(this));
   apps.add(new Rings(this));
-  apps.add(new ParametricLines(this));
   apps.add(new Jags(this));
+  apps.add(new ParametricLines(this));
   apps.add(new TwinkleToph(this));
+  apps.add(new Video(this));
 
   // apps.add(new DotMatrix(this));
   // apps.add(new Planets(this));
@@ -110,6 +116,15 @@ void draw() {
   apps.get(selected).display(signals);
 }
 
+
+
+void movieEvent(Movie m) {
+  println("still readin");
+  m.read();
+}
+
+
+
 void sendExpBase(int value) {
   float normalizedExpBase = map(value, 0, 127, 0, 3.0);
 
@@ -133,7 +148,10 @@ void setSignalScale(float _signalScale) {
 }
 
 void setSelected(int _selected) {
+  int old = selected;
   selected = _selected;
+  apps.get(old).onUnswitch();
+  getCurrentSketch().onSwitch();
   cf.initializeAppControls(getCurrentSketch());
 }
 

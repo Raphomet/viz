@@ -60,6 +60,14 @@ public class ParametricLines extends VizBase
     maxX0 = 30;
     defaultX0 = 13;
     x0 = defaultX0;
+
+
+    usesZ0 = true;
+    minZ0 = 0.1;
+    maxZ0 = 3;
+    defaultZ0 = 1;
+    z0 = defaultZ0;
+
   }
   
   @Override
@@ -70,6 +78,7 @@ public class ParametricLines extends VizBase
   @Override
   void display(float[] signals) {
     translate(width / 2, height / 2);
+    scale(z0);
 
     int backgroundColor;
     if (colorPalette == 0) {
@@ -211,6 +220,13 @@ public class ParametricLines extends VizBase
     return x0;
   }
 
+
+  @Override
+  public float setZ0(float value, boolean normalized) {
+    z0 = normalized ? value : map(value, 0, 127, minZ0, maxZ0);
+    println("z0 changed to " + z0);
+    return z0;
+  }
 
 
 }

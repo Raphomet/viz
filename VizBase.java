@@ -29,6 +29,14 @@ public abstract class VizBase {
     cf = _cf;
   }
 
+  public void onSwitch() {
+
+  }
+
+  public void onUnswitch() {
+    
+  }
+
   // controls
   // the sketch is responsible for remapping the value (0-127 from nanokontrol2)
   // to something that makes sense within its own domain.
