@@ -1,6 +1,6 @@
 # VIZ
 
-Hello. This is a not-that-well-written music visualization engine that I wrote for a tiny campout with friends in June. You are very brave to find and use it.
+Hello. This is a not-that-well-written music visualization engine that I wrote for a tiny campout with friends in June. You are very brave to find and use it
 
 There are currently six visualizations that I think are polished enough to show off, but I tried to make it pretty easy to write new ones to plug in. There are some half-finished sketches checked into the repo as well that are not on by default.
 
@@ -96,5 +96,5 @@ Rendering to the full screen means Processing has to push more pixels, which can
 
 You can get fancy and figure out how to pipe the DJ's sound booth output to your computer, but just listening via the built-in microphone produces good results if the music is loud enough.
 
-HAVE FUN
+HAVE FUN... OR ELSE!!!!
 
