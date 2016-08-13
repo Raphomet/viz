@@ -2,7 +2,7 @@
 
 Hello. This is a not-that-well-written music visualization engine that I wrote for a tiny campout with friends in June. You are very brave to find and use it.
 
-There are currently six visualizatons that I think are polished enough to show off, but I tried to make it pretty easy to write new ones to plug in. There are some half-finished sketches checked into the repo as well that are not on by default.
+There are currently six visualizations that I think are polished enough to show off, but I tried to make it pretty easy to write new ones to plug in. There are some half-finished sketches checked into the repo as well that are not on by default.
 
 
 
