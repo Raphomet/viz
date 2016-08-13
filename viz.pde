@@ -44,13 +44,16 @@ ArrayList<VizBase> apps;
 int selected;
 
 void setup() {
-  // size(600, 600);
-  // surface.setLocation(100, 100);
+  // !!! for fullscreen, comment these out
+  size(600, 600);
+  surface.setLocation(100, 100);
 
-  fullScreen(2);
+  // !!! for fullscreen, uncomment this
+  // fullScreen(P3D, 2);
 
-  // smooth(2);
-  noSmooth();
+  // !!! for better performance, use noSmooth
+  smooth(2);
+  // noSmooth();
 
   // set up korg nanokontrol2
   kontrol = new MidiBus(this, kontrolChannel, -1);
@@ -83,7 +86,7 @@ void setup() {
   apps.add(new Jags(this));
   apps.add(new ParametricLines(this));
   apps.add(new TwinkleToph(this));
-  apps.add(new Video(this));
+  // apps.add(new Video(this));
 
   // apps.add(new DotMatrix(this));
   // apps.add(new Planets(this));
