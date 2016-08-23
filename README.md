@@ -16,8 +16,10 @@ Assuming you are running OS X, you will need:
 As well as the following Processing libraries, which can be installed from the default IDE using the `Import Library...` menu items:
 
 - minim
-- themidibus
+- the midibus
 - controlP5
+- geomerative
+- video (Gstreamer-based video library for Processing)
 
 Then open up `viz.pde` and `run` it like any Processing sketch.
 
