@@ -31,11 +31,15 @@ he likes.
 
 Give each scene a small vocabulary of distinct, legible reactions:
 
-- **Kick → a punch that lands.** A flash, a bloom, a pulse outward, a zoom
-  kick, a launch, a bell contraction: something unmistakable on every beat
-  that *decays* back (a few hundred milliseconds) rather than wrecking the
-  structure. At 124 BPM a kick lands every 0.48 s, so the punch must be quick
-  to rise and quick to fall, and the underlying scene must survive it.
+- **Kick → visible but confined.** Every beat must be seen, but it must not
+  shake the whole picture. Batch 02 (2026-09-28) was "too pulsey": full-frame
+  flashes, zoom punches and global glow on every kick made a large part of the
+  screen change at once, which is jarring to watch for long. So the kick lands
+  in *part* of the image: one subject, one layer, one light source, a ripple
+  that travels, a burst in one place, a surge of speed. Global effects (zoom,
+  whole-frame brightness, full-screen bloom) are either gone or held to a
+  barely-there 1-2%. Measure it with `harness/jolt.mjs`: aim for "calm".
+  Let the continuous layers (bass swell, drift) carry the energy between beats.
 - **Snare / clap → a different event.** A colour flip, a burst, a camera cut,
   a flock turning. Visibly not the same as the kick.
 - **Bass and pad → continuous swell.** Size, glow, height, density, speed.
@@ -45,6 +49,15 @@ Give each scene a small vocabulary of distinct, legible reactions:
 
 Legible does not mean literal: no spectrum bars and no meters. The reaction
 lives inside the imagery.
+
+## Movement
+
+Raph wants more sense of movement: not in every scene, but whenever the
+subject allows it. Travel through the world (flying over a landscape,
+sinking through water, drifting down a river, pushing through a tunnel, a
+slow camera dolly across a scene), parallax that makes depth felt, and flow
+that carries the eye across the frame. Motion is continuous and smooth, and
+the music changes its *speed*, never jerks it.
 
 ## What makes it captivating
 
