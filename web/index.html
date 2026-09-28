@@ -4,6 +4,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans+Condensed:wght@400;500&family=Silkscreen&display=swap">
+<!-- Poster series typefaces (2026-09-28): scenes draw text to canvas with these,
+     so they must be loaded page-wide; each scene waits on document.fonts. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Bebas+Neue&family=Abril+Fatface&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Rye&family=Special+Elite&family=Monoton&family=Yellowtail&family=Russo+One&family=Bungee&family=Rubik+Mono+One&family=Major+Mono+Display&family=Unica+One&family=Oswald:wght@400;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Space+Mono:wght@400;700&family=Syne:wght@700;800&family=Alfa+Slab+One&family=Josefin+Sans:wght@300;700&display=swap">
 <style>
   /* One dark look on purpose: this sits next to a projector in a dark room.
      The blues are controlP5's defaults (background #003652, foreground #00698C,
@@ -349,6 +352,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.13/p5.min.js"></script>
 <script src="palettes.js"></script>
+<script src="fonts.js"></script>
 <script src="core.js"></script>
 <script src="viz/text.js"></script>
 <script src="viz/arcs.js"></script>

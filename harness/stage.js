@@ -375,6 +375,12 @@
     document.body.appendChild(s);
   }
 
-  if (document.readyState === 'complete') start();
-  else window.addEventListener('load', start);
+  // Wait for the poster typefaces (web/fonts.js) so text renders the same on
+  // every run instead of racing the font download.
+  function startWhenFontsReady() {
+    var f = window.VIZ_FONTS && window.VIZ_FONTS.ready;
+    if (f) f.then(start, start); else start();
+  }
+  if (document.readyState === 'complete') startWhenFontsReady();
+  else window.addEventListener('load', startWhenFontsReady);
 })();
