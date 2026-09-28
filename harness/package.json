@@ -1,0 +1,12 @@
+{
+  "name": "viz-harness",
+  "private": true,
+  "type": "module",
+  "description": "Headless render tool for viz scenes: steps a scene through a scripted track and writes a contact sheet.",
+  "scripts": {
+    "render": "node render.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

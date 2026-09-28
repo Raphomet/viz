@@ -1,0 +1,17 @@
+<!doctype html>
+<title>viz harness stage</title>
+<meta charset="utf-8">
+<!-- Scenes resolve their own relative URLs (p.loadImage('assets/…')) against
+     web/, exactly as they do inside web/index.html. The scene query path
+     (../web/scenes/foo.js) still resolves correctly from here. -->
+<base href="../web/">
+<style>
+  html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+  #stage { position: absolute; left: 0; top: 0; }
+  #stage canvas { display: block; }
+</style>
+<div id="stage"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.13/p5.min.js"></script>
+<script src="palettes.js"></script>
+<script src="../harness/track.js"></script>
+<script src="../harness/stage.js"></script>
