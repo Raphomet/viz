@@ -74,3 +74,30 @@ turns so the stamps walk around the floor); the snare turns a cube's heading
 or drops a new cube in; the bass sets how firmly the ink prints; hats spatter
 a few ink flecks; the drop sets every cube rolling at once, in step, printing
 a pattern.
+
+## Ophanim (`ophanim`) · 2026-09-28
+"I'd love to see something inspired by a 'biblically accurate angel'."
+
+The Ophanim of Ezekiel 1 and 10: "a wheel in the middle of a wheel", rings
+that turn on different axes at once, their rims "full of eyes round about",
+moving as one living being, with fire and lightning going between them; and the
+Seraphim of Isaiah 6, six wings (two covering the face, two the feet, two to
+fly). The aim is awe: the sublime, the overwhelming, the holy, not horror.
+Nothing menacing or gory; the eyes are serene and luminous, they blink slowly
+and open together, and they look *at* you with calm attention.
+
+Visual direction: gilded and luminous, like an illuminated manuscript or
+Byzantine mosaic come alive (gold leaf, lapis, vermilion, white fire), or
+alternatively pure white light and gold on deep night. Glow is earned here:
+this is a being of light, and it's the one place in the collection where
+radiance belongs, but keep it structured (rays, halos, mandorlas), not a bloom
+wash. Real 3D: interlocking rings (gyroscope-like) rotating on independent
+axes in perspective, eyes set around each rim, wings of many feathers folding
+and opening, a fiery core. Movement: the whole being turns slowly and
+approaches or recedes; the camera may orbit.
+
+Music: kicks turn one ring a notch (a solemn, mechanical step) or open one
+ring's eyes; the snare beats the wings once; hats flicker sparks and lightning
+between the rings; bass swells the fire at the centre; the drop opens every
+eye at once and spreads all six wings, rings spinning faster, the light
+flooding out in rays (confined to the being, not a full-screen flash).
