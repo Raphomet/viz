@@ -1,0 +1,361 @@
+<title>viz</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans+Condensed:wght@400;500&family=Silkscreen&display=swap">
+<style>
+  /* One dark look on purpose: this sits next to a projector in a dark room.
+     The blues are controlP5's defaults (background #003652, foreground #00698C,
+     active #08A2CF), which is what the 2016 panel looked like. */
+  :root {
+    --stage: #000000;
+    --panel: #04141C;
+    --track: #003652;
+    --fill: #00698C;
+    --active: #08A2CF;
+    --ink: #E6F4F9;
+    --muted: #7FA7B8;
+    --rule: #0C2A38;
+    --ceiling: #FF2A2A;
+    --panel-w: 340px;
+    --pixel: "Silkscreen", "Press Start 2P", ui-monospace, Menlo, Consolas, monospace;
+    --sans: "IBM Plex Sans Condensed", "Roboto Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color-scheme: dark;
+  }
+
+  /* The host pads :root by the safe-area insets; border-box keeps that padding
+     inside the 100% so the one-screen app never scrolls the page. */
+  html { height: 100%; box-sizing: border-box; background: var(--stage); }
+  *, *::before, *::after { box-sizing: inherit; }
+  body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--stage);
+    color: var(--ink);
+    font: 400 14px/1.35 var(--sans);
+  }
+
+  .app {
+    height: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--panel-w);
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .app.panel-hidden { grid-template-columns: minmax(0, 1fr); }
+  .app.panel-hidden .panel { display: none; }
+
+  .stage {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--stage);
+  }
+  .stage canvas { display: block; }
+  .stage:fullscreen { width: 100%; height: 100%; }
+
+  .drop-hint {
+    position: absolute;
+    inset: 12px;
+    display: grid;
+    place-items: center;
+    border: 2px dashed var(--active);
+    background: rgba(8, 162, 207, 0.12);
+    font: 400 14px var(--pixel);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink);
+    pointer-events: none;
+  }
+  .drop-hint[hidden] { display: none; }
+
+  .stage-note {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    right: 12px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .panel {
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: var(--panel);
+    border-left: 1px solid var(--rule);
+    padding: 16px 16px 20px;
+    overscroll-behavior: contain;
+  }
+
+  /* Phone: stage on top, roughly square, panel scrolling underneath. */
+  @media (max-width: 720px) {
+    .app {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: min(100vw, 58%) minmax(0, 1fr);
+    }
+    .app.panel-hidden { grid-template-rows: minmax(0, 1fr); }
+    .panel { border-left: 0; border-top: 1px solid var(--rule); }
+  }
+
+  .head { display: flex; align-items: baseline; gap: 10px; }
+  .wordmark { margin: 0; font: 400 26px/1 var(--pixel); letter-spacing: 0.14em; }
+  .fps { margin-left: auto; font: 400 12px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .subtitle { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+
+  .section { border-top: 1px solid var(--rule); margin-top: 16px; padding-top: 14px; }
+  .section h2 {
+    margin: 0 0 10px;
+    font: 400 11px/1 var(--pixel);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+
+  :focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
+
+  /* Segmented controls (source, short selects). */
+  .seg { display: flex; gap: 2px; }
+  .seg button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 6px 6px;
+    border: 0;
+    border-radius: 0;
+    background: var(--track);
+    color: var(--ink);
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .seg button:hover { background: var(--fill); }
+  .seg button[aria-pressed="true"] { background: var(--active); color: #001018; font-weight: 500; }
+
+  .btn {
+    padding: 6px 10px;
+    border: 0;
+    border-radius: 0;
+    background: var(--track);
+    color: var(--ink);
+    font-size: 13px;
+  }
+  .btn:hover { background: var(--fill); }
+  .btn:active { background: var(--active); color: #001018; }
+  .btn[disabled] { opacity: 0.45; cursor: default; }
+  .btn[disabled]:hover { background: var(--track); }
+
+  .source-file { display: flex; align-items: center; gap: 8px; margin-top: 10px; min-width: 0; }
+  .source-file[hidden] { display: none; }
+  .file-name { flex: 1 1 auto; min-width: 0; color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+  .file-pick:focus-within { outline: 2px solid var(--active); outline-offset: 2px; }
+  .note { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+  .note.warn { color: var(--ink); border-left: 2px solid var(--ceiling); padding-left: 8px; }
+  .note[hidden] { display: none; }
+
+  /* Signal monitor: the original's white bars under a red ceiling at 100. */
+  .monitor {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 3px;
+    height: 100px;
+    border-top: 1px solid var(--ceiling);
+    background: #000;
+  }
+  .bar { position: relative; height: 100%; cursor: default; }
+  .bar i {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 100%;
+    background: #fff;
+    transform-origin: bottom;
+    transform: scaleY(0);
+  }
+  .bar:hover i, .bar:focus-visible i { background: var(--active); }
+  .bar:focus-visible { outline-offset: 0; }
+  .bar-labels { display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px; margin-top: 3px; }
+  .bar-labels span { text-align: center; font: 400 11px var(--mono); color: var(--muted); }
+  .hz { margin: 4px 0 12px; min-height: 1.35em; font: 400 12px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  /* Control rows. */
+  .row { margin-bottom: 12px; }
+  .row-head { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; min-width: 0; }
+  .row-head label, .row-head .label { font-weight: 500; font-size: 13px; }
+  .tag { font: 400 9px var(--pixel); letter-spacing: 0.1em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .val { margin-left: auto; font: 400 12px var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+  .helper { margin: 0 0 4px; color: var(--muted); font-size: 12.5px; }
+
+  /* controlP5-style flat bar: no pill, no knob, just track filled to the value. */
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    height: 18px;
+    margin: 0;
+    border-radius: 0;
+    background: linear-gradient(to right, var(--fill) 0 var(--pct, 0%), var(--track) var(--pct, 0%) 100%);
+    cursor: ew-resize;
+  }
+  input[type="range"]:hover, input[type="range"]:active, input[type="range"]:focus-visible {
+    background: linear-gradient(to right, var(--active) 0 var(--pct, 0%), var(--track) var(--pct, 0%) 100%);
+  }
+  input[type="range"]::-webkit-slider-runnable-track { height: 18px; background: transparent; border: 0; }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 2px; height: 18px; border: 0; border-radius: 0; background: var(--ink);
+  }
+  input[type="range"]::-moz-range-track { height: 18px; background: transparent; border: 0; }
+  input[type="range"]::-moz-range-thumb { width: 2px; height: 18px; border: 0; border-radius: 0; background: var(--ink); }
+
+  select, input[type="text"] {
+    width: 100%;
+    padding: 5px 8px;
+    border: 1px solid var(--track);
+    border-radius: 0;
+    background: var(--track);
+    color: var(--ink);
+    font-size: 13px;
+  }
+  select:hover, input[type="text"]:hover { border-color: var(--fill); }
+  input[type="text"] { background: #000; }
+
+  .bands { display: grid; grid-template-columns: repeat(9, 1fr); gap: 2px; }
+  .bands button {
+    padding: 4px 0; border: 0; border-radius: 0;
+    background: var(--track); color: var(--ink);
+    font: 400 12px var(--mono);
+  }
+  .bands button:hover { background: var(--fill); }
+  .bands button[aria-pressed="true"] { background: var(--active); color: #001018; }
+
+  .swatches { display: flex; flex-wrap: wrap; gap: 4px; }
+  .swatch {
+    display: flex; height: 20px; min-width: 40px; padding: 0; border: 0; border-radius: 0;
+    background: var(--track);
+    outline: 1px solid transparent;
+  }
+  .swatch span { flex: 1 1 0; width: 8px; }
+  .swatch.named { padding: 0 8px; align-items: center; font-size: 12px; color: var(--ink); }
+  .swatch:hover { outline: 1px solid var(--fill); outline-offset: 1px; }
+  .swatch[aria-pressed="true"] { outline: 2px solid var(--active); outline-offset: 2px; }
+
+  .viz-list { display: flex; flex-direction: column; gap: 2px; }
+  .viz-list button {
+    display: flex; align-items: baseline; gap: 10px;
+    width: 100%; padding: 7px 10px; border: 0; border-radius: 0;
+    background: var(--track); color: var(--ink); text-align: left; font-size: 14px;
+  }
+  .viz-list button:hover { background: var(--fill); }
+  .viz-list button[aria-current="true"] { background: var(--active); color: #001018; font-weight: 500; }
+  .viz-list kbd { font: 400 12px var(--mono); opacity: 0.8; }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .empty { color: var(--muted); font-size: 13px; margin: 0; }
+
+  .foot { color: var(--muted); font-size: 12.5px; }
+  .foot dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 0 0 10px; }
+  .foot dt { font: 400 12px var(--mono); color: var(--ink); }
+  .foot dd { margin: 0; }
+  .foot a { color: var(--muted); }
+  .foot a:hover { color: var(--ink); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .seg button, .btn, .viz-list button, .bands button, .swatch, select, input[type="text"] {
+      transition: background-color 120ms ease, outline-color 120ms ease, border-color 120ms ease;
+    }
+  }
+</style>
+
+<div class="app" id="app">
+  <main class="stage" id="stage" aria-label="Visual stage">
+    <div class="drop-hint" id="drop-hint" hidden>Drop an audio file</div>
+    <p class="stage-note" id="stage-note" hidden></p>
+  </main>
+
+  <aside class="panel" id="panel" aria-label="Controls">
+    <header>
+      <div class="head">
+        <h1 class="wordmark">VIZ</h1>
+        <span class="fps" id="fps" aria-label="Frames per second">-- fps</span>
+      </div>
+      <p class="subtitle">Raph's 2016 music visualizer, in the browser</p>
+    </header>
+
+    <section class="section" aria-labelledby="h-source">
+      <h2 id="h-source">Source</h2>
+      <div class="seg" role="group" aria-labelledby="h-source">
+        <button type="button" id="src-demo" data-source="demo" aria-pressed="true">Demo</button>
+        <button type="button" id="src-file" data-source="file" aria-pressed="false">Audio file</button>
+        <button type="button" id="src-mic" data-source="mic" aria-pressed="false">Microphone</button>
+      </div>
+      <div class="source-file" id="source-file" hidden>
+        <label class="btn file-pick" for="file-input">Choose file…<input class="visually-hidden" type="file" id="file-input" accept="audio/*"></label>
+        <button type="button" class="btn" id="file-play" disabled>Play</button>
+        <span class="file-name" id="file-name">or drop one on the stage</span>
+      </div>
+      <p class="note warn" id="source-msg" role="status" hidden></p>
+    </section>
+
+    <section class="section" aria-labelledby="h-signal">
+      <h2 id="h-signal">Signal</h2>
+      <div class="monitor" id="monitor"></div>
+      <div class="bar-labels" id="bar-labels" aria-hidden="true"></div>
+      <p class="hz" id="hz">Hover a bar for its frequency range</p>
+
+      <div class="row">
+        <div class="row-head">
+          <label for="g-expbase">Treble boost</label><span class="tag">EXPBASE</span>
+          <output class="val" id="g-expbase-val" for="g-expbase"></output>
+        </div>
+        <input type="range" id="g-expbase" min="0" max="3" step="0.01">
+      </div>
+      <div class="row">
+        <div class="row-head">
+          <label for="g-gain">Gain</label><span class="tag">SIGNALSCALE</span>
+          <output class="val" id="g-gain-val" for="g-gain"></output>
+        </div>
+        <input type="range" id="g-gain" min="0.5" max="8" step="0.01">
+      </div>
+      <p class="helper">Raise treble boost until every bar can reach the red line; use gain for overall loudness.</p>
+    </section>
+
+    <section class="section" aria-labelledby="h-visual">
+      <h2 id="h-visual">Visual</h2>
+      <div class="viz-list" id="viz-list"></div>
+    </section>
+
+    <section class="section" aria-labelledby="h-controls">
+      <h2 id="h-controls">Controls</h2>
+      <div id="controls"></div>
+    </section>
+
+    <footer class="section foot">
+      <dl>
+        <dt>1–9</dt><dd>Pick a visual</dd>
+        <dt>H</dt><dd>Hide or show this panel</dd>
+        <dt>F</dt><dd>Fullscreen the stage</dd>
+      </dl>
+      <p>Ported from <a href="https://github.com/Raphomet/viz" target="_blank" rel="noopener">github.com/Raphomet/viz</a> (2016)</p>
+    </footer>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.13/p5.min.js"></script>
+<script src="palettes.js"></script>
+<script src="core.js"></script>
+<script src="viz/text.js"></script>
+<script src="viz/arcs.js"></script>
+<script src="viz/rings.js"></script>
+<script src="viz/jags.js"></script>
+<script src="viz/parametric.js"></script>
+<script src="viz/toph.js"></script>
+<script src="viz/planets.js"></script>
+<script src="viz/flyover.js"></script>
+<script src="viz/dotmatrix.js"></script>
