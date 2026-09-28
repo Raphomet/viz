@@ -91,7 +91,9 @@ control is welcome. Every default must already look great.
 
 ## Performance
 
-Read `renderTime` p95 in `report.json` at 1280×720, measured on an idle
-machine. Canvas 2D scenes: at most ~12 ms. WebGL scenes: the harness emulates
-the GPU on the CPU (SwiftShader), which overstates cost several times over, so
-the ceiling there is ~30 ms.
+The target is a steady 60 fps on a laptop at full screen. Measure it with
+`harness/fps.mjs`, which runs the real app in Chrome on the GPU. The render
+harness's `renderTime` is useful for comparing versions of one scene, but it
+rasterises in software (SwiftShader) and overstated batch 02's costs three to
+ten times over: scenes it timed at 80-160 ms ran at 60 fps at 3024x1890 on an
+M4 Pro.
