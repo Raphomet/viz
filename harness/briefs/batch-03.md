@@ -95,3 +95,37 @@ phosphor terminal (amber or green) with glow, scanlines and a little
 persistence. **Movement:** the 3D scene flies or turns. **Music:** kicks brighten
 one region of glyphs; the snare glitches a few rows into other character sets;
 hats flicker single characters; the drop switches the scene and adds colour.
+
+## 11 · Thresholds (`thresholds`): the tunnel of opening doors
+Raph's own sketch, one he has always wanted to see (2026-09-28): "flying
+forward through a tunnel of successively opening doors. Gears, machinery,
+steam. Many different kinds of doors mechanically opening before you. In my
+mind I see it as a black and white drawing, or maybe an 'animated woodcut'."
+
+**Look:** black ink on white (or white on black), rendered as a woodcut or
+engraving: tone made entirely of carved lines whose width and density follow
+the form (hatching that wraps around cylinders, radiates from hubs, follows
+the curve of a gear tooth), bold black masses, gouge marks, slight paper
+texture. No grey fills, no gradients: every tone is line. Crisp at projector
+resolution. Optionally, very subtle animation "boil" in the line work, as in
+hand-drawn animation, but never jitter.
+
+**The doors:** a long corridor of successive doors, each a different mechanism,
+each opening just in time for us to pass through: iris diaphragms, bank-vault
+doors with radial bolts retracting, portcullises rising, double doors sliding
+apart, bascule leaves lifting, shutters of slats rotating, spiral or helical
+doors unscrewing, clamshells, rotating gear-toothed discs, doors that split into
+many segments. Between them: gears meshing on the walls, pistons, chains,
+cams, pipes, pressure gauges, and steam venting. Doors should feel heavy and
+mechanical: they unlock, pause, and move with weight (ease-in, overshoot and
+settle), driven visibly by their gears.
+
+**Movement:** continuous forward flight through door after door; the doors ahead
+recede in perspective, and the next one is always beginning to unlock as we
+approach. The music sets the flight speed (smoothly).
+
+**Music:** kicks trip one mechanism at a time (a latch releasing, a bolt
+retracting, a gear advancing a tooth) so the beat is visible in one place;
+the snare vents a jet of steam from one side; the bass sets flight and gear
+speed; hats strike sparks or glints on rivets; the drop makes the doors more
+elaborate, multi-stage and faster, perhaps inverting to white-on-black.
