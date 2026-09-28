@@ -18,15 +18,16 @@
 // segment count arrives from the centre and flows outward like everything else.
 //
 // The music lives in different places so each hit reads as its own event:
-//   kick  → the tunnel lurches forward (a zoom impulse in the feedback), the
-//           whole image punches in scale, a fresh bright mandala is stamped
-//           into the centre (so every beat becomes a ring you watch fly out),
-//           and the centre blooms.
-//   snare → the palette flips to its complement, a star-shaped shockwave races
-//           out, and the tunnel is given a twist of spin.
+//   kick  → a bright mandala is stamped into the centre only, and the tunnel
+//           carries it outward: every beat is a ring you watch fly out. It is
+//           confined on purpose (2026-09-28, "too pulsey": a zoom lurch, scale
+//           punch and core flare on every kick moved 73% of the frame).
+//   snare → a thin star-shaped shockwave races out, and one narrow band of the
+//           complementary colour is laid into the tunnel to follow it.
 //   bass  → saturation and the size of the source petals swell.
 //   hats  → sparkles glint on a folded grid, so they are mirrored too.
-//   drop  → more segments, faster spin and zoom, brighter source, more bloom.
+//   drop  → more segments, faster (but always continuous) flight and spin,
+//           brighter source, more bloom.
 
 (function () {
   const VERT = `#version 300 es
@@ -65,7 +66,10 @@ uniform vec4  blob[5];    // folded centre xy, ring radius, width
 uniform vec3  colA[5];
 uniform vec3  colB[5];
 uniform float flipMix;
-uniform float gain;       // source brightness (kick stamps here)
+uniform float gain;       // source brightness
+uniform float stamp;      // kick: extra brightness, confined to the centre
+uniform vec4  band;       // snare: radius, intensity, width, unused
+uniform vec3  bandCol;
 uniform vec4  thread;     // offset, amplitude, frequency, phase
 uniform float fallback;   // 1 when the buffer is 8-bit: subtract a floor so trails reach black
 out vec4 outColor;
@@ -101,7 +105,19 @@ void main() {
   float th = exp(-ty * ty) * smoothstep(15.0, 70.0, k.x) * (1.0 - smoothstep(260.0, 460.0, k.x));
   src += mix(colA[4], colB[4], flipMix) * th * 0.7;
 
-  outColor = vec4(old + src * gain, 1.0);
+  // The kick stamps a bright copy of the source only near the centre; the
+  // tunnel then carries it outward. Stamping the whole source lit 70% of the
+  // frame at once on every beat (jolt 0.73, "too pulsey").
+  float g = gain * (1.0 + stamp * exp(-r * r / 9000.0));
+  vec3 col = old + src * g;
+  // The snare lays one narrow star-shaped band of the complementary colour
+  // into the tunnel, which then flies out with everything else.
+  if (band.y > 0.002) {
+    float a2 = atan(p.y, p.x) + srcRot;
+    float db = (r - band.x * (1.0 + 0.12 * cos(nseg * a2))) / band.z;
+    col += bandCol * band.y * exp(-db * db);
+  }
+  outColor = vec4(col, 1.0);
 }`;
 
   const DISPLAY = `#version 300 es
@@ -112,8 +128,6 @@ uniform sampler2D glowFar;  // and 16x
 uniform vec2  res;        // output pixels
 uniform float unitPx;     // output pixels per virtual unit
 uniform vec2  stage;      // virtual stage size
-uniform float punch;      // display scale punch (kick)
-uniform float kick;
 uniform float glow;       // centre bloom base (pad/bass)
 uniform vec3  coreCol;
 uniform float bloom;
@@ -129,7 +143,7 @@ out vec4 outColor;
 ${COMMON}
 void main() {
   vec2 p = (gl_FragCoord.xy - 0.5 * res) / unitPx;
-  vec2 ps = p / punch;
+  vec2 ps = p;
   vec2 uv = ps / stage + 0.5;
   vec3 col = texture(fb, uv).rgb;
   vec3 bl = texture(glowNear, uv).rgb * 0.55 + texture(glowFar, uv).rgb * 0.7;
@@ -137,15 +151,15 @@ void main() {
 
   float r = length(ps);
   float a = atan(ps.y, ps.x) + srcRot;
-  // Centre bloom: a hot core that flares on the kick.
-  float R = 40.0 + 55.0 * kick;
-  col += coreCol * (glow + 1.15 * kick) * exp(-r * r / (R * R));
+  // No kick term here: a flare of the core and a swell of the bloom moved the
+  // whole frame on every beat. The core breathes with the pad and bass only.
+  col += coreCol * glow * exp(-r * r / 1600.0);
 
   // Snare shockwave: a star with one point per segment, racing outward.
   if (shock.y > 0.002) {
   float rs = shock.x * (1.0 + 0.1 * cos(nseg * a));
   float ds = (r - rs) / shock.z;
-  col += shockCol * shock.y * (exp(-ds * ds) + 0.35 * exp(-abs(ds) * 0.25) * step(r, rs));
+  col += shockCol * shock.y * exp(-ds * ds);
   }
 
   // Hat sparkles on a folded grid: mirrored like the rest, crisp at full res.
@@ -244,7 +258,7 @@ void main() {
     gallery: {
       title: 'Mandala',
       technique: 'WebGL2 ping-pong video feedback (half-float, half resolution) with a kaleidoscope-folded procedural source, then a full-resolution display pass with mip-chain bloom, a centre bloom, a snare shockwave and folded hat sparkles',
-      brief: 'A tunnel of mandalas. Ring-petals and a sinuous thread, mirrored into N wedges, are painted into a feedback loop that zooms, spins, twists and melts, so every frame\'s mandala flies outward and ages from warm to cool. Each kick lurches the tunnel forward, stamps a bright new mandala into the centre and flares the core; each snare flashes the palette to its complement (it relaxes home within the beat), fires a star-shaped shockwave and wrenches the spin; bass swells saturation and petal size; hats glint mirrored sparkles. The drop adds four segments and speeds everything; the breakdown slows into long dreamy trails.',
+      brief: 'A tunnel of mandalas. Ring-petals and a sinuous thread, mirrored into N wedges, are painted into a feedback loop that zooms, spins, twists and melts, so every frame\'s mandala flies outward and ages from warm to cool. The flight through the tunnel is continuous and speeds up in the drop. Each kick stamps a bright new mandala into the centre that you watch fly outward; each snare fires a thin star-shaped shockwave and lays one narrow band of the complementary colour into the tunnel; bass swells saturation and petal size; hats glint mirrored sparkles. The drop adds four segments and speeds everything; the breakdown slows into long dreamy trails.',
       lineage: [
         'Brief 06 (batch 02): kaleidoscope + video feedback; kick zooms the tunnel, snare flips palette, bass saturates, drop adds segments.',
         'Chose not to re-fold the feedback each frame: old echoes keep the symmetry they were born with, so a segment change flows out from the centre instead of cutting.',
@@ -252,6 +266,7 @@ void main() {
         'Kick is three reactions at once (feedback zoom impulse, display scale punch, stamped source + core bloom) so one beat reads as one forward lurch of the tunnel.',
         'Snare was first a palette toggle: visible, but the build roll left the parity to chance and a whole breakdown sat in the cyan flash colours. Now a flash to the complement that relaxes home over ~0.5 s, so every clap sends a band of the other colour flying out the tunnel.',
         'Perf: a per-frame generateMipmap for the bloom cost more than both passes together under SwiftShader; replaced with two 4x box downsamples (160x90, 40x23). Sparkle and shockwave code is skipped by uniform branch when silent.',
+        'Batch 02 review (Raph, 2026-09-28): loved, but too pulsey; jolt meter 0.73 kickArea ("jarring"): the heat map was a whole-frame bloom. Removed the per-kick zoom lurch, the 7% scale punch, the core flare and the kick bloom swell; the kick stamp is now confined to a gaussian ~95 units round the centre. The snare palette flash and spin wrench became a thinner shockwave plus one narrow colour band in the tunnel. Flight is continuous, its speed set by the slow drop envelope (faster in the drop). With the palette flash gone the drop lost its colour lift, so the drop envelope now cools the echo tint toward the complement: warm stamps fly out into a cyan-violet tunnel. Jolt after: kickArea 0.18, ratio 1.28, calm.',
         'Half-float buffers so long trails fade smoothly to black; an 8-bit fallback subtracts a floor so pixels do not stick.',
       ],
     },
@@ -264,11 +279,9 @@ void main() {
       this.clock = 0;
       this.env = { kick: 0, snare: 0, hat: 0, bass: 0, pad: 0, drop: 0, kickAvg: 0 };
       this.spinAng = 0;
-      this.spinVel = 0;
       this.srcRot = 0;
       this.flip = this.flip || 0;   // the performer's home palette survives a switch away
       this.flipMix = 0;
-      this.flash = 0;
       this.snareArmed = true;
       this.snareCool = 0;
       this.shockAge = 10;
@@ -396,18 +409,12 @@ void main() {
         this.snareArmed = false;
         this.snareCool = 0.4;
         if (P > 0.01) {
-          this.flash = 1;
           this.shockAge = 0;
-          this.spinVel += 1.4 * P * (this.spinDir || 1);
         }
       }
       if (snareRaw < 0.25) this.snareArmed = true;
-      // The snare is a flash to the complement that relaxes home over about
-      // half a second. A toggle left the palette wherever the build's roll
-      // happened to end, so a whole breakdown could sit in the flash colours.
-      this.flash *= Math.exp(-dt * 2.0);
-      const flipTarget = this.flip ? 1 - this.flash : this.flash;
-      this.flipMix = ease(this.flipMix, flipTarget, 12, dt);
+      // Home palette only changes by the action, and eases over a quarter second.
+      this.flipMix = ease(this.flipMix, this.flip, 4, dt);
       this.shockAge += dt;
 
       // Motion clock runs faster in the drop.
@@ -420,15 +427,15 @@ void main() {
       const nseg = Math.round(params.segments) + this.segBoost;
 
       // Spin changes direction every minute or so, so it never settles into
-      // one endless rotation; the snare's impulse follows the current way.
-      this.spinDir = Math.sin(T * 0.045 + 0.6) >= 0 ? 1 : -1;
+      // one endless rotation.
       const spinBase = params.spin * (0.12 + 0.55 * e.drop) * Math.sin(T * 0.045 + 0.6);
-      this.spinVel *= Math.exp(-dt * 5);
-      const spinThis = (spinBase + this.spinVel) * dt;
+      const spinThis = spinBase * dt;
       this.srcRot -= params.spin * (0.08 + 0.25 * e.drop) * dt;
 
-      // Zoom: a steady fall into the tunnel, and a lurch on every kick.
-      const zoomRate = 0.35 + 0.45 * e.drop + 0.15 * e.pad + 3.2 * P * e.kick * e.kick;
+      // Zoom: a continuous flight into the tunnel. The music sets its speed
+      // (the drop level is a slow envelope) and never jerks it: a per-kick
+      // lurch here was the biggest part of the old whole-frame pulse.
+      const zoomRate = 0.45 + 0.6 * e.drop + 0.12 * e.pad;
       const zoom = Math.exp(zoomRate * dt);
 
       // Trails: longer in quiet passages, so the breakdown exhales into slow echoes.
@@ -458,7 +465,8 @@ void main() {
       }
 
       // Kick stamps a bright copy of the source; drop brightens the base.
-      const gain = (0.045 + 0.02 * e.drop + 0.03 * e.pad) * (1 + 5 * P * e.kick * e.kick);
+      const gain = 0.045 + 0.02 * e.drop + 0.03 * e.pad;
+      const stamp = 9 * P * e.kick * e.kick;
 
       // ---- render
       const gl = this.gl;
@@ -489,12 +497,21 @@ void main() {
       gl.uniform1f(F.u.nseg, nseg);
       gl.uniform1f(F.u.srcRot, this.srcRot);
       gl.uniform1f(F.u.decay, decay);
-      gl.uniform3fv(F.u.tint, pal.tint);
+      // The drop cools the echoes toward the complementary palette, so the
+      // warm stamps fly out into a cyan-violet tunnel: more colour in the
+      // drop, arriving on the slow drop envelope rather than per beat.
+      const away = this.flip ? pal.A : pal.B;
+      const tint = [0, 1, 2].map((c) => pal.tint[c] + ((0.86 + 0.16 * away[0][c]) - pal.tint[c]) * e.drop);
+      gl.uniform3fv(F.u.tint, tint);
       gl.uniform4fv(F.u.blob, blob);
       gl.uniform3fv(F.u.colA, pal.A.flat());
       gl.uniform3fv(F.u.colB, pal.B.flat());
       gl.uniform1f(F.u.flipMix, this.flipMix);
       gl.uniform1f(F.u.gain, gain);
+      gl.uniform1f(F.u.stamp, stamp);
+      const ba = this.shockAge;
+      gl.uniform4f(F.u.band, 40 + ba * 120, ba < 0.1 ? 0.8 * P * (1 - ba / 0.1) : 0, 6, 0);
+      gl.uniform3fv(F.u.bandCol, this.flip ? pal.A[1] : pal.B[1]);
       gl.uniform4f(F.u.thread, 6 + 8 * Math.sin(T * 0.23), 5 + 4 * Math.sin(T * 0.17), 0.035 + 0.01 * Math.sin(T * 0.11), -T * 2.2);
       gl.uniform1f(F.u.fallback, this.floatOK ? 0 : 1);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -532,17 +549,15 @@ void main() {
       gl.uniform2f(D.u.res, w, h);
       gl.uniform1f(D.u.unitPx, Math.min(w, h) / 600);
       gl.uniform2f(D.u.stage, ctx.width, ctx.height);
-      gl.uniform1f(D.u.punch, 1 + 0.07 * P * e.kick);
-      gl.uniform1f(D.u.kick, P * e.kick);
       gl.uniform1f(D.u.glow, 0.12 + 0.3 * e.pad + 0.2 * e.bass);
       gl.uniform3fv(D.u.coreCol, pal.core);
-      gl.uniform1f(D.u.bloom, 0.25 + 0.15 * e.drop + 0.45 * P * e.kick);
+      gl.uniform1f(D.u.bloom, 0.3 + 0.2 * e.drop);
       gl.uniform1f(D.u.hat, P * e.hat);
       gl.uniform1f(D.u.time, ms / 1000);
       gl.uniform1f(D.u.nseg, nseg);
       gl.uniform1f(D.u.srcRot, this.srcRot);
       const age = this.shockAge;
-      gl.uniform3f(D.u.shock, 20 + age * 900, age < 1.2 ? 1.1 * P * Math.exp(-age * 3.2) : 0, 5 + age * 30);
+      gl.uniform3f(D.u.shock, 20 + age * 900, age < 1.2 ? 0.8 * P * Math.exp(-age * 3.2) : 0, 4 + age * 12);
       const sc = this.flip ? pal.A[3] : pal.B[3];
       gl.uniform3fv(D.u.shockCol, sc);
       gl.uniform1f(D.u.sat, 0.85 + 0.6 * e.bass + 0.2 * e.drop);

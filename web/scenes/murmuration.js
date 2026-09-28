@@ -19,15 +19,22 @@
 // with backlit plumes; drifting motes and bokeh.
 //
 // Music:
-//   kick   the flock clenches (the whole ribbon contracts toward its centre
-//          and darkens) and the sun blooms; both let go within ~250 ms.
+//   kick   a ripple of dark density runs head to tail through the flock
+//          (birds in the wave pull in and show more wing), and the sun's rim
+//          flares. Confined on purpose: nothing else on screen jumps.
 //   snare  the flock turns: a yaw swing that travels along the ribbon, birds
 //          banking as it passes, so a dark (in the drop, iridescent) band
 //          sweeps through the flock. Successive claps swing it back and forth.
 //   bass   the flock's size and the sun's glow swell.
 //   hats   reed plumes, water glitter and motes sparkle.
 //   drop   an energy level built from the kicks lets the ribbon fold and twist
-//          much harder, speeds its flight, raises sun rays, saturates the sky.
+//          much harder, speeds its flight and the travel over the marsh,
+//          raises sun rays, saturates the sky.
+//
+// The camera travels slowly along the marsh: reeds, water ripples, motes and
+// the treeline slide past at parallax speeds, the flock keeps pace in the
+// sky. The music changes the travel's speed through the energy level only,
+// smoothly, never on a beat.
 
 (function () {
   const MAX_BIRDS = 14000;
@@ -97,7 +104,7 @@
     gallery: {
       title: 'Murmuration',
       technique: 'Canvas 2D: thousands of birds on a 3D ribbon (bent, twisted, undulated, yawed, perspective-projected, deformations lagged along the ribbon so they travel as waves), batched into a few Path2D strokes; soft sky, clouds, sun glow and rays on a third-resolution canvas; full-resolution sun, treeline, glitter, reeds and motes',
-      brief: 'Starlings at dusk over a marsh. A flock of thousands folds and pours across a sunset sky, dark ribbons forming wherever the sheet of birds turns edge-on. The kick makes the flock clench and the sun bloom; the clap swings the whole flock into a turn that visibly travels through it as a band of banking (iridescent in the drop); bass swells the flock and the sun\'s glow; hats sparkle the backlit reed plumes, the glitter path on the water and the drifting motes. The drop surges: the ribbon folds and twists much harder, flies faster, sun rays come up and the sky saturates; the breakdown lets it settle into a slow, wide drift.',
+      brief: 'Starlings at dusk over a marsh. A flock of thousands folds and pours across a sunset sky, dark ribbons forming wherever the sheet of birds turns edge-on. A slow travel along the marsh slides reeds, ripples and treeline past in parallax while the flock keeps pace overhead. Each kick sends a ripple of dark density running through the flock and flares the sun\'s rim; the clap swings the whole flock into a turn that visibly travels through it as a band of banking (iridescent in the drop); bass swells the flock and the sun\'s glow; hats sparkle the backlit reed plumes, the glitter path on the water and the drifting motes. The drop surges: the ribbon folds and twists much harder, flies faster, sun rays come up and the sky saturates; the breakdown lets it settle into a slow, wide drift.',
       lineage: [
         'Brief 08 (batch 02): starlings at dusk, boids drawn as dark flecks.',
         'Chose a projected ribbon over boids: murmuration shape is the projection of a folding sheet, and a steerable surface lets kick, clap and bass act on the whole flock at once, which boids with local rules cannot do legibly (and a neighbour search on 5,000 birds would blow the 2D budget).',
@@ -113,6 +120,9 @@
         'Drop plumage: where the sheet faces you and its angle catches the light, stretches of birds turn teal/cyan/blue/violet/magenta, hue drifting across the sheet; edge-on folds stay dark. A first pass let half the flock go colour and the dark mass vanished, so it is gated on facing. The flock is mirrored into the marsh.',
         'Performance: glitter bucketed into 3 strokes instead of 160, fewer bokeh discs, the reflection strokes only heavy or coloured birds whose mirror lands on stage. At 8,000 birds plus a full reflection the 1280x720 p95 had gone to 23 ms (busy machine), so the default dropped to 5,500 and the drop\'s twist and bend were reined in so the bigger sheet stays cohesive instead of scattering.',
         'Full-size check: kick now obvious (flare, rays, rim), drop flock a huge iridescent sweep, but intro and breakdown flocks were faint and sparse at the new size. Resting size cut to R 150 with the drop growing it 85%, so quiet sections keep a dense, bold crescent and the drop is far bigger than the breakdown.',
+        'Raph on batch 02: "super cool" but too pulsey, and wanted more movement. Jolt meter before: kickArea 0.92 (jarring), the sky-wide warm wash and pulsing rays moving almost every block. The wash and ray pulse are gone; the sun keeps a rim flare and a small ring; the flock carries the beat as a ripple of dark density running head to tail (birds in the wave pull in and show more wing), and the whole-flock clench fell from 30% to 5%.',
+        'Movement: the camera now travels along the marsh. Reeds (clumped on a wrapping strip, taller = nearer = faster), ripple streaks on the water, motes and bokeh, and the treeline slide past at parallax speeds while the flock keeps pace overhead; the drop speeds the travel through the slow energy level only.',
+        'Jolt after: kickArea 0.17, ratio 0.99 (calm), down from 0.92 (jarring); build kick 0.18. Heat map shows the kick confined to the sun and a band of the flock. First travel pass spread reeds evenly into a fence across the sun; they are now four clumps of tall reeds with a low fringe between, so open water and sun slide by between stands.',
       ],
     },
 
@@ -129,6 +139,9 @@
       this.yawBase = 0;     // settled sum of past turns
       this.turnSign = 1;
       this.ringT = [];      // kick rings from the sun
+      this.kicks = [];      // kick ripples travelling through the flock
+      this.kickArmed = true;
+      this.cam = 0;         // distance travelled along the marsh, units
       this.sparkT = 0;      // time of the latest hat
       this.sparkSeed = 0;
     },
@@ -179,25 +192,32 @@
           }
         }
       }
-      for (let pass = 0; pass < 2; pass++) {
-        for (let i = 1; i < steps; i++) hs[i] = (hs[i - 1] + 2 * hs[i] + hs[i + 1]) / 4;
+      // Periodic (wrapping) smoothing, so the line can scroll forever.
+      hs.length = steps;
+      for (let pass = 0; pass < 3; pass++) {
+        const c = hs.slice();
+        for (let i = 0; i < steps; i++) hs[i] = (c[(i + steps - 1) % steps] + 2 * c[i] + c[(i + 1) % steps]) / 4;
       }
-      for (let i = 0; i <= steps; i++) tree.push([W * i / steps, hy - hs[i]]);
+      this.treeH = hs;
       this.tree = tree;
 
-      // Reeds gather in clumps at both sides, so the middle of the frame
-      // stays open for the flock and the sun.
+      // Reeds live on a strip of marsh 1.6 stages long that scrolls past
+      // and wraps. They gather in clumps with open water between, so as they
+      // slide by the sun and flock are framed rather than fenced off; taller
+      // reeds are nearer and slide faster.
       const reeds = [];
+      const span = W * 1.6;
+      this.reedSpan = span;
+      const clumps = [];
+      for (let k = 0; k < 4; k++) clumps.push((k + 0.35 * r()) / 4 * span);
       for (let i = 0; i < 150; i++) {
-        let x;
-        const side = r();
-        if (side < 0.42) x = Math.pow(r(), 1.6) * W * 0.34;
-        else if (side < 0.84) x = W - Math.pow(r(), 1.6) * W * 0.34;
-        else x = r() * W;
-        const edge = Math.min(x, W - x) / (W * 0.5);           // 0 at a side, 1 in the middle
-        const h = H * (0.12 + r() * 0.36) * (1 - 0.6 * edge);
+        // Tall reeds only in the clumps; between them, a low fringe, so wide
+        // stretches of open water and sun pass between the stands.
+        const inClump = r() < 0.75;
+        const x = inClump ? clumps[(r() * clumps.length) | 0] + (r() + r() - 1) * 110 : r() * span;
+        const h = inClump ? H * (0.1 + Math.pow(r(), 1.2) * 0.36) : H * (0.04 + r() * 0.07);
         reeds.push({
-          x, h, lean: (r() - 0.5) * 0.35 + (x < W / 2 ? 0.08 : -0.08),
+          x, h, depth: 0.45 + 2.2 * h / H, lean: (r() - 0.5) * 0.35,
           w: 2 + r() * 3, ph: r() * 10, plume: r() < 0.45 && h > H * 0.15, cat: r() < 0.12,
           glint: r(),
         });
@@ -221,6 +241,14 @@
         }
       }
       this.clouds = clouds;
+
+      // Ripple streaks across the whole water, scrolling with the travel.
+      const rip = [];
+      for (let i = 0; i < 70; i++) {
+        const d = Math.pow(r(), 0.9);
+        rip.push({ d, x: r() * (W + 200), len: 6 + d * 40 * r() + 6 });
+      }
+      this.rip = rip;
 
       const glit = [];
       for (let i = 0; i < 160; i++) {
@@ -246,6 +274,11 @@
       const kickness = sg[0] - 0.6 * sg[1];
       e.kick = Math.max(e.kick * Math.exp(-dt / 0.14), Math.min(1, Math.max(0, (kickness - 4) / 42)));
       e.kickSm = ease(e.kickSm, e.kick, 40, dt);
+      if (this.kickArmed && e.kick > 0.45) {
+        this.kickArmed = false;
+        this.kicks.push({ t0: t, s: Math.min(1, e.kick) });
+      } else if (e.kick < 0.25) this.kickArmed = true;
+      while (this.kicks.length && t - this.kicks[0].t0 > 1) this.kicks.shift();
       e.kickAvg = ease(e.kickAvg, e.kick, 0.8, dt);
       // Energy: how much kick there has been lately. Up fast, down slowly, so
       // the drop surges in within a bar and the breakdown exhales over several.
@@ -297,6 +330,10 @@
       // One drift clock for everything that wanders; the drop flies faster.
       this.clock += dt * params.speed * (0.7 + 0.9 * E);
       const T = this.clock;
+      // Travel along the marsh: faster in the drop, but only through the
+      // slow energy level, so the music changes the speed and never jerks it.
+      this.travelV = 38 * params.speed * (0.6 + 1.1 * E);
+      this.cam += dt * this.travelV;
 
       // ---- palette
       let sch;
@@ -321,10 +358,11 @@
       const sunX = W * (0.5 + 0.14 * Math.sin(T * 0.021 + s.a));
       const sunR = 34 + 6 * e.bass;
       const sunY = hy - sunR * 0.55 - 14 * (0.5 + 0.5 * Math.sin(T * 0.017 + s.b));
-      const glow = 0.6 + 0.5 * e.bass + 1.3 * kick + 0.3 * E;
+      const glow = 0.6 + 0.5 * e.bass + 0.15 * kick + 0.3 * E;
 
-      // The flare follows the raw kick envelope (instant attack) rather than
-      // the smoothed one, so it lands on the beat frame itself.
+      // The sun's rim flare follows the raw kick envelope (instant attack) so
+      // it lands on the beat frame itself. It stays on the sun: a sky-wide
+      // wash here in an earlier round made every beat move 90% of the frame.
       const flare = Math.min(1.5, e.kick * push);
       this.drawBackdrop(p, g, W, H, sch, sunX, sunY, sunR, glow, E, kick, T, flare);
 
@@ -337,9 +375,9 @@
       g.beginPath(); g.arc(sunX, sunY, sunR, 0, Math.PI * 2); g.fill();
       g.restore();
       g.globalCompositeOperation = 'lighter';
-      const rimR = sunR * (1.9 + 1.3 * flare);
+      const rimR = sunR * (1.8 + 0.9 * flare);
       let grd = g.createRadialGradient(sunX, sunY, sunR * 0.6, sunX, sunY, rimR);
-      grd.addColorStop(0, rgba(sch.sun, 0.5 + 0.3 * flare));
+      grd.addColorStop(0, rgba(sch.sun, 0.5 + 0.4 * flare));
       grd.addColorStop(1, rgba(sch.sun, 0));
       g.fillStyle = grd;
       g.beginPath(); g.arc(sunX, sunY, rimR, 0, Math.PI * 2); g.fill();
@@ -351,9 +389,9 @@
       g.globalCompositeOperation = 'lighter';
       for (const r0 of this.ringT) {
         const a = (t - r0) / 1.1;
-        const rr = sunR * 1.4 + a * 300;
-        g.strokeStyle = rgba(sch.sun, 0.34 * (1 - a) * (1 - a) * Math.min(1, push) * (0.3 + 0.7 * E));
-        g.lineWidth = 10 * (1 - a) + 2;
+        const rr = sunR * 1.6 + a * 150;
+        g.strokeStyle = rgba(sch.sun, 0.22 * (1 - a) * (1 - a) * Math.min(1, push) * (0.3 + 0.7 * E));
+        g.lineWidth = 5 * (1 - a) + 1.5;
         g.beginPath(); g.arc(sunX, sunY, rr, Math.PI, Math.PI * 2); g.stroke();
       }
       g.globalCompositeOperation = 'source-over';
@@ -363,7 +401,17 @@
       g.fillStyle = rgba(treeCol);
       g.beginPath();
       g.moveTo(0, hy + 1);
-      for (const [x, y] of this.tree) g.lineTo(x, y);
+      {
+        // Far away, so it slides by slowly.
+        const hs = this.treeH, n = hs.length, px = 0.06;
+        const off = (this.cam * px) / W * n;
+        for (let i = 0; i <= 200; i++) {
+          const f = i / 200 * n + off;
+          const i0 = Math.floor(f), fr = f - i0;
+          const h = hs[i0 % n] * (1 - fr) + hs[(i0 + 1) % n] * fr;
+          g.lineTo(W * i / 200, hy - h);
+        }
+      }
       g.lineTo(W, hy + 1);
       g.closePath();
       g.fill();
@@ -444,13 +492,13 @@
       b.fillRect(sunX - gr, sunY - gr, gr * 2, gr * 2);
 
       const rays = 0.1 + 0.9 * E;
-      if (rays > 0.05 || flare > 0.05) {
+      if (rays > 0.05) {
         const len = Math.max(W, H) * 1.1;
         const n = 14;
         for (let i = 0; i < n; i++) {
           const a = Math.PI + (i + 0.5) / n * Math.PI + 0.08 * Math.sin(T * 0.13 + i * 1.7);
           const wdt = 0.035 + 0.03 * Math.sin(i * 2.3 + T * 0.21);
-          const al = (rays * 0.05 + (0.08 + 0.22 * rays) * flare) * (0.6 + 0.4 * Math.sin(i * 3.1 + T * 0.4));
+          const al = rays * 0.06 * (0.6 + 0.4 * Math.sin(i * 3.1 + T * 0.4));
           grd = b.createRadialGradient(sunX, sunY, sunR, sunX, sunY, len);
           grd.addColorStop(0, rgba(sch.sun, al));
           grd.addColorStop(1, rgba(sch.sun, 0));
@@ -463,22 +511,9 @@
           b.fill();
         }
       }
-      // Kick flare: a warm wash of light out of the sun over most of the sky,
-      // gone in ~200 ms. A gradient, never a flat fill, and it tops out well
-      // short of white, so it blooms rather than strobes.
-      if (flare > 0.02) {
-        const fr = Math.max(W, H) * 1.1;
-        grd = b.createRadialGradient(sunX, sunY, sunR, sunX, sunY, fr);
-        const warm = mixc(sch.sun, sch.lit, 0.45);
-        grd.addColorStop(0, rgba(warm, 0.55 * flare));
-        grd.addColorStop(0.3, rgba(warm, 0.22 * flare));
-        grd.addColorStop(1, rgba(warm, 0));
-        b.fillStyle = grd;
-        b.fillRect(0, 0, W, H);
-      }
       // The sun's column on the water.
       grd = b.createLinearGradient(0, hy, 0, H);
-      grd.addColorStop(0, rgba(sch.sun, 0.35 * glow + 0.3 * flare));
+      grd.addColorStop(0, rgba(sch.sun, 0.35 * glow));
       grd.addColorStop(1, rgba(sch.sun, 0));
       b.fillStyle = grd;
       b.beginPath();
@@ -523,12 +558,21 @@
       g.lineWidth = 1.4;
       const hl = this.env.hatLvl || 0;
       const paths = [new Path2D(), new Path2D(), new Path2D()];
+      const ripP = new Path2D();
+      const wrapW = W + 200;
+      for (const q of this.rip) {
+        const y = hy + 3 + q.d * (H - hy);
+        const x = ((q.x - this.cam * (0.12 + 1.3 * q.d)) % wrapW + wrapW) % wrapW - 100;
+        ripP.moveTo(x, y); ripP.lineTo(x + q.len, y);
+      }
+      g.strokeStyle = rgba(mixc(sch.sky[2], sch.sun, 0.4), 0.16);
+      g.stroke(ripP);
       for (const q of this.glit) {
         const y = hy + 2 + q.d * (H - hy);
         const spread = 30 + q.d * 150;
         const x = sunX + q.off * spread * (0.6 + 0.4 * Math.sin(t * 0.3 + q.ph));
         const tw = 0.5 + 0.5 * Math.sin(t * q.f + q.ph);
-        const a = (0.1 + 0.3 * tw * tw) * (1 - 0.5 * q.d) + 0.9 * this.spark(q.k, t) + 0.25 * kick * (1 - q.d) + 0.15 * hl;
+        const a = (0.1 + 0.3 * tw * tw) * (1 - 0.5 * q.d) + 0.9 * this.spark(q.k, t) + 0.15 * hl;
         if (a < 0.03) continue;
         // Bucketed by brightness: 160 separate strokes cost more raster time
         // than the whole flock.
@@ -556,7 +600,7 @@
       const cyAt = far
         ? (tt) => this.hy - H * (0.17 + 0.04 * Math.sin(0.2 * tt + s.a))
         : (tt) => H * (0.32 + 0.05 * Math.sin(0.15 * tt + s.c) + 0.03 * Math.sin(0.37 * tt + s.d));
-      const R = (far ? 38 : 150) * (1 + (far ? 0.35 : 0.85) * E + 0.25 * e.bass * push) * (1 + 0.12 * Math.sin(0.19 * T + s.e)) * (1 - 0.3 * Math.min(1.3, kick));
+      const R = (far ? 38 : 150) * (1 + (far ? 0.35 : 0.85) * E + 0.25 * e.bass * push) * (1 + 0.12 * Math.sin(0.19 * T + s.e)) * (1 - 0.05 * Math.min(1.3, kick));
       const L = R * (1.8 + 0.5 * Math.sin(0.1 * T + s.f));
       const Hh = R * (far ? 0.6 : 0.42 + 0.18 * Math.sin(0.14 * T + 1));
       const A2 = R * (0.25 + 0.45 * fold * (0.35 + 0.65 * E));
@@ -577,6 +621,7 @@
       }
       const yaw0 = this.yawBase + 0.9 * Math.sin(0.043 * T + s.e) + 0.05 * T;
       const turns = this.turns;
+      const kicks = this.kicks;
 
       const P = [new Path2D(), new Path2D(), new Path2D()];
       const G = [];
@@ -608,6 +653,18 @@
         const be = bend * u;
         const cb = Math.cos(be), sb = Math.sin(be);
         let x2 = X * cb - Z * sb; Z = X * sb + Z * cb; X = x2;
+        // Kick ripple: each kick runs head to tail through the flock in
+        // ~0.3 s. Birds in the wave pull in toward the ribbon's spine and
+        // show more wing, so a band of dark density travels through it.
+        let kr = 0;
+        if (!far) {
+          const kd = (u + 1.2) * 0.14;
+          for (let k = 0; k < kicks.length; k++) {
+            const q = (t - kicks[k].t0 - kd) / 0.2;
+            if (q > 0 && q < 1) kr = Math.max(kr, kicks[k].s * Math.sin(Math.PI * q));
+          }
+          if (kr > 0) { const c = 1 - 0.3 * kr * push; X *= c; Y *= c; Z *= c; }
+        }
         // Yaw, including any clap turn that has reached this bird.
         let yaw = yaw0, bank = 0, hue = 0;
         const delay = (u + 1.25) * 0.5 * turnDelay;
@@ -636,7 +693,7 @@
         // Edge-on stretches get heavier flecks on top of their projected
         // density, so the folds read as bold dark ribbons.
         const face = Math.abs(ct);
-        const ink = ps * (0.45 + 0.9 * (1 - face) + 1.1 * bank) * (1 + 0.35 * kick);
+        const ink = ps * (0.45 + 0.9 * (1 - face) + 1.1 * bank + 1.8 * kr * push);
         const flap = Math.sin(t * Fq[i] + Ph[i]);
         const len = fs * (1.15 * ink * (0.75 + 0.25 * flap) + 0.35);
         const ang = 0.9 * flap + 0.3 * sy + 0.4 * Math.sin(Ph[i] * 3);
@@ -730,7 +787,10 @@
         if (r.glint > dens) continue;
         const wind = 0.05 * Math.sin(t * 0.8 + r.ph) + 0.03 * Math.sin(t * 1.9 + r.ph * 2.3) + 0.04 * e.bass * Math.sin(t * 3 + r.ph);
         const lean = r.lean + wind;
-        const bx = r.x, by = H + 4;
+        const sp0 = this.reedSpan;
+        const bx = ((r.x - this.cam * r.depth) % sp0 + sp0) % sp0 - (sp0 - W) / 2;
+        if (bx < -r.h * 0.6 - 20 || bx > W + r.h * 0.6 + 20) continue;
+        const by = H + 4;
         const tx = bx + lean * r.h, ty = H - r.h;
         const mx = bx + lean * r.h * 0.35, my = H - r.h * 0.5;
         const w = r.w;
@@ -786,9 +846,11 @@
       const col = mixc(sch.sun, sch.lit, 0.35);
       const hl = e.hatLvl || 0;
       for (const m of this.motes) {
-        m.x += (m.vx * (1 + E) + 6 * Math.sin(t * 0.4 + m.ph)) * dt * (m.bokeh ? 1.8 : 1);
+        // They drift past with the travel, the out-of-focus near ones fastest.
+        m.x += (-this.travelV * (m.bokeh ? 2.6 : 0.6 + 0.3 * m.z) + 0.3 * m.vx + 6 * Math.sin(t * 0.4 + m.ph)) * dt;
         m.y += (m.vy + 4 * Math.cos(t * 0.5 + m.ph)) * dt;
         if (m.x > W + 30) m.x -= W + 60;
+        if (m.x < -30) m.x += W + 60;
         if (m.y < -30) m.y += H + 60;
         const sp = this.spark(m.k, t);
         if (m.bokeh) {

@@ -21,8 +21,8 @@
 //
 // Music:
 //  - kick: an expanding shell of light leaves the camera and races down the
-//    tunnel, lighting every wall it passes; the camera lurches forward (a
-//    zoom punch and a speed surge) and the core light and bloom swell.
+//    tunnel, lighting the rims of the ring of wall it is passing. The shell
+//    is thin; nothing else in the frame moves on the beat.
 //  - snare/clap: the fractal refolds (its inversion radius jolts and relaxes)
 //    and the whole palette turns a step round the colour wheel.
 //  - bass/pad: the tunnel breathes wider, the fold slowly morphs, glow deepens.
@@ -45,7 +45,7 @@ uniform float fold;      // inversion constant of the Apollonian fold
 uniform float tunR;      // tunnel radius
 uniform vec4  shellD;    // distances of the last four kick shells
 uniform vec4  shellA;    // their amplitudes
-uniform float punch, hat, energy, glowAmt, palPhase, sat, bright;
+uniform float hat, energy, glowAmt, palPhase, sat, bright;
 uniform vec3  cDeep, cMid, cHot, cGlow, cCore, cFog;
 uniform vec3  coreDir;
 uniform float hatSeed;
@@ -93,7 +93,9 @@ vec3 calcNormal(vec3 p, float e) {
 }
 
 float shell(float t) {
-  vec4 d = (vec4(t) - shellD) / 0.32;
+  // Narrow: the shell is a ring of wall at one depth, not a band that
+  // swallows whole bubbles (it lit ~80% of the frame at width 0.32).
+  vec4 d = (vec4(t) - shellD) / 0.11;
   return dot(shellA, exp(-d * d));
 }
 
@@ -113,9 +115,9 @@ void main() {
   // Rays that escape through a bubble's open interior end in this far haze.
   // It stays nearly black except toward the core: a bright far haze turned
   // every open bubble into a flat pink disc with its rim cut out.
-  vec3 fogFar = cMid * (0.015 + 0.02 * energy + (0.04 + 0.2 * energy + 0.35 * punch) * pow(cd, 12.0));
-  vec3 core = cCore * pow(cd, 160.0) * (0.9 + 2.4 * punch)
-            + mix(cMid, cHot, 0.4) * pow(cd, 10.0) * (0.017 + 0.14 * punch + 0.06 * energy);
+  vec3 fogFar = cMid * (0.015 + 0.02 * energy + (0.04 + 0.2 * energy) * pow(cd, 12.0));
+  vec3 core = cCore * pow(cd, 160.0) * (0.9 + 0.8 * energy)
+            + mix(cMid, cHot, 0.4) * pow(cd, 10.0) * (0.017 + 0.06 * energy);
 
   float t = 0.02;
   float glow = 0.0, sglow = 0.0;
@@ -172,7 +174,10 @@ void main() {
     // the upscale's staircase.
     vec3 edge = mix(cMid, cHot, smoothstep(0.3, 1.0, tc));
     col = base * 0.012 * ao;
-    col += edge * rim * (0.5 + 2.8 * att) * ao * (1.0 - cut);
+    col += edge * rim * (0.5 + 2.8 * att) * (0.8 + 0.7 * energy) * ao * (1.0 - cut);
+    // The drop lights a second, complementary rim colour on every wall and
+    // holds it for the section: the drop is bigger by layers, not by beats.
+    col += cGlow * pow(rim, 1.5) * (1.1 * energy) * (0.3 + att) * ao * (1.0 - cut);
     // No orbit-trap emission: an "ember" term on small trap.w (round 2) lit
     // whole big shells evenly and was the source of the flat discs. The
     // small bubbles glow through their rims instead.
@@ -190,7 +195,7 @@ void main() {
     col += (cHot + 0.6) * glint * 3.0 * att * (0.3 + fres);
 
     // Kick shells light the walls they pass through.
-    col += cGlow * shell(t) * (0.3 + 2.2 * fres * (1.0 - cut)) * (0.4 + 0.6 * ao);
+    col += cGlow * shell(t) * (0.06 + 3.5 * rim * (1.0 - cut)) * (0.4 + 0.6 * ao);
   } else {
     t = TMAX;
     col = vec3(0.0);
@@ -208,7 +213,7 @@ void main() {
 
   // Volumetric glow of near misses, and the shells as rings of light in the air.
   col += mix(cMid, cHot, 0.3) * glow * glowAmt * 0.035;
-  col += cGlow * sglow * 0.35;
+  col += cGlow * sglow * 0.12;
 
   // Breakdown desaturates a little.
   float l = dot(col, vec3(0.299, 0.587, 0.114));
@@ -308,6 +313,7 @@ void main() {
         'Render 4-7: big open bubbles read as flat grey, then beige, then pink discs. Traced to rays escaping through bubble interiors into a bright far haze, and to core light added through the fog onto near walls. Walls are now rim-lit (face-on shells dark, edges bright), the core is occluded by the walls, the far haze stays near black except toward the core, and a gentle toe pulls the murky mids down.',
         'Raymarch renders a fixed number of lines (Render lines, default 180) whatever the canvas size, upscaled with smoothing under a shrink-and-add bloom whose source is squared twice as a soft threshold; the motes on top are full resolution.',
         'Lead review: resting state was mauve mud with staircased cut-outs, the core always centred, minute to minute alike. Round 2: bodies near black with light on the rims only; a second GL pass upscales the march 2x with a B-spline bicubic (the staircase softened visibly at 1280x720); the gaze wanders off the path and the path swings wider, so the core travels the frame; fold and fold-cell size drift on ~65 s and ~95 s cycles (the 96 s run passes through red foam, gold lattice and cyan-lit halls). All four palettes rendered side by side; Nebula coral (coral and amber walls, cyan kick shells) kept as default for its drop.',
+        'Raph (batch 02): "super cool" but too pulsey, and wants more movement. Jolt meter before: kickArea 0.82, kickMean 0.21. Removed the 16% zoom punch, the kick speed surge and the core/bloom swell; bloom now follows section energy only. The kick shell was narrowed (0.32 to 0.11 world units) and lights only the rims of the ring of wall it passes. Flight is a continuous cruise whose speed eases (0.6/s) toward bass plus section energy. The drop is carried by held layers instead: brighter rims and a complementary cyan rim colour that follows section energy. After: kickArea 0.36, kickMean 0.08, ratio 1.1 (calm); most of what remains is the flight itself moving the bright tunnel-cut sheets.',
         'Two false leads on the flat discs, each ruled out by a render: an orbit-trap ember term, and the tunnel cylinder cut faces (now kept dark anyway). The real cause was normals: the surfaces are |y| sheets, and a gradient sampled across one is noise, so the rim term lit whole shells. The hit is now backed off along the ray before the normal is sampled; the discs dimmed but a red glow through the open voids remains (core halo and far in-scatter).',
       ],
     },
@@ -319,7 +325,7 @@ void main() {
       this.z = 0;
       this.clock = 0;
       this.shells = [];            // { t, a }
-      this.punch = 0;
+      this.cruise = undefined;
       this.jolt = 0;
       this.hueRot = 0;
       this.hueTarget = 0;
@@ -379,7 +385,7 @@ void main() {
       gl.useProgram(prog);
       const u = {};
       for (const n of ['res', 'time', 'ro', 'fw', 'rt', 'up', 'focal', 'fold', 'tunR', 'shellD', 'shellA',
-        'punch', 'hat', 'energy', 'glowAmt', 'palPhase', 'filmShift', 'jolt', 'sat', 'bright',
+        'hat', 'energy', 'glowAmt', 'palPhase', 'filmShift', 'jolt', 'sat', 'bright',
         'cDeep', 'cMid', 'cHot', 'cGlow', 'cCore', 'cFog', 'coreDir', 'hatSeed', 'box']) u[n] = gl.getUniformLocation(prog, n);
       this.gl = gl; this.glCanvas = c; this.u = u;
       this.bloomA = document.createElement('canvas');
@@ -400,7 +406,6 @@ void main() {
         const a = Math.min(1, kRise * 1.15);
         this.shells.unshift({ t: now, a });
         if (this.shells.length > 4) this.shells.length = 4;
-        this.punch = Math.max(this.punch, a);
       }
       if (cRise > 0.3 && now - this.lastClap > 0.1) {
         this.lastClap = now;
@@ -413,8 +418,7 @@ void main() {
         this.hatSeed = (this.hatSeed + 17.31) % 1000;
       }
 
-      // Punch and jolt decay fast so each beat is its own event.
-      this.punch *= Math.exp(-dt / 0.16);
+      // The jolt decays fast so each clap is its own event.
       this.jolt *= Math.exp(-dt / 0.3);
       e.hat = ease(e.hat, h, h > e.hat ? 30 : 7, dt);
       const bass = (s[1] + s[2] + s[3]) / 300;
@@ -438,8 +442,13 @@ void main() {
       const pal = PALETTES[(params.palette | 0) % PALETTES.length];
 
       // ---- flight
-      const punch = this.punch * react;
-      const speed = params.speed * (0.45 + 0.6 * E + 0.9 * punch);
+      // Continuous flight: the cruise speed follows the bass and the section
+      // energy through a slow ease, so the music changes the speed and never
+      // lurches it. (Round 2 surged the speed and zoomed 16% on every kick:
+      // with the core and bloom swell that moved ~80% of the frame per beat.)
+      const cruiseTarget = 0.4 + 0.45 * E + 0.3 * react * e.bass;
+      this.cruise = this.cruise === undefined ? cruiseTarget : ease(this.cruise, cruiseTarget, 0.6, dt);
+      const speed = params.speed * this.cruise;
       this.z += speed * dt;
       this.clock += dt;
       const T = this.clock;
@@ -459,7 +468,7 @@ void main() {
       const upRef = [Math.sin(bank), Math.cos(bank), 0];
       const rt = norm(cross(upRef, fw));
       const up = cross(fw, rt);
-      const focal = 1.1 * (1 + 0.16 * punch);
+      const focal = 1.1;
       const cp = path(z + 5);
       const coreDir = norm(sub([cp[0], cp[1], z + 5], ro));
 
@@ -467,7 +476,7 @@ void main() {
       // Fold and cell size drift on incommensurate ~65 s and ~95 s cycles, so
       // over a minute the foam passes through visibly different structures.
       const fold = 1.08 + 0.2 * params.fold + 0.07 * Math.sin(T * 2 * Math.PI / 65) + 0.025 * Math.sin(T * 0.19)
-        + 0.05 * react * e.bass + 0.09 * react * this.jolt;
+        + 0.05 * react * e.bass + 0.05 * react * this.jolt;
       const tunR = params.width * (0.36 + 0.06 * Math.sin(T * 0.05) + 0.07 * react * e.bass + 0.03 * react * e.thump);
 
       // Each clap turns the iridescence a step round the wheel. Turning the
@@ -519,7 +528,6 @@ void main() {
       gl.uniform1f(u.tunR, tunR);
       gl.uniform4fv(u.shellD, sD);
       gl.uniform4fv(u.shellA, sA);
-      gl.uniform1f(u.punch, punch);
       gl.uniform1f(u.hat, Math.min(1, e.hat * react * 1.3));
       gl.uniform1f(u.energy, E);
       gl.uniform1f(u.glowAmt, params.glow * (0.5 + 0.8 * E + 0.6 * react * e.bass));
@@ -571,9 +579,9 @@ void main() {
       g2.globalCompositeOperation = 'lighter';
       // Bloom follows the section: calm passages get almost none, so they
       // stay rims in a dark void; the drop's bloom level is as before.
-      g2.globalAlpha = Math.min(1, 0.06 + 0.55 * E + 0.5 * punch);
+      g2.globalAlpha = Math.min(1, 0.06 + 0.55 * E);
       g2.drawImage(A, 0, 0, ctx.width, ctx.height);
-      g2.globalAlpha = Math.min(1, 0.08 + 0.75 * E + 0.55 * punch);
+      g2.globalAlpha = Math.min(1, 0.08 + 0.75 * E);
       g2.drawImage(B, 0, 0, ctx.width, ctx.height);
 
       // ---- motes: points in the tunnel, projected with the shader's camera.

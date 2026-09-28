@@ -19,15 +19,17 @@
 //      iridescent rim and a dark meniscus;
 //   5. air bubbles in the oil: clear lenses with rainbow rims and specular
 //      glints that sparkle on the hats;
-//   6. lens: bloom halo around the oil, and the glass-press ripple on the kick.
+//   6. lens: bloom halo around the oil, and the thumb-press hot spot on the kick.
 //
 // Music:
-//   kick   presses the glass: everything spreads outward from the centre,
-//          blobs swell and merge, the lamp brightens, and a ring ripple runs
-//          out through the image. Rises in a frame, gone in ~300 ms.
-//   snare  drops a new drop of dye with a white splash, and gives the dish a
-//          quick twist (a rotation, where the kick is a scale).
-//   bass   drives the swirl: blob travel speed, warp speed and twist.
+//   kick   a thumb presses the glass at one point, moving round the dish
+//          by the golden angle each beat: the oil there squashes and spreads,
+//          the thinned film lights up with a rainbow ring. The rest of the
+//          dish does not move (jolt meter: calm). Gone in ~300 ms.
+//   snare  drops a new drop of dye with a white splash, and lights the water
+//          round it in the dye's colour for a moment.
+//   bass   sets the speed of the stir: the whole dish turns continuously,
+//          and the blobs and warp travel faster.
 //   hats   shimmer the thin-film colours and fire glints on the bubbles.
 //   drop   "heat" (a slow level) raises saturation, the number of blobs, the
 //          bubbles and the bloom; the breakdown exhales into pale marbling.
@@ -51,7 +53,9 @@ uniform vec2 res;
 uniform sampler2D noiseTex;
 uniform float T;          // warp clock (bass-driven)
 uniform float press;      // kick envelope, 0-1
-uniform float kickAge;    // seconds since the last kick
+uniform vec2 thumb;       // where the kick presses, stage coords
+uniform float stir;       // the dish's slow rotation, radians
+uniform vec2 flashPos;    // the latest dye drop, dish coords
 uniform float twist;      // swirl angle at the centre, radians
 uniform float hatPh;      // thin-film phase, advanced by hats
 uniform float hatEnv;     // hat envelope 0-1
@@ -103,10 +107,17 @@ void main() {
   vec2 p = (gl_FragCoord.xy - 0.5 * res) / (0.5 * min(res.x, res.y));
   float r = length(p);
 
-  // ---- the glass press: scale outward plus a travelling ring ripple
-  float rip = 0.15 + kickAge * 2.4;
-  float wv = press * 0.07 * sin((r - rip) * 22.0) * exp(-pow((r - rip) * 3.5, 2.0));
-  vec2 pp = p / (1.0 + 0.22 * press) + (p / max(r, 1e-3)) * wv;
+  // ---- the stir: the whole dish turns slowly, so colour flows across the
+  // frame; the bass sets its speed on the JS side.
+  float cs = cos(stir), ss = sin(stir);
+  mat2 rotS = mat2(cs, ss, -ss, cs);
+  // ---- the kick: a thumb pressing the glass at one point. Near it the oil
+  // is squashed and spread (a local magnification) and the thinned film
+  // lights up; the rest of the dish does not move. A global press moved
+  // 79% of the frame on every beat (jolt meter, 2026-09-28): too pulsey.
+  vec2 tp = p - thumb;
+  float tg = press * exp(-dot(tp, tp) / 0.09);
+  vec2 pp = rotS * (p - tp * 0.45 * tg);
 
   // ---- the swirl: a twist strongest at the centre of the dish
   float a = twist * exp(-dot(pp, pp) * 0.7);
@@ -122,10 +133,11 @@ void main() {
   // ---- layer 1+2: lamp and marbled water
   float pool = 1.1 - 0.55 * smoothstep(0.35, 1.7, r);
   float vig = smoothstep(2.25, 0.85, r);
-  vec3 L = lamp * pool * vig * (1.0 + 0.6 * press);
-  // The snare tints the lamp toward the new dye for a moment: a colour
-  // event, where the kick is a brightness one.
-  L *= mix(vec3(1.0), 0.35 + 1.1 * flashCol, 0.4 * flash);
+  vec3 L = lamp * pool * vig * (1.0 + 0.02 * press + 0.7 * tg);
+  // The snare lights the water round its new drop in the dye's colour for
+  // a moment: a colour event in one place, where the kick is a squeeze.
+  vec2 fp = pp - flashPos;
+  L *= mix(vec3(1.0), 0.35 + 1.1 * flashCol, 0.55 * flash * exp(-dot(fp, fp) / 0.15));
   float mixw = smoothstep(0.3, 0.7, w2.x);
   vec3 water = mix(waterA, waterB, mixw);
   // A third, deeper pool of the first dye, so the water has three depths.
@@ -157,7 +169,7 @@ void main() {
     float a2 = clamp(body * 0.85 + front * 0.5, 0.0, 1.0);
     dye = mix(dye, dropCol[i] * (1.0 - 0.45 * front), a2);
     dyeA = max(dyeA, a2);
-    splash += exp(-age * 9.0) * exp(-dot(p - d.xy, p - d.xy) / (0.03 + d.w * d.w * 0.6));
+    splash += exp(-age * 9.0) * exp(-dot(pp - d.xy, pp - d.xy) / (0.03 + d.w * d.w * 0.6));
   }
   vec3 ground = mix(water, dye, dyeA);
 
@@ -168,7 +180,7 @@ void main() {
   for (int i = 0; i < ${NB}; i++) {
     vec4 b = blobs[i];
     vec2 d = so - b.xy;
-    float R2 = 4.0 * b.z * b.z * (1.0 + 0.35 * press);
+    float R2 = 4.0 * b.z * b.z * (1.0 + 0.5 * tg);
     float dd2 = dot(d, d);
     // Compact kernel: most blobs are nowhere near most pixels.
     if (dd2 >= R2) continue;
@@ -233,7 +245,7 @@ void main() {
     if (hx > bubbleAmt * (0.25 + clump)) continue;
     vec2 ctr = c + 0.5 + (vec2(hy, hz) - 0.5) * 0.24
              + 0.05 * vec2(sin(T * 1.3 + hw * 20.0), cos(T * 1.1 + hy * 20.0));
-    float br = (0.07 + 0.2 * hw * hw) * (1.0 + 0.2 * press);
+    float br = (0.07 + 0.2 * hw * hw);
     vec2 dv = bc - ctr;
     float dd = length(dv);
     if (dd > br * 1.2 + 2.0 * px) continue;
@@ -265,7 +277,10 @@ void main() {
   // Halo colour weighted by every group's field: the winner's colour alone
   // left a hard seam where two groups' halos met.
   vec3 hc = (oilCol[0] * f.x + oilCol[1] * f.y + oilCol[2] * f.z) / max(f.x + f.y + f.z, 1e-4);
-  proj += L * hc * halo * (0.18 + 0.7 * press + 0.15 * heat);
+  proj += L * hc * halo * (0.18 + 0.7 * tg + 0.15 * heat);
+  // The pressed film: a rainbow ring where the thumb thins the oil.
+  float tr = length(tp);
+  proj += L * film(tr * 5.0 + hatPh) * 0.8 * tg * smoothstep(0.03, 0.2, tr);
 
   vec3 bl = vec3(0.0);
   {
@@ -274,10 +289,11 @@ void main() {
     bl = wb + dye * dyeA * 0.85;
     bl = mix(bl, oc * (0.35 + 0.9 * thick) , oil);
     bl += filmC * glowEdge * (0.9 + 0.6 * hatEnv);
-    bl += hc * halo * (0.35 + 0.8 * press);
+    bl += hc * halo * (0.35 + 0.8 * tg);
+    bl += film(length(tp) * 5.0 + hatPh) * 0.35 * tg;
     bl *= 1.0 - 0.8 * iface;
     bl += bub * 0.9;
-    bl *= vig * (1.0 + 0.6 * press);
+    bl *= vig * (1.0 + 0.02 * press + 0.3 * tg);
   }
   vec3 c = mix(proj, bl, mode);
   c += splash * vec3(1.0, 0.95, 0.85) * 0.9 * vig;
@@ -363,8 +379,8 @@ void main() {
 
     gallery: {
       title: 'Oil',
-      technique: 'WebGL2 fragment shader, analytic per pixel: three immiscible groups of metaballs over domain-warped marbled water, dye-drop discs, a hashed grid of thin-film bubbles, and a glass-press ripple; smoothed value noise from one texture read per octave',
-      brief: 'A 1960s liquid light show: coloured oil and water pressed between glass on an overhead projector. Slow blobs of three oils that never mix drift, merge and split over marbled water, their edges ringed with thin-film rainbows, air bubbles glinting in them. Each kick presses the glass: the whole image spreads outward, blobs swell and merge, the lamp brightens and a ripple runs out. Each snare lets fall a drop of new dye that splashes white and blooms, and twists the dish. Bass drives the swirl; hats shimmer the iridescence and fire glints on the bubbles. The drop is lurid and fast; the breakdown exhales into pale, slow marbling.',
+      technique: 'WebGL2 fragment shader, analytic per pixel: three immiscible groups of metaballs over domain-warped marbled water, dye-drop discs, a hashed grid of thin-film bubbles, a slowly rotating dish, and a local thumb-press; smoothed value noise from one texture read per octave',
+      brief: 'A 1960s liquid light show: coloured oil and water pressed between glass on an overhead projector. Slow blobs of three oils that never mix drift, merge and split over marbled water, their edges ringed with thin-film rainbows, air bubbles glinting in them. The whole dish turns slowly, so colour flows across the frame; the bass sets how fast. Each kick is a thumb pressing the glass at one point, moving round the dish beat to beat: the oil there squashes and spreads and the thinned film lights up in a rainbow ring. Each snare lets fall a drop of new dye that splashes white, blooms, and lights the water round it in its colour. hats shimmer the iridescence and fire glints on the bubbles. The drop is lurid and fast; the breakdown exhales into pale, slow marbling.',
       lineage: [
         'Brief 05 (Joshua Light Show): oil and water between glass on an overhead projector; kick presses the glass, snare drops dye, bass swirls, hats shimmer the iridescence.',
         'Chose an analytic shader over a feedback fluid sim: advection muddies immiscible dyes toward brown and needs a decay that fights the look; analytic fields stay fresh at minute five and cost one pass.',
@@ -377,6 +393,9 @@ void main() {
         'Performance: first build was far over budget under SwiftShader. Render capped at 0.3 Mpx and scaled up (the image is soft liquid), fbm cut to 3 octaves, bubbles searched in 2x2 cells not 3x3, compact-kernel blobs and dye drops culled per pixel, drop lifetime 7 s.',
         'Longevity (96 s): palette rotation and incommensurate Lissajous paths keep every tile different; no saturation or drift.',
         'Halo coloured by all groups\' fields, removing a seam where two halos met.',
+        'Raph on batch 02 (2026-09-28): too pulsey, and wants more movement. Jolt meter before: JARRING, kickArea 0.79, ratio 2.82 (build 0.71): the global press (22% spread, lamp +60%, ripple) moved almost the whole frame each beat.',
+        'Kick made local: a thumb presses at one point (golden-angle walk round the dish), magnifying the oil there by up to ~1.8x, swelling blobs, and lighting a rainbow film ring; the lamp change is 2%. Snare lamp tint made local to its drop; its global twist removed. Flow, warp and stir take a slower bass so each kick does not surge the whole dish.',
+        'Movement: the whole dish now rotates continuously, speed set by the bass (and Swirl), so colour flows across the frame. Jolt after: CALM, kickArea 0.235, ratio 1.71 (build 0.31).',
       ],
     },
 
@@ -417,7 +436,10 @@ void main() {
       this.kickAge = 10;
       this.sinceKick = 10;
       this.sinceClap = 10;
-      this.twistImp = 0;
+      this.thumbAng = 0.7;
+      this.thumbR = 0.5;
+      this.stir = 0;
+      this.flashPos = [0, 0];
       this.hatPh = 0;
       this.hatEnv = 0;
       this.hatCount = 0;
@@ -483,7 +505,7 @@ void main() {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 
       const u = {};
-      for (const name of ['res', 'noiseTex', 'flashCol', 'flash', 'T', 'press', 'kickAge', 'twist', 'hatPh', 'hatEnv', 'hatCount',
+      for (const name of ['res', 'noiseTex', 'flashCol', 'flash', 'flashPos', 'thumb', 'stir', 'T', 'press', 'twist', 'hatPh', 'hatEnv', 'hatCount',
         'heat', 'mode', 'bubbleAmt', 'bubbleOff', 'blobs', 'drops', 'dropCol', 'oilCol', 'waterA', 'waterB', 'lamp']) {
         u[name] = gl.getUniformLocation(prog, name);
       }
@@ -507,6 +529,10 @@ void main() {
         this.press = Math.min(1, 0.35 + b0 * 0.75);
         this.sinceKick = 0;
         this.kickAge = 0;
+        // The thumb moves round the dish by the golden angle each beat, so
+        // successive presses land in different places.
+        this.thumbAng += 2.39996;
+        this.thumbR = 0.3 + 0.45 * Math.random();
         this.kickRate += 1;
       } else {
         this.press *= Math.exp(-dt / 0.15);
@@ -527,6 +553,10 @@ void main() {
 
       const bass = (sig[1] + sig[2]) / 200;
       this.bass = ease(this.bass, bass, 3, dt);
+      // The flow and stir take a slower bass, so each kick's energy in bands
+      // 1-2 does not surge the whole dish's motion (a global jolt) but the
+      // drop still runs visibly faster than the breakdown.
+      this.bassSlow = ease(this.bassSlow || 0, bass, 0.8, dt);
       this.pad = ease(this.pad, (sig[2] + sig[3] + sig[4]) / 300, 0.8, dt);
       // Heat: how much is going on, over a couple of seconds. Kicks per
       // second dominate so the drop is unmistakable and the breakdown falls.
@@ -562,7 +592,7 @@ void main() {
       this.dropCount++;
       this.flash = 1;
       this.flashCol = d.col;
-      this.twistImp += 0.45 * (Math.random() < 0.5 ? -1 : 1) * amp;
+      this.flashPos = [d.x, d.y];
     },
 
     draw(p, signals, params, ctx) {
@@ -589,16 +619,17 @@ void main() {
       this.listen(signals, dt, react);
       const press = Math.min(1.4, this.press * react);
       const bass = this.bass * react;
+      const bassSlow = this.bassSlow * react;
       const heat = this.heat;
 
       this.clock += dt;
       const spd = params.speed;
-      this.flow += dt * spd * (0.22 + 0.9 * bass + 0.25 * heat);
-      this.warpT += dt * spd * (0.05 + 0.22 * bass + 0.05 * heat);
-      this.twistImp *= Math.exp(-dt / 0.5);
+      this.flow += dt * spd * (0.22 + 0.9 * bassSlow + 0.25 * heat);
+      this.warpT += dt * spd * (0.05 + 0.22 * bassSlow + 0.05 * heat);
       this.flash *= Math.exp(-dt / 0.14);
-      const twist = params.swirl * (0.9 * Math.sin(this.clock * 0.041) + (0.4 + 1.3 * bass) * Math.sin(this.clock * 0.093 + 1.3))
-        + this.twistImp * react;
+      const twist = params.swirl * (0.9 * Math.sin(this.clock * 0.041) + (0.4 + 1.3 * bass) * Math.sin(this.clock * 0.093 + 1.3));
+      // The dish turns continuously; the bass sets how fast.
+      this.stir += dt * spd * (0.3 + 0.7 * params.swirl) * (0.035 + 0.16 * bassSlow + 0.03 * heat);
       this.bubbleOff[0] += dt * spd * (0.03 + 0.1 * bass);
       this.bubbleOff[1] += dt * spd * (0.012 * Math.sin(this.clock * 0.07));
 
@@ -656,7 +687,11 @@ void main() {
       gl.uniform2f(u.res, w, h);
       gl.uniform1f(u.T, this.warpT);
       gl.uniform1f(u.press, press);
-      gl.uniform1f(u.kickAge, this.kickAge);
+      const tx = Math.min(aspect, 1.7) * 0.8 * this.thumbR * Math.cos(this.thumbAng);
+      const ty = 0.8 * this.thumbR * Math.sin(this.thumbAng);
+      gl.uniform2f(u.thumb, tx, ty);
+      gl.uniform1f(u.stir, this.stir % (Math.PI * 2));
+      gl.uniform2f(u.flashPos, this.flashPos[0], this.flashPos[1]);
       gl.uniform1f(u.twist, twist);
       gl.uniform1f(u.hatPh, this.hatPh % 10);
       gl.uniform1f(u.hatEnv, Math.min(1, this.hatEnv * react));

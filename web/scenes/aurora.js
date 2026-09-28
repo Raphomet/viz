@@ -1,6 +1,7 @@
 // Aurora — northern lights over a still mountain lake.
 //
-// Layers, back to front: a slowly wheeling star field, two or three aurora
+// The camera travels slowly along the shore, faster when the music is
+// bigger, so the layers slide past with parallax. Layers, back to front: a slowly wheeling star field, two or three aurora
 // curtains, three silhouetted ranges with parallax (a far snow ridge, a mid
 // range, a pine treeline on the far shore), mist on the water, and the lake,
 // which is the same sky evaluated at the mirrored point after the water's
@@ -35,6 +36,10 @@
   // upscaled: the imagery is soft light, and full resolution cost ~2.5x the
   // harness's WebGL budget on SwiftShader.
   const RES = 0.65;
+  // Water moves with the camera at this rate in lake-plane units per virtual
+  // unit of travel: near water slides ~3x faster than the shore, far water
+  // slower, which is enough parallax without streaking the foreground.
+  const LAKE_PAR = 0.04;
 
   const VERT = `#version 300 es
 in vec2 pos;
@@ -47,7 +52,7 @@ uniform vec2  texX;       // x of texel 0's centre, 1 / span
 uniform vec2  res;
 uniform float unitPx;
 uniform float tw;
-uniform float camX;
+uniform float lakeX;      // camera travel, in lake-plane units
 uniform float starAng;
 uniform float hz;
 uniform float bass, kick, snare, hat, hatSeed, drop;
@@ -93,10 +98,12 @@ vec3 curtain(vec2 q, vec4 C, float pulse, vec3 top) {
   vec3 col = mix(cLow, cMid, smoothstep(0.03, 0.4, hy));
   col = mix(col, top, smoothstep(0.3, 1.0, hy));
   // Snare: the curtain flips toward the accent, strongest in its crown.
-  col = mix(col, cAccent, clamp(snare * (0.3 + 0.7 * hy), 0.0, 0.85));
-  // A kick pulse runs hot and nearly white along the lower edge.
-  col += vec3(0.5, 0.65, 0.6) * pulse * edge;
-  return col * I;
+  col = mix(col, cAccent, clamp(snare * smoothstep(0.25, 0.9, hy), 0.0, 0.8));
+  // A kick pulse runs hot and nearly white along the lower edge only: a band
+  // ~30 units tall. It used to lift the whole curtain column too, which
+  // (doubled in the lake) moved half the frame on every beat.
+  float hot = pulse * C.y * (4.0 * edge + 0.9 * exp(-max(d, 0.0) / 22.0) * step(0.0, d));
+  return col * I + vec3(0.55, 0.95, 0.85) * hot;
 }
 
 vec3 stars(vec2 q, float alt) {
@@ -190,8 +197,8 @@ void main() {
     // ---- the lake, in its own plane: Z is distance across the water.
     float d = hz - q.y;
     float Z = 900.0 / (d + 2.0);
-    float X = q.x * Z / 300.0;
-    float amb = n2(vec2(X * 0.06 + camX * 0.002, Z * 0.4 - tw * 0.3)) - 0.5;
+    float X = q.x * Z / 300.0 + lakeX;
+    float amb = n2(vec2(X * 0.06, Z * 0.4 - tw * 0.3)) - 0.5;
     float wave = 0.0, crest = 0.0;
     for (int j = 0; j < 4; j++) {
       vec4 R = rip[j];
@@ -279,13 +286,15 @@ void main() {
     gallery: {
       title: 'Aurora',
       technique: 'WebGL2 fragment shader fed by a per-column float texture computed in JS (curtain edges, fold brightness from the warp slope, rays, kick pulses, ridge lines); rotating hashed star field; a lake that re-evaluates the sky at the rippled mirror point; music detected as onsets and passed in as travelling pulses, rings and meteors',
-      brief: 'Night over a mountain lake. Curtains of light fold and drift above silhouetted ranges and a pine shore, stars wheel slowly, and the still water mirrors all of it. Each kick sends a white-hot pulse racing both ways along the curtains from a new spot and throws a ring across the lake; each snare or clap fires a shooting star and flips the curtain crowns to magenta; hats re-deal which stars glint and scatter sparks on the water; bass lifts and brightens the curtains. The drop adds a third, nearer curtain, turns the crowns violet-magenta and makes the ribbons fold faster; the breakdown exhales to a slow green veil.',
+      brief: 'Night over a mountain lake, travelling slowly along the shore: the pine treeline, mid range and far snow ridge slide past at different speeds, the water and its reflections move with them, and the music sets the travel speed (a surge in the drop, a near-glide in the breakdown). Curtains of light fold and drift overhead, and stars wheel slowly. Each kick lights a white-hot spot on one curtain\'s lower edge that races outward both ways along it, and throws a ring across the lake; each snare or clap fires a shooting star and flips the curtain crowns to magenta; hats re-deal which stars glint and scatter sparks on the water; bass lifts and brightens the curtains. Nothing global moves on the kick. The drop adds a third, nearer curtain, turns the crowns violet-magenta and makes the ribbons fold faster; the breakdown exhales to a slow green veil.',
       lineage: [
         'Brief 02 (batch 02): aurora over a lake, layered like Flyover\'s Night drive, with a legible reaction per drum.',
         'v1: everything per pixel in one shader (noise for curtain folds, rays, ridges). The whole sky was a saturated barcode of vertical stripes, the mountains glowed grey-green like fog, the kick rings melted the lake, and it cost ~4x the WebGL budget.',
         'v2: moved everything that depends only on x into a per-column RGBA16F texture computed in JS each frame; land darkened to silhouettes; ripples halved. Curtains now had darkness around them, but read as a picket fence, the stars as snow, and the breakdown stayed violet too long.',
         'v3: sparser, smaller stars on integer hashes; softer rays; faster exhale after the drop. Kick strip checked: the frame 65 ms after a kick shows a white-cyan bloom and a hot lower edge, 170 ms after it the pulse is visibly racing outward, and kick plus clap flips the crowns pink with a shooting star.',
         'v4: the drop was a wall because the curtains\' bright lower edges sat behind the mountains. Raised the curtains, lowered the ranges, and made the rays converge on a vanishing point above the frame (real aurora rays converge on the magnetic zenith): the biggest single gain, it turns the drop into a cathedral of light with depth.',
+        'Batch 02 feedback (Raph: "super cool", but too pulsey; more movement). Jolt before: kickArea 0.49 (whole curtain column plus its reflection lit on each beat, and a curtains-wide height and brightness jump). Removed every global kick term (curtain gain, height, landscape light); the pulse now only lights a ~30-unit band at the curtain\'s lower edge, with a narrower, hotter origin bloom; the snare colour flip is confined to the crowns. Jolt after: kickArea 0.19, verdict calm, and the kick still reads as a white hot spot in the frame after it.',
+        'Movement: a continuous camera travel along the shore, its speed eased from the bass and the drop (10 units/s calm, ~100 in the drop), with parallax 1.0 treeline, 0.45 mid range, 0.2 far ridge, ~0.1 curtains; the water scrolls in its own plane, so near water slides faster than the shore, and kick rings drift with it.',
         'v5: fold brightness box-filtered over ~35 units and the gaps between curtains laid out in screen space with a wider gate, to remove hard vertical cut-offs; GL layer rendered at 0.65x and upscaled to fit the budget, since the imagery is soft light.',
       ],
     },
@@ -301,6 +310,7 @@ void main() {
       this.T = 0;
       this.tw = 0;
       this.camX = 0;
+      this.speed = 10;
       this.env = { kick: 0, snare: 0, hat: 0, bass: 0, kAvg: 0, drop: 0, b4: 0, b8: 0, prevK: 0, prevS: 0, prevH: 0 };
       this.since = { kick: 9, snare: 9, hat: 9 };
       this.hatSeed = 0;
@@ -332,7 +342,7 @@ void main() {
       gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
       gl.useProgram(prog);
       const u = {};
-      for (const n of ['cols', 'texX', 'res', 'unitPx', 'tw', 'camX', 'starAng', 'hz', 'bass', 'kick', 'snare',
+      for (const n of ['cols', 'texX', 'res', 'unitPx', 'tw', 'lakeX', 'starAng', 'hz', 'bass', 'kick', 'snare',
         'hat', 'hatSeed', 'drop', 'starK', 'waterK', 'halfW', 'cLow', 'cMid', 'cTop', 'cDropTop', 'cAccent',
         'aLight', 'rip', 'met', 'metA']) {
         u[n] = gl.getUniformLocation(prog, n);
@@ -363,7 +373,7 @@ void main() {
         since.kick = 0;
         const r = Math.random;
         this.pulses.unshift({ x: (r() * 1.4 - 0.7) * halfW, age: 0, amp: kRaw,
-          lx: (r() * 2 - 1) * 22, lz: 7 + r() * 10 });
+          lx: (r() * 2 - 1) * 22 + this.camX * LAKE_PAR, lz: 7 + r() * 10 });
         this.pulses.length = Math.min(this.pulses.length, 4);
       }
       e.prevK = kRaw;
@@ -412,8 +422,8 @@ void main() {
       const N = Math.ceil((2 * (halfW + margin)) / TEX_STEP);
       if (!this.data || this.data.length !== N * ROWS * 4) this.data = new Float32Array(N * ROWS * 4);
       const D = this.data, T = this.T, camX = this.camX;
-      const bass = e.bass * push, kick = e.kick * push, drop = e.drop;
-      const g = 0.35 + 0.45 * bass + 0.4 * kick + 0.25 * drop;
+      const bass = e.bass * push, drop = e.drop;
+      const g = 0.35 + 0.45 * bass + 0.35 * drop;
       const bassH = (1 + 0.8 * bass) * params.height;
       const pulses = this.pulses;
       const nCurt = drop > 0.02 ? 3 : 2;
@@ -452,16 +462,16 @@ void main() {
             const P = pulses[j];
             const dx = Math.abs(x - P.x);
             const front = dx - P.age * 800;
-            pulse += P.amp * (Math.exp(-front * front / 2400 - P.age * 1.1)
-              + 1.1 * Math.exp(-dx * dx / 18000 - P.age / 0.15));
+            pulse += P.amp * (Math.exp(-front * front / 1800 - P.age * 1.1)
+              + 2.0 * Math.exp(-dx * dx / 5000 - P.age / 0.18));
           }
           pulse *= push;
           const o = row + k * 4;
           D[o] = y0;
           fg[k] = foldGain;
-          D[o + 1] = lit * gain * (1 + 2.2 * pulse);
+          D[o + 1] = lit * gain;
           D[o + 2] = rays;
-          D[o + 3] = C.H * bassH * (1 + 0.6 * pulse);
+          D[o + 3] = C.H * bassH;
           if (ci === 0) D[3 * N * 4 + k * 4] = pulse;
         }
         // A fold's brightness spike, taken raw, reads as a hard vertical
@@ -527,7 +537,12 @@ void main() {
 
       this.T += dt * (0.3 + 0.9 * e.bass * push + 0.9 * e.drop) * params.dance;
       this.tw += dt;
-      this.camX += dt * 7 * params.drift;
+      // Travel along the shore: the music sets the speed, never jerks it. The
+      // speed eases over ~1.5 s, so the drop surges forward and the breakdown
+      // glides to a near stop.
+      const cruise = params.drift * (10 + 45 * e.bass * push + 55 * e.drop);
+      this.speed = ease(this.speed, cruise, 0.7, dt);
+      this.camX += dt * this.speed;
 
       const w = Math.round(p.width * p.pixelDensity() * RES);
       const h = Math.round(p.height * p.pixelDensity() * RES);
@@ -554,7 +569,7 @@ void main() {
       }
 
       const pal = PALETTES[(params.palette | 0) % PALETTES.length].c;
-      const lightK = 0.35 + 0.5 * e.bass * push + 0.4 * e.kick * push + 0.4 * e.drop;
+      const lightK = 0.35 + 0.5 * e.bass * push + 0.4 * e.drop;
       const aLight = pal[0].map((c, i) => (c * (1 - 0.35 * e.drop) + pal[3][i] * 0.35 * e.drop) * lightK);
 
       gl.viewport(0, 0, w, h);
@@ -562,7 +577,7 @@ void main() {
       gl.uniform2f(u.res, w, h);
       gl.uniform1f(u.unitPx, Math.min(w, h) / 600);
       gl.uniform1f(u.tw, this.tw % 3000);
-      gl.uniform1f(u.camX, this.camX % 20000);
+      gl.uniform1f(u.lakeX, this.camX * LAKE_PAR);
       gl.uniform1f(u.starAng, (this.tw * 0.006 * params.drift) % (Math.PI * 2));
       gl.uniform1f(u.hz, HZ);
       gl.uniform1f(u.halfW, halfW);

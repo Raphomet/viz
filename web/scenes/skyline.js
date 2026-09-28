@@ -1,11 +1,12 @@
-// Skyline — fireworks over a city at night, seen from across a river.
+// Skyline — fireworks over a city at night, seen from a boat drifting down
+// the river opposite.
 //
 // Layers, back to front: a dusk gradient sky with a few stars; drifting smoke
 // left by every shell, lit from below by the bass and by fresh bursts; the
 // fireworks themselves (shells, stars, glitter sparks) on a persistence
 // buffer so every star draws its own trail; a soft bloom of light where each
-// shell breaks; the city silhouette with lit windows and blinking aviation
-// lights; and the river, a rippled, squashed reflection of everything above
+// shell breaks; the city in three parallax layers (far haze, downtown, the
+// waterfront) sliding past as the boat drifts; and the river, a rippled, squashed reflection of everything above
 // it with glints on the water.
 //
 // The music:
@@ -13,19 +14,26 @@
 //          flight (a white-hot core, a bloom of its colour, stars flung out)
 //          and launches the next ones, which rise for one beat interval so
 //          they arrive exactly on the following kick. The burst IS the beat.
-//          Every older star dips at the same moment and swells back (a
-//          sidechain pump), so the new burst stands clear of a full sky.
+//          The kick stays local: one burst carries a bloom, the rest of
+//          the sky is left alone (see the jolt note below).
 //   clap   a salute: a row of white strobe pops ripples across the sky, left
 //          to right, and the water flashes with glints. The build's snare
 //          roll fires crackling comets up instead, a rising barrage.
 //   bass   lifts the smoke glow and the horizon; ripples the river harder.
 //   hats   strobe the glitter stars, throw sparks off every glitter shell,
 //          twinkle the sky, flicker the city's windows and glint the water.
+//   drift  the boat's speed follows kick rate, bass and pad, eased over
+//          seconds: the drop carries the city past faster, the breakdown
+//          slows it. Speed changes, never a jerk.
 //   drop   a finale: each kick sends up two to four shells and every fourth
 //          kick a fan of palms. With no kick the show exhales into slow gold
 //          willows that hang and drip.
 //
 // Craft notes:
+// - Jolt (2026-09-28, Raph: batch 02 "too pulsey"): nothing global moves on
+//   the kick. No sidechain dip of the older stars, no flash in the horizon,
+//   smoke or water, and only the lead burst of each kick gets a bloom. A
+//   new burst stands out by burning white-hot and thick for 0.16 s instead.
 // - Stars share colour and age per burst, so a burst is one stroke call no
 //   matter how many stars it has. Trails come from fading the buffer, not
 //   from per-star history.
@@ -42,6 +50,7 @@
 (function () {
   const TAU = Math.PI * 2;
   const MAX_SPARKS = 7000;
+  const SMOKE = 0.6;
 
   function clamp(x, a, b) { return x < a ? a : x > b ? b : x; }
   function ease(cur, target, rate, dt) { return cur + (target - cur) * (1 - Math.exp(-rate * dt)); }
@@ -125,7 +134,7 @@
       { key: 'size', label: 'Finale size', type: 'range', min: 0.3, max: 2, default: 1, step: 0.01 },
       { key: 'react', label: 'Reaction strength', type: 'range', min: 0, max: 2, default: 1, step: 0.01 },
       { key: 'trails', label: 'Trails', type: 'range', min: 0, max: 1, default: 0.6, step: 0.01 },
-      { key: 'smoke', label: 'Smoke', type: 'range', min: 0, max: 1, default: 0.6, step: 0.01 },
+      { key: 'drift', label: 'Drift speed', type: 'range', min: 0, max: 3, default: 1, step: 0.01 },
     ],
 
     actions: [
@@ -134,8 +143,8 @@
 
     gallery: {
       title: 'Skyline',
-      technique: 'Canvas 2D: particle fireworks on a persistence buffer composited additively, quarter-resolution sprite blooms, lit smoke and horizon glow, a procedurally built skyline, and a river rebuilt from those layers at half resolution and drawn back in rippled strips',
-      brief: 'Fireworks over a city across a river. Shells are timed to the kick: each beat breaks every shell in flight with a white-hot core and a bloom of colour, and launches the next, which rises for exactly one beat, while every older star dips and swells back like a sidechained mix. The clap fires a salute, a row of white strobe pops rippling across the sky with glints on the water; hats strobe the glitter, flicker the windows and twinkle the sky; the bass lights the smoke and the horizon from below. The drop is a finale of multiple shells per beat and fans of palms; the breakdown exhales into slow gold willows. Stars change colour as they fall, the river doubles everything, and a Mirror symmetry turns the show into a slow kaleidoscope.',
+      technique: 'Canvas 2D: three wrapping parallax skyline layers scrolled by a music-driven drift, particle fireworks on a persistence buffer composited additively, quarter-resolution sprite blooms, lit smoke and horizon glow, a procedurally built skyline, and a river rebuilt from those layers at half resolution and drawn back in rippled strips',
+      brief: 'Fireworks over a city across a river. Shells are timed to the kick: each beat breaks every shell in flight with a white-hot core and a bloom of colour, and launches the next, which rises for exactly one beat; only that one place in the sky lights up. The clap fires a salute, a row of white strobe pops rippling across the sky with glints on the water; hats strobe the glitter, flicker the windows and twinkle the sky; the bass lights the smoke and the horizon from below. The drop is a finale of multiple shells per beat and fans of palms; the breakdown exhales into slow gold willows. All the while the view drifts downriver, the waterfront, downtown and far city sliding past at different speeds with their reflections, faster in the drop and slower in the breakdown. Stars change colour as they fall, the river doubles everything, and a Mirror symmetry turns the show into a slow kaleidoscope.',
       lineage: [
         'Brief 03 (batch 02): dusky sky, fireworks with gravity, drag, glitter and smoke, a skyline with lit windows, the river reflecting everything; kicks launch, the snare bursts, hats flicker windows, bass lifts smoke, the drop is a finale.',
         'Timing decision: a launch is not a punch (a comet leaving the ground is small and the eye does not catch its start), so shells launched on one kick rise for one estimated beat interval and are broken by the next. Every kick is a burst; the launch is the anticipation. With no kick for a second, shells fall back to rising on their own and breaking at the apex, which is what makes the breakdown read as an exhale.',
@@ -145,6 +154,8 @@
         'Render 2: the drop sky became a gold-white wall (gold embers from every chrysanthemum) and the salute row was lost in it. Fewer shells per kick, fewer embers, and the salute moved down to the rooftops, where kick shells never break: kick high, clap low, and the towers stand backlit on every clap. Willows rebuilt as near-still drip sparks so a strand traces the star\'s whole path.',
         'Kick strip on a dense finale: the new burst was visible but competed with the sky full of older stars. Added a sidechain duck: on each kick every star older than 0.1 s dips about 45% and recovers over ~0.2 s, so the sky pumps with the kick and the fresh burst stands clear.',
         'Render 3 (full size, and square with Mirror): full size read well; Mirror in a square blew out to white, since everything soft was drawn twice over a narrow sky. Mirror now keeps shells to the left half (the mirror supplies the right), sends up fewer, and halves the soft light; shells shrink on narrow stages. Stars switched from stroked segments to runs of squares after profiling showed stroking was most of the frame.',
+        'Batch 02 feedback (2026-09-28): "too pulsey", and wanted more movement. Jolt meter before: kickArea 0.44, ratio 2.24, noticeable; the heat map lit most of the sky and the water on every kick (the sidechain dip, two or three big blooms, flash-driven horizon, smoke and water glints). Removed the dip and every flash-driven global term, shrank the blooms and gave only one burst per kick a bloom, and made new bursts stand out by burning white-hot longer and thicker. The salute glint on the water is halved. After: kickArea 0.13, ratio 1.47, calm, and the heat map shows the kick as one or two hot spots plus the salute\'s row of dots.',
+        'Movement: the city is rebuilt as three wrapping layers (far haze 2 stages wide, downtown 2.5 with two tall clusters per lap, waterfront 1.5) scrolled at 0.18 / 0.42 / 1 of a drift whose speed follows kick rate, bass and pad, eased over about three seconds. The river is rebuilt from the scrolled layers, so the reflections follow. Drift speed replaces the Smoke slider (smoke fixed at 0.6) to keep eight controls.',
       ],
     },
 
@@ -172,7 +183,7 @@
       this.beat = 0.484;
       this.kickCount = 0;
       this.energy = 0; this.bass = 0; this.pad = 0; this.hat = 0; this.glint = 0;
-      this.flash = 0; this.flashHue = 40; this.duck = 0;
+      this.flash = 0; this.flashHue = 40; this.lastBloom = -10; this.cam = 0; this.speed = 8;
       this.autoTimer = 0.8;
       this.hue = 330 * Math.random();
       this.spread = Math.random();
@@ -262,109 +273,134 @@
       }
     },
 
-    // A skyline that belongs to the stage: a denser, taller downtown off
-    // centre, lower blocks at the edges, a far layer in haze behind it.
+    // The city in three wrapping layers that slide past at different
+    // speeds, as seen from a boat drifting down the river: a far layer in
+    // haze, downtown (two tall clusters per lap, lit windows, beacons) and
+    // a low waterfront with the promenade lamps. Each layer is one canvas a
+    // few stages wide; buildings that cross its seam are drawn at both ends
+    // so the lap is seamless.
     buildCity(W, H) {
       const sky = SKIES[this.skyMode] || SKIES[0];
       const r = mulberry(1234);
       const yW = this.yW;
-      const [c, g] = this.canvas(W, yW + 1);
-      const flick = [];
-      const beacons = [];
-      const lamps = [];
-      const core = W * (0.38 + 0.1 * r());
+      const top = Math.max(0, Math.floor(yW - yW * 0.5 - 90));
+      this.cityTop = top;
+      const bandH = yW + 1 - top;
 
-      const layer = (far) => {
-        let x = -20;
-        g.fillStyle = far ? sky.far : sky.near;
-        const rects = [];
-        while (x < W + 20) {
-          const w = far ? 8 + r() * 22 : 14 + r() * 34;
-          const d = Math.abs(x + w / 2 - core) / W;
-          // Downtown is a cluster; the rest of the bank is low, so the sky
-          // keeps two thirds of the stage for the show.
-          const tall = Math.exp(-d * d * 22);
-          let h = (far ? 30 : 14) + r() * (far ? 40 : 34) + tall * (far ? 120 : 110) * (0.3 + r());
-          if (!far && r() < 0.05) h += 40 + r() * 40;   // a landmark tower
+      const mkLayer = (tw) => {
+        const c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(tw * this.k));
+        c.height = Math.max(1, Math.round(bandH * this.k));
+        const g = c.getContext('2d');
+        g.setTransform(this.k, 0, 0, this.k, 0, -top * this.k);
+        return { c, g, tw };
+      };
+      // Distance around the lap, for clusters that wrap.
+      const wrapD = (x, cx, tw) => { const d = Math.abs(x - cx) % tw; return Math.min(d, tw - d); };
+
+      const build = (L, spec) => {
+        const { g, tw } = L;
+        const list = [];
+        let x = 0;
+        while (x < tw) {
+          const w = spec.w0 + r() * spec.w1;
+          let tall = 0;
+          for (const cx of spec.clusters) { const d = wrapD(x + w / 2, cx * tw, tw) / W; tall = Math.max(tall, Math.exp(-d * d * 22)); }
+          let h = spec.h0 + r() * spec.h1 + tall * spec.hc * (0.3 + r());
+          if (spec.landmarks && r() < 0.05) h += 40 + r() * 40;
           h = Math.min(h, yW * 0.5);
-          const top = yW - h;
-          g.beginPath();
-          const kind = r();
-          if (kind < 0.18 && w > 22) {
-            // setback tower
-            const inset = w * 0.2;
-            g.rect(x, top + h * 0.25, w, h);
-            g.rect(x + inset, top, w - inset * 2, h * 0.3);
-          } else if (kind < 0.3) {
-            // spire
-            g.rect(x, top, w, h);
-            g.moveTo(x + w * 0.3, top); g.lineTo(x + w / 2, top - 18 - r() * 30); g.lineTo(x + w * 0.7, top);
-          } else if (kind < 0.38) {
-            // slanted crown
-            g.moveTo(x, yW); g.lineTo(x, top + 10); g.lineTo(x + w, top - 8); g.lineTo(x + w, yW);
-          } else {
-            g.rect(x, top, w, h);
-          }
-          g.fill();
-          if (!far && (h > 150 || kind < 0.3) && r() < 0.8) {
-            const ax = x + w / 2;
-            const ah = 8 + r() * 22;
-            g.fillRect(ax - 0.5, top - ah - (kind < 0.3 && kind >= 0.18 ? 40 : 0), 1, ah + 2);
-            beacons.push({ x: ax, y: top - ah - (kind < 0.3 && kind >= 0.18 ? 40 : 0), ph: r() * TAU });
-          }
-          rects.push({ x, w, top: kind < 0.18 && w > 22 ? top + h * 0.25 : top + 10, far });
-          x += w + (far ? r() * 4 : (r() < 0.2 ? 3 + r() * 10 : 0));
+          list.push({ x, w, h, kind: r(), seed: (r() * 1e9) | 0, gap: 0 });
+          x += w + (r() < spec.gapP ? 3 + r() * spec.gapW : 0);
         }
-        return rects;
+        const beacons = [], flick = [], lamps = [];
+        for (const pass of [0, 1]) {         // 0: silhouettes, 1: windows over them
+          for (const bd of list) {
+            for (const off of bd.x + bd.w > tw ? [0, -tw] : [0]) {
+              const rr = mulberry(bd.seed);
+              const x0 = bd.x + off, w = bd.w, h = bd.h, t0 = yW - h;
+              const setback = bd.kind < 0.18 && w > 22, spire = !setback && bd.kind < 0.3;
+              if (pass === 0) {
+                g.fillStyle = spec.color;
+                g.beginPath();
+                if (setback) { const i = w * 0.2; g.rect(x0, t0 + h * 0.25, w, h); g.rect(x0 + i, t0, w - 2 * i, h * 0.3); }
+                else if (spire) { g.rect(x0, t0, w, h); g.moveTo(x0 + w * 0.3, t0); g.lineTo(x0 + w / 2, t0 - 18 - rr() * 30); g.lineTo(x0 + w * 0.7, t0); }
+                else if (bd.kind < 0.38 && spec.slants) { g.moveTo(x0, yW); g.lineTo(x0, t0 + 10); g.lineTo(x0 + w, t0 - 8); g.lineTo(x0 + w, yW); }
+                else g.rect(x0, t0, w, h);
+                g.fill();
+                if (spec.beacons && (h > 150 || spire) && rr() < 0.8) {
+                  const ah = 8 + rr() * 22, ay = t0 - ah - (spire ? 40 : 0);
+                  g.fillRect(x0 + w / 2 - 0.5, ay, 1, t0 - ay + 2);
+                  if (off === 0) beacons.push({ x: bd.x + w / 2, y: ay, ph: rr() * TAU });
+                }
+                continue;
+              }
+              if (!spec.windows) continue;
+              const wtop = setback ? t0 + h * 0.25 : t0 + 10;
+              const cols = Math.max(1, Math.floor((w - 4) / 4.5));
+              const rows = Math.floor((yW - wtop - spec.floorGap) / 6);
+              const office = rr() < 0.35;
+              const density = spec.windows * (0.05 + 0.3 * rr() * rr());
+              for (let j = 0; j < rows; j++) {
+                const lit = rr() < 0.25 ? 0.75 : density;
+                for (let i = 0; i < cols; i++) {
+                  const on = rr() <= lit, fl = rr() < 0.25, a = 0.3 + 0.5 * rr(), ci = (rr() * 3) | 0;
+                  if (!on) continue;
+                  const wx = x0 + 3 + i * 4.5, wy = wtop + 5 + j * 6;
+                  if (fl && spec.flicker) { if (off === 0) flick.push({ x: bd.x + 3 + i * 4.5, y: wy, cool: office, on: rr() < 0.5 }); continue; }
+                  g.globalAlpha = a;
+                  g.fillStyle = office ? ['#bfe4ff', '#9fd0ff', '#e8f4ff'][ci] : ['#ffcf7a', '#ffb65c', '#ffe3a8'][ci];
+                  g.fillRect(wx, wy, 1.8, 2.6);
+                }
+              }
+              g.globalAlpha = 1;
+            }
+          }
+        }
+        if (spec.lamps) for (let lx = 4 + r() * 6; lx < tw - 10; lx += 14 + r() * 6) lamps.push({ x: lx, ph: r() * TAU });
+        return { beacons, flick, lamps };
       };
 
-      layer(true);
-      // Haze between the layers so the far city sits back.
-      const hz = g.createLinearGradient(0, yW - 140, 0, yW);
+      const far = mkLayer(W * 2);
+      build(far, { w0: 8, w1: 22, h0: 30, h1: 40, hc: 120, clusters: [0.2, 0.62], color: sky.far, gapP: 1, gapW: 1, floorGap: 6 });
+      // Haze over the far layer so it sits back.
+      const hz = far.g.createLinearGradient(0, yW - 140, 0, yW);
       hz.addColorStop(0, hsl(sky.glow, 0));
       hz.addColorStop(1, hsl(sky.glow, 0.18));
-      g.fillStyle = hz;
-      g.fillRect(0, yW - 140, W, 140);
-      const near = layer(false);
-      // A continuous waterfront of low blocks, so gaps between towers never
-      // show the bright horizon as slits running down to the water.
-      g.fillStyle = sky.near;
-      g.fillRect(0, yW - 12, W, 13);
+      far.g.fillStyle = hz;
+      far.g.fillRect(0, yW - 140, far.tw, 141);
 
-      // Windows: most are baked at a steady glow; a share is kept out to
-      // flicker with the hats. Lit windows come in floors and runs, the way
-      // an evening office tower is lit, not as a uniform speckle.
-      const warm = ['#ffcf7a', '#ffb65c', '#ffe3a8'];
-      const cool = ['#bfe4ff', '#9fd0ff', '#e8f4ff'];
-      for (const b of near) {
-        const cols = Math.max(1, Math.floor((b.w - 4) / 4.5));
-        const rows = Math.floor((yW - b.top - 6) / 6);
-        const office = r() < 0.35;
-        const density = 0.05 + 0.3 * r() * r();
-        for (let j = 0; j < rows; j++) {
-          const floorLit = r() < 0.25 ? 0.75 : density;
-          for (let i = 0; i < cols; i++) {
-            if (r() > floorLit) continue;
-            const wx = b.x + 3 + i * 4.5, wy = b.top + 5 + j * 6;
-            if (wx > W + 5 || wx < -5) continue;
-            const col = office ? cool[(r() * 3) | 0] : warm[(r() * 3) | 0];
-            if (r() < 0.25) { flick.push({ x: wx, y: wy, cool: office, on: r() < 0.5 }); continue; }
-            g.globalAlpha = 0.3 + 0.5 * r();
-            g.fillStyle = col;
-            g.fillRect(wx, wy, 1.8, 2.6);
-          }
-        }
-      }
-      g.globalAlpha = 1;
-      // Promenade lamps along the far bank, just above the water.
-      g.fillStyle = sky.near;
-      g.fillRect(0, yW - 3, W, 3);
-      for (let x = 4 + r() * 6; x < W; x += 14 + r() * 6) lamps.push({ x, ph: r() * TAU });
+      const down = mkLayer(W * 2.5);
+      const dt = build(down, { w0: 14, w1: 34, h0: 26, h1: 34, hc: 120, clusters: [0.28, 0.74], landmarks: true, slants: true,
+        color: sky.near, gapP: 0.2, gapW: 10, beacons: true, windows: 1, flicker: true, floorGap: 22 });
 
-      this.cityC = c;
-      this.flick = flick;
-      this.beacons = beacons;
-      this.lamps = lamps;
+      // The waterfront passes fastest and hides the bottom of downtown: warehouses,
+      // low blocks, and the promenade.
+      const front = mkLayer(W * 1.5);
+      const ft = build(front, { w0: 18, w1: 50, h0: 8, h1: 22, hc: 0, clusters: [], color: sky.near, gapP: 0.15, gapW: 6,
+        windows: 0.6, floorGap: 4, lamps: true });
+      front.g.fillStyle = sky.near;
+      front.g.fillRect(0, yW - 4, front.tw, 5);
+
+      this.layers = [
+        { L: far, f: 0.18 }, { L: down, f: 0.42 }, { L: front, f: 1 },
+      ];
+      this.flick = dt.flick;
+      this.beacons = dt.beacons;
+      this.lamps = ft.lamps;
+      this.downTw = down.tw; this.frontTw = front.tw;
+    },
+
+    // Scroll offset of a layer: how far the boat has drifted, times its parallax.
+    layerOff(f, tw) { const o = (this.cam * f) % tw; return o < 0 ? o + tw : o; },
+
+    drawCity(g, afterDowntown) {
+      const W = this.W, top = this.cityTop, bh = this.yW + 1 - top;
+      this.layers.forEach(({ L, f }, i) => {
+        const o = this.layerOff(f, L.tw);
+        g.drawImage(L.c, -o, top, L.tw, bh);
+        if (L.tw - o < W) g.drawImage(L.c, L.tw - o, top, L.tw, bh);
+        if (i === 1 && afterDowntown) afterDowntown();
+      });
     },
 
     buildSprites() {
@@ -433,7 +469,6 @@
       const gap = t - this.lastKick;
       if (gap > 0.3 && gap < 0.9) this.beat = ease(this.beat, gap, 3, 1);
       this.lastKick = t;
-      this.duck = 1;
       this.kickTimes.push(t);
       this.kickCount++;
 
@@ -624,8 +659,12 @@
       this.bursts.push(b);
 
       if (kind !== 'mini') {
-        const big = kind === 'pop' ? 0.7 : 1;
-        this.blooms.push({ x, y, born: t, R: R * (kind === 'pop' ? 2.4 : 1.9), h: colA[0], s: colA[1], k: strength * big });
+        // One bloom per kick carries the punch; the others break without
+        // one, so a finale kick lights one place, not the whole sky.
+        const lead = t - this.lastBloom > 0.1;
+        if (lead) this.lastBloom = t;
+        const big = kind === 'pop' ? 0.45 : lead ? 1 : 0.3;
+        this.blooms.push({ x, y, born: t, R: R * (kind === 'pop' ? 1.2 : 1.05), h: colA[0], s: colA[1], k: strength * big });
         this.flash = Math.min(1.5, this.flash + 0.55 * strength * big);
         this.flashHue = colA[0];
       }
@@ -723,7 +762,6 @@
       this.puffs = this.puffs.filter((s) => t - s.born < s.life);
       this.blooms = this.blooms.filter((b) => t - b.born < 2.5);
       this.flash *= Math.exp(-dt / 0.22);
-      this.duck *= Math.exp(-dt / 0.16);
     },
 
     crossSplit(b, i, params) {
@@ -802,7 +840,6 @@
       g.globalCompositeOperation = 'lighter';
       g.lineCap = 'butt';
 
-      const duckK = 1 - clamp(0.45 * this.duck * params.react, 0, 0.7);
       this.twice(g, mirror, () => {
         // Shells: a hot gold streak.
         g.lineWidth = 2;
@@ -819,13 +856,9 @@
             col = m >= 1 ? b.cb : [b.ca[0] + (((b.cb[0] - b.ca[0] + 540) % 360) - 180) * m,
               b.ca[1] + (b.cb[1] - b.ca[1]) * m, b.ca[2] + (b.cb[2] - b.ca[2]) * m];
           }
-          const hot = clamp(1 - age / 0.09, 0, 1);    // white-hot for the first moments
-          let a = f < 0.6 ? 1 : clamp(1 - (f - 0.6) / 0.5, 0.15, 1);
-          // Sidechain: on the kick every older star dips and swells back,
-          // so the new burst stands clear of a busy finale sky, and the
-          // whole show pumps the way the mix does.
-          if (age > 0.1) a *= duckK;
-          const w = b.width * (1 + hot * 0.6);
+          const hot = clamp(1 - age / 0.16, 0, 1);    // white-hot for the first moments: the new burst outshines the sky
+          const a = f < 0.6 ? 1 : clamp(1 - (f - 0.6) / 0.5, 0.15, 1);
+          const w = b.width * (1 + hot * 0.9);
           const blink = b.strobe ? 0.3 + 0.7 * this.hat : 1;
           this.drawStars(g, b, b.np, b.n, hsl(col, a, hot), w, age, blink);
           if (b.np) this.drawStars(g, b, 0, b.np, hsl(b.cp, a, hot), w, age, 1);
@@ -836,7 +869,6 @@
         // they fade without a style change per spark.
         const sz = 1.1;
         const on = 0.3 + 0.7 * this.hat;
-        g.globalAlpha = duckK;
         const pass = (kind, style, young, size, strobe) => {
           g.fillStyle = style;
           for (let i = 0; i < MAX_SPARKS; i++) {
@@ -872,11 +904,11 @@
 
       // Horizon glow: bass and bursts light the haze from below.
       lg.globalCompositeOperation = 'lighter';
-      lg.globalAlpha = clamp(0.1 + (0.55 * this.bass + 0.3 * this.pad) * react + 0.3 * this.flash * react, 0, 1);
+      lg.globalAlpha = clamp(0.1 + (0.55 * this.bass + 0.3 * this.pad) * react, 0, 1);
       lg.drawImage(this.glowC, 0, yW * 0.3, W, yW * 0.7 + 1);
 
-      const smoke = params.smoke;
-      const lit = clamp((0.1 + 0.8 * this.bass + 0.5 * this.pad) * react + 0.35 * this.flash * react, 0, 1.4);
+      const smoke = SMOKE;
+      const lit = clamp((0.1 + 0.8 * this.bass + 0.5 * this.pad) * react, 0, 1.4);
       // Mirrored, everything soft is drawn twice over the same sky.
       const dim = mirror ? 0.55 : 1;
       const draw = () => {
@@ -894,10 +926,10 @@
         // Blooms: the punch of each break, then the cloud of light it leaves.
         for (const b of this.blooms) {
           const age = t - b.born;
-          const punch = Math.exp(-age / 0.15);
-          const cloud = 0.1 * Math.exp(-age / 0.9);
-          const a = clamp((0.55 * punch * react + cloud) * b.k * dim, 0, 1);
-          const r = b.R * (0.75 + 0.5 * (1 - punch));
+          const punch = Math.exp(-age / 0.14);
+          const cloud = 0.1 * Math.exp(-age / 1.2);
+          const a = clamp((0.45 * punch * react + cloud) * b.k * dim, 0, 1);
+          const r = b.R * (0.8 + 0.5 * (1 - punch));
           lg.globalAlpha = a;
           lg.drawImage(this.glow(b.h, b.s), b.x - r, b.y - r, r * 2, r * 2);
         }
@@ -932,6 +964,12 @@
       this.hue = (this.hue + dt * (1.2 + 3 * this.energy)) % 360;
 
       this.listen(signals, dt, params);
+      // The boat drifts downriver. Speed, in waterfront units a second,
+      // follows the music but eases over seconds, so the drop pushes the
+      // city past faster and the breakdown slows it, without a single jerk.
+      const want = params.drift * (8 + 34 * this.energy + 14 * this.bass + 6 * this.pad);
+      this.speed = ease(this.speed, want, 0.35, dt);
+      this.cam += this.speed * dt;
       this.step(dt, params);
       this.drawFx(dt, params, mirror);
       this.drawSoft(t, params, react, mirror);
@@ -962,33 +1000,44 @@
         for (const b of this.blooms) {
           const age = t - b.born;
           if (age > 0.25) continue;
-          const c = 18 + 36 * b.k * react;
+          const c = 10 + 18 * b.k * react;
           g.globalAlpha = clamp(Math.exp(-age / 0.06) * b.k * (0.5 + 0.5 * react), 0, 1);
           g.drawImage(this.coreSprite, b.x - c, b.y - c, c * 2, c * 2);
         }
       });
 
-      // 5. City.
+      // 5. City, sliding past.
       g.globalCompositeOperation = 'source-over';
       g.globalAlpha = 1;
-      g.drawImage(this.cityC, 0, 0, W, yW + 1);
-      // Windows that flicker with the hats.
-      g.globalAlpha = 0.9;
-      g.fillStyle = '#ffd488';
-      for (const w of this.flick) if (w.on && !w.cool) g.fillRect(w.x, w.y, 1.8, 2.6);
-      g.fillStyle = '#cfe8ff';
-      for (const w of this.flick) if (w.on && w.cool) g.fillRect(w.x, w.y, 1.8, 2.6);
-      // Promenade lamps and aviation beacons.
+      this.drawCity(g, () => {
+        // Downtown's extras ride with downtown, under the waterfront.
+        const o = this.layerOff(this.layers[1].f, this.downTw), tw = this.downTw;
+        const sx = (x) => { let v = x - o; if (v < -10) v += tw; return v; };
+        g.globalAlpha = 0.9;
+        g.fillStyle = '#ffd488';
+        for (const w of this.flick) if (w.on && !w.cool) { const x = sx(w.x); if (x < W + 4) g.fillRect(x, w.y, 1.8, 2.6); }
+        g.fillStyle = '#cfe8ff';
+        for (const w of this.flick) if (w.on && w.cool) { const x = sx(w.x); if (x < W + 4) g.fillRect(x, w.y, 1.8, 2.6); }
+        g.globalCompositeOperation = 'lighter';
+        const red = this.glow(0, 100);
+        for (const bcn of this.beacons) {
+          const x = sx(bcn.x);
+          if (x > W + 6) continue;
+          g.globalAlpha = Math.sin(t * 3.2 + bcn.ph) > 0.55 ? 1 : 0.08;
+          g.drawImage(red, x - 5, bcn.y - 5, 10, 10);
+        }
+        g.globalCompositeOperation = 'source-over';
+        g.globalAlpha = 1;
+      });
+      // Promenade lamps on the waterfront.
       g.globalCompositeOperation = 'lighter';
       const lampSprite = this.glow(35, 90);
+      const lo = this.layerOff(1, this.frontTw);
       for (const l of this.lamps) {
+        let x = l.x - lo; if (x < -10) x += this.frontTw;
+        if (x > W + 6) continue;
         g.globalAlpha = 0.45 + 0.1 * Math.sin(t * 2 + l.ph);
-        g.drawImage(lampSprite, l.x - 5, yW - 9, 10, 10);
-      }
-      const red = this.glow(0, 100);
-      for (const bcn of this.beacons) {
-        g.globalAlpha = Math.sin(t * 3.2 + bcn.ph) > 0.55 ? 1 : 0.08;
-        g.drawImage(red, bcn.x - 5, bcn.y - 5, 10, 10);
+        g.drawImage(lampSprite, x - 5, yW - 9, 10, 10);
       }
 
       // 6. River.
@@ -1014,7 +1063,7 @@
       rg.drawImage(this.fx, 0, 0, this.fx.width, yW * this.k, 0, 0, W, yW);
       rg.drawImage(this.soft, 0, 0, this.soft.width, yW * this.qk, 0, 0, W, yW);
       rg.globalCompositeOperation = 'source-over';
-      rg.drawImage(this.cityC, 0, 0, W, yW + 1);
+      this.drawCity(rg);
       rg.setTransform(1, 0, 0, 1, 0, 0);
 
       // Strips with a ripple that grows toward the viewer. Opaque and
@@ -1042,7 +1091,7 @@
       g.fillRect(0, yW, W, waterH + 1);
 
       // Glints: the hats and the salute catch the water.
-      const gl = clamp((this.hat * 0.45 + this.glint + this.flash * 0.25) * react, 0, 1);
+      const gl = clamp((this.hat * 0.45 + this.glint * 0.5) * react, 0, 1);
       g.globalCompositeOperation = 'lighter';
       if (gl > 0.03) {
         const r = mulberry((Math.floor(t * 12) * 7919) >>> 0);
@@ -1058,12 +1107,15 @@
       // Lamp reflections: broken dashes that wander, as on moving water. A
       // solid streak per lamp read as a comb of vertical lines.
       g.fillStyle = 'rgba(255,190,110,1)';
+      const lo = this.layerOff(1, this.frontTw);
       for (const l of this.lamps) {
+        let lx = l.x - lo; if (lx < -10) lx += this.frontTw;
+        if (lx > W + 6) continue;
         for (let j = 0; j < 5; j++) {
           const y = yW + 2 + j * j * 2.2 + 2 * Math.sin(t * 1.9 + l.ph + j);
           g.globalAlpha = (0.2 - j * 0.035) * (0.6 + 0.4 * Math.sin(t * 3.1 + l.ph * 2 + j * 1.7));
           const wob = Math.sin(t * 2.4 + l.ph + j * 0.9) * (1 + j);
-          g.fillRect(l.x - 1 - j * 0.3 + wob, y, 2 + j * 0.6, 1.2 + j * 0.3);
+          g.fillRect(lx - 1 - j * 0.3 + wob, y, 2 + j * 0.6, 1.2 + j * 0.3);
         }
       }
     },

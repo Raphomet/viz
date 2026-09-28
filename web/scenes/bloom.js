@@ -66,6 +66,14 @@
       ground: [2, 8, 12], moon: [220, 248, 255], mist: [60, 140, 170], hues: [184, 206, 150, 262, 318], seed: 320, fly: 90 },
   ];
 
+  // Parallax: how fast a flower at depth z slides past as the camera walks.
+  function par(z) { return 0.3 + 0.9 * z; }
+  // Layers that repeat (grass, hills, fireflies) live on a loop 1.3 stages wide.
+  function wrapX(x, W) {
+    const span = W * 1.3;
+    return ((x + W * 0.15) % span + span) % span - W * 0.15;
+  }
+
   const SLOTS_MAX = 24;
   const FLIES_MAX = 110;
   const STARS = 170;
@@ -79,7 +87,7 @@
       { key: 'react', label: 'Reaction strength', type: 'range', min: 0, max: 2, default: 1, step: 0.01 },
       { key: 'scheme', label: 'Night', type: 'select', options: SCHEMES.map((s) => s.name), default: 0 },
       { key: 'count', label: 'Flowers', type: 'range', min: 6, max: 24, default: 15, step: 1 },
-      { key: 'size', label: 'Bloom size', type: 'range', min: 0.6, max: 1.6, default: 1, step: 0.01 },
+      { key: 'walk', label: 'Walk speed', type: 'range', min: 0, max: 3, default: 1, step: 0.01 },
       { key: 'trails', label: 'Dream trails', type: 'range', min: 0, max: 0.9, default: 0.35, step: 0.01 },
       { key: 'wind', label: 'Sway', type: 'range', min: 0, max: 2.5, default: 1, step: 0.01 },
       { key: 'flies', label: 'Fireflies', type: 'range', min: 0, max: 2, default: 1, step: 0.01 },
@@ -93,7 +101,7 @@
     gallery: {
       title: 'Bloom',
       technique: 'Canvas 2D, additive blending: gradient sky, star field, moon halo, parallax hills and grass, mandala flowers (three counter-rotating rings of petals, each ring one path filled and stroked under "lighter"), glow-sprite fireflies and pollen, optional frame persistence for trails',
-      brief: 'A night garden under a big moon. Mandala flowers on swaying stems at several depths, grass in front and behind, fireflies drifting through. Every kick flares every open flower (petals punch out, their glow blooms, pollen puffs up) and throws a halo ring off the moon; every snare bursts a new bud open with a ring of light and sparks and steps the whole garden\'s colour around its palette; bass sways the stems and swells the mist; hats blink the fireflies. In the drop the moonlit silver garden lights up in saturated colour, nebula glow fills the sky and the fireflies multiply; in the breakdown the colour drains, the flowers close one by one and only the moon breathes with the pad.',
+      brief: 'A slow walk through a night garden beside a lake, under a moon that stays put. Mandala flowers on swaying stems at several depths slide past in parallax (near stems and reeds fastest), entering on the right and leaving on the left; fireflies drift; the lake reflects it all. Each kick starts a ripple of flaring on one flower (petals punch out, glow blooms, pollen puffs) that spreads both ways through its neighbours and fades, a new spot each beat, while a thin ring leaves the moon; each snare bursts a bud open with a ring of light and sparks; bass sways stems, swells the mist and stirs the lake; hats blink the fireflies and glint the moon path. The drop walks faster and lights the silver garden up in saturated, slowly drifting colour with nebula glow; the breakdown slows, drains and closes.',
       lineage: [
         'Brief 09 (night garden: moon, stems with parallax, flowers opening, fireflies; kick opens, snare blooms, bass sways, hats blink, drop lights up the colour).',
         'Flowers head-on rather than in profile, so each is a mandala with detail inside detail (phyllotaxis seed head inside three counter-rotating petal rings) for the altered viewer to fall into, and so a flare reads as the whole head punching outward at any size.',
@@ -105,11 +113,14 @@
         'Added a moon path of glints on the water that twinkles with the pad and sparkles on each hat, so hats read in a second place beside the fireflies, which now use one cached glow sprite instead of a gradient each.',
         'Kick strip: 12.0 s (65 ms after a kick) shows every head flared, glows bloomed, moon halo brightened and a ring leaving it, against 11.9 s. Snare rings and sparks were given a minimum size after a burst from a far bud read as a speck.',
         '96 s run: the colour steps and drift keep the palette moving (fireflies and garden wander through the scheme), the garden count rises and falls with the sections, no accumulation or stasis.',
+        'Batch 02 review (2026-09-28): too pulsey. Jolt meter before: kickArea 0.36, ratio 2.96, "noticeable": every head flared at once, the moon halo brightened, the garden zoomed 1.8% and the lake churned, and each clap stepped the whole garden 34 degrees in hue.',
+        'Revision: zoom removed; the kick is now a ripple that starts on one open flower (a new spot each beat, walking across the stage) and spreads both ways at 0.8 stage widths a second, fading in 0.5 s, so only a few heads flare at once; pollen puffs as the ripple reaches each head. Moon keeps only its thin ring; lake and waterline no longer jump on the kick. Snare keeps its local bud burst but no longer steps the hue: colour drifts at 2-6 degrees a second instead.',
+        'Movement: the camera walks right through the garden, speed set by the music (faster in the drop, eased, never jerked). Flowers live in world x with depth parallax and are replanted beyond the right edge when they leave on the left; grass, hills and fireflies wrap on seamless loops; the moon stays put. "Bloom size" gave way to a "Walk speed" control. Jolt after: kickArea 0.13, ratio 1.12, "calm", with the kick a clear hot spot on one flower.',
       ],
     },
 
-    setup() { this.replant(); },
-    enter() { this.replant(); },
+    setup(p, ctx) { if (ctx) this.W = ctx.width; this.replant(); },
+    enter(p, ctx) { if (ctx) this.W = ctx.width; this.replant(); },
 
     replant() {
       const rnd = mulberry32((Math.random() * 1e9) | 0);
@@ -123,7 +134,11 @@
       this.hueShift = 0;
       this.hueTarget = 0;
       this.lastBloom = 0;
-      this.camT = rnd() * 100;
+      this.cam = 0;           // how far the walk has gone, in virtual units
+      this.waves = [];
+      this.waveX = 0.3 + rnd() * 0.4;
+      this.waveN = 0;
+      this.W = this.W || 1067;
 
       this.flowers = [];
       for (let i = 0; i < SLOTS_MAX; i++) {
@@ -159,13 +174,14 @@
         const ph = [rnd() * TAU, rnd() * TAU, rnd() * TAU];
         for (let i = 0; i <= n; i++) {
           const u = i / n;
-          pts.push(amp * (0.5 * Math.sin(u * oct * TAU + ph[0]) + 0.3 * Math.sin(u * oct * 2.3 * TAU + ph[1])
-            + 0.2 * Math.sin(u * oct * 5.1 * TAU + ph[2])));
+          // Integer cycles over the loop, so the walk never meets a seam.
+          pts.push(amp * (0.5 * Math.sin(u * oct[0] * TAU + ph[0]) + 0.3 * Math.sin(u * oct[1] * TAU + ph[1])
+            + 0.2 * Math.sin(u * oct[2] * TAU + ph[2])));
         }
         return pts;
       };
-      this.hillFar = hill(90, 1, 1.3);
-      this.hillNear = hill(90, 1, 2.1);
+      this.hillFar = hill(120, 1, [1, 3, 7]);
+      this.hillNear = hill(120, 1, [2, 5, 11]);
 
       this.grassBack = [];
       for (let i = 0; i < 260; i++) {
@@ -182,24 +198,27 @@
       this.moonRings = [];
     },
 
-    newFlower(i) {
+    // Where a flower is on stage now, as a fraction of the width.
+    screenU(f) { return (f.wx - this.cam * par(f.z)) / this.W; },
+
+    newFlower(i, entering) {
       const rnd = this.rnd;
       const z = Math.pow(rnd(), 0.8);
       // Best of four spots: the one furthest from flowers at a similar depth,
       // so heads spread over the stage instead of piling into one blot.
       let u = 0.5, best = -1;
       for (let c = 0; c < 4; c++) {
-        const cu = -0.05 + rnd() * 1.1;
+        const cu = entering ? 1.1 + rnd() * 0.15 : -0.05 + rnd() * 1.1;
         let dmin = 9;
         for (const o of this.flowers || []) {
           if (o.id === i || o.state === 'close') continue;
-          dmin = Math.min(dmin, Math.abs(o.u - cu) + 0.6 * Math.abs(o.z - z));
+          dmin = Math.min(dmin, Math.abs(this.screenU(o) - cu) + 0.6 * Math.abs(o.z - z));
         }
         if (dmin > best) { best = dmin; u = cu; }
       }
       return {
         id: i,
-        u,                                  // across the stage, 0..1
+        wx: u * this.W + this.cam * par(z), // world x: the walk slides it past
         z,                                  // 0 far, 1 near
         hueIdx: (rnd() * 5) | 0,
         hueJit: (rnd() - 0.5) * 24,
@@ -263,7 +282,7 @@
       g.fillStyle = gr;
       g.fillRect(0, wy, cv.width, bandH);
       g.imageSmoothingEnabled = true;
-      const agit = 0.6 + 1.6 * e.bass + 2.2 * e.kick;
+      const agit = 0.6 + 1.8 * e.bass + 0.4 * e.kick;
       const pad = 14 * s;
       for (let y = 0; y < rh; y++) {
         const d = y / rh;
@@ -368,7 +387,17 @@
 
     stepFlowers(dt, now) {
       for (let i = 0; i < this.flowers.length; i++) {
-        const f = this.flowers[i];
+        let f = this.flowers[i];
+        // Walked past: replant it just beyond the right edge, already grown
+        // (open, in bud or still growing) so the garden keeps coming.
+        if (this.screenU(f) < -0.2) {
+          f = this.newFlower(f.id, true);
+          const r = this.rnd();
+          if (r < 0.5) { f.state = 'open'; f.grow = 1; f.openAge = 1.2 + this.rnd() * 5; f.open = 1; }
+          else if (r < 0.8) { f.state = 'bud'; f.grow = 1; }
+          else f.grow = 0.3 + 0.6 * this.rnd();
+          this.flowers[i] = f;
+        }
         const on = i < this.active;
         if (f.state === 'grow') {
           f.grow = Math.min(1, f.grow + dt / 3);
@@ -421,23 +450,55 @@
       e.colour = ease(e.colour, colTarget, 1.5, dt);
       const col = e.colour;
 
-      // Snare: a bud bursts open and the garden's colour steps round.
+      // Snare: a bud bursts open. (It used to step the whole garden's hue
+      // too; on every clap that was a full-frame jolt, so colour now drifts.)
       if (ev.snare) {
         const f = this.bloomOne(now);
-        this.hueTarget += 34;
         if (f) f.burstPending = true;
       }
       // Without snares the garden still breathes, slowly.
       if (now - this.lastBloom > 2.6 && now - e.lastSnare > 2.6) this.bloomOne(now);
       this.hueShift = ease(this.hueShift, this.hueTarget, 7, dt);
-      this.hueTarget += dt * 1.5;   // and it drifts, so no two minutes match
+      this.hueTarget += dt * (2 + 4 * e.energy);   // drifts, faster in the drop, so no two minutes match
       this.stepFlowers(dt, now);
 
-      // Camera: a slow sideways drift for parallax, and a small zoom kick.
-      this.camT += dt;
-      const cam = 55 * Math.sin(this.camT * 0.043) + 25 * Math.sin(this.camT * 0.101 + 1.3);
-      const kick = e.kick;
-      const zoom = 1 + 0.018 * kick;
+      // The walk: the camera strolls right through the garden. The music sets
+      // its speed (the drop walks faster), it never jerks it.
+      this.W = W;
+      this.walkV = ease(this.walkV || 0, params.walk * (14 + 26 * e.energy + 14 * e.bass), 1.2, dt);
+      this.cam += dt * this.walkV;
+      const cam = this.cam;
+
+      // Kick: a ripple of flaring that starts at one spot in the garden and
+      // spreads both ways, fading as it goes, so only part of the garden
+      // flares at a time. Each kick starts from a different spot.
+      if (ev.kick) {
+        this.waveX = (this.waveX + 0.29 + 0.25 * this.rnd()) % 1;
+        let x = (0.12 + 0.76 * this.waveX) * W;
+        // Start it on the open flower nearest that spot, so the beat always
+        // lands on a head, never on empty meadow.
+        let best = Infinity;
+        for (let i = 0; i < this.active; i++) {
+          const f = this.flowers[i];
+          if (f.open < 0.6 || f.hx < W * 0.05 || f.hx > W * 0.95) continue;
+          const d = Math.abs(f.hx - x) - 60 * f.z;
+          if (d < best) { best = d; x = f.hx; }
+        }
+        this.waves.push({ t0: now, x, amp: e.kickAmp * react, id: ++this.waveN });
+      }
+      while (this.waves.length && now - this.waves[0].t0 > 1.2) this.waves.shift();
+      const waves = this.waves;
+      const flareAt = (x) => {
+        let v = 0, id = 0;
+        for (const w of waves) {
+          const age = now - w.t0;
+          const d = Math.abs(x - w.x) - age * 0.8 * W;
+          const band = Math.exp(-(d * d) / (0.012 * W * W));
+          const k = w.amp * band * Math.exp(-age / 0.5);
+          if (k > v) { v = k; id = w.id; }
+        }
+        return [v, id];
+      };
 
       g.save();
       g.globalCompositeOperation = 'source-over';
@@ -471,7 +532,7 @@
         const tw = 0.5 + 0.5 * Math.sin(now * s.f + s.ph);
         const a = (0.12 + 0.4 * tw * tw + 0.35 * e.high * tw) * (1 - y / horizon * 0.8);
         g.globalAlpha = Math.min(1, a);
-        const x = ((s.x * W * 1.1 - cam * 0.08) % (W * 1.1) + W * 1.1) % (W * 1.1) - W * 0.05;
+        const x = ((s.x * W * 1.1 - cam * 0.01) % (W * 1.1) + W * 1.1) % (W * 1.1) - W * 0.05;
         g.fillRect(x, y, s.r, s.r);
       }
       g.globalAlpha = 1;
@@ -480,11 +541,11 @@
       if (col > 0.02) {
         for (let i = 0; i < 3; i++) {
           const hue = sch.hues[i] + this.hueShift * 0.5;
-          const nx = W * (0.2 + 0.3 * i) + 90 * Math.sin(now * 0.07 + i * 2.1) - cam * 0.1;
+          const nx = W * (0.2 + 0.3 * i) + 90 * Math.sin(now * 0.07 + i * 2.1);
           const ny = H * (0.2 + 0.08 * Math.sin(now * 0.05 + i));
           const nr = H * (0.35 + 0.05 * Math.sin(now * 0.11 + i * 1.7)) * (1 + 0.12 * e.bass);
           gr = g.createRadialGradient(nx, ny, 0, nx, ny, nr);
-          gr.addColorStop(0, hsla(hue, 80, 45, 0.16 * col + 0.06 * kick * col));
+          gr.addColorStop(0, hsla(hue, 80, 45, 0.16 * col));
           gr.addColorStop(1, hsla(hue, 80, 45, 0));
           g.fillStyle = gr;
           g.fillRect(nx - nr, ny - nr, nr * 2, nr * 2);
@@ -492,10 +553,10 @@
       }
 
       // Moon, halo and kick rings.
-      const mx = W * 0.74 - cam * 0.05, my = H * 0.2, mr = 34;
-      const haloR = mr * (3.2 + 1.6 * e.pad + 0.8 * kick);
+      const mx = W * 0.74, my = H * 0.2, mr = 34;
+      const haloR = mr * (3.2 + 1.6 * e.pad);
       gr = g.createRadialGradient(mx, my, mr * 0.9, mx, my, haloR);
-      gr.addColorStop(0, rgba(sch.moon, 0.22 + 0.25 * e.pad + 0.18 * kick));
+      gr.addColorStop(0, rgba(sch.moon, 0.22 + 0.25 * e.pad));
       gr.addColorStop(0.4, rgba(mixRGB(sch.moon, sch.mist, 0.6), 0.07 + 0.06 * e.pad));
       gr.addColorStop(1, rgba(sch.mist, 0));
       g.fillStyle = gr;
@@ -525,26 +586,26 @@
         g.fill();
       }
 
-      // Garden layers get the kick zoom around the lower centre.
-      g.translate(W / 2, waterY);
-      g.scale(zoom, zoom);
-      g.translate(-W / 2, -waterY);
 
       // ---- hills -------------------------------------------------------
-      const drawHill = (pts, base, amp, color, par) => {
+      const drawHill = (pts, base, amp, color, hp) => {
         g.fillStyle = color;
         g.beginPath();
         const n = pts.length - 1;
         const span = W * 1.3;
-        const off = -W * 0.15 - cam * par;
-        g.moveTo(off, H + 10);
-        for (let i = 0; i <= n; i++) g.lineTo(off + (i / n) * span, base - amp * (0.6 + pts[i]));
-        g.lineTo(off + span, H + 10);
+        const shift = cam * hp;
+        g.moveTo(-10, H + 10);
+        for (let x = -10; x <= W + 10; x += span / n) {
+          const u = (((x + shift) / span) % 1 + 1) % 1 * n;
+          const i = Math.floor(u), t = u - i;
+          g.lineTo(x, base - amp * (0.6 + pts[i] + (pts[Math.min(n, i + 1)] - pts[i]) * t));
+        }
+        g.lineTo(W + 10, H + 10);
         g.closePath();
         g.fill();
       };
-      drawHill(this.hillFar, horizon + 10, 55, rgba(mixRGB(sch.hillFar, sch.mist, 0.15 + 0.2 * e.pad), 1), 0.15);
-      drawHill(this.hillNear, horizon + 32, 34, rgba(sch.hillNear, 1), 0.3);
+      drawHill(this.hillFar, horizon + 10, 55, rgba(mixRGB(sch.hillFar, sch.mist, 0.15 + 0.2 * e.pad), 1), 0.06);
+      drawHill(this.hillNear, horizon + 32, 34, rgba(sch.hillNear, 1), 0.15);
 
       // Ground.
       gr = g.createLinearGradient(0, horizon + 30, 0, H);
@@ -572,7 +633,7 @@
       g.fillStyle = rgba(mixRGB(sch.hillNear, [20, 60, 60], 0.25), 1);
       g.beginPath();
       for (const b of this.grassBack) {
-        const bx = b.u * W - cam * 0.45;
+        const bx = wrapX(b.u * W - cam * 0.3, W);
         const by = waterY - 44 + b.d * 46;
         const sw = swayAmp * 5 * Math.sin(now * 0.9 + b.ph + b.u * 6);
         const tx = bx + b.lean + sw, ty = by - b.h;
@@ -585,11 +646,11 @@
       // ---- flowers -------------------------------------------------------
       const order = this.flowers.slice().sort((a, b) => a.z - b.z);
       const sat = 18 + 80 * col;
-      const size = params.size;
+      const size = 1;
       for (const f of order) {
         if (f.fade < 0.01 && f.grow < 0.01) continue;
         const sc = 0.42 + 0.78 * f.z;
-        const bx = f.u * W - cam * (0.4 + 0.6 * f.z);
+        const bx = f.wx - cam * par(f.z);
         const by = waterY - 56 * (1 - f.z) + 2;
         const fullH = H * (0.1 + 0.36 * f.stemH) * sc;
         const sway = swayAmp * 18 * sc * (Math.sin(now * f.swayF + f.ph) + 0.4 * Math.sin(now * f.swayF * 2.3 + f.ph * 2));
@@ -632,7 +693,8 @@
         const hueBase = sch.hues[f.hueIdx] + f.hueJit + this.hueShift;
         const light = 52 + 8 * (1 - col);
         const openK = f.open;
-        const flare = kick * clamp01(openK * 1.5) * (0.8 + 0.4 * f.z);
+        const [localKick, waveId] = flareAt(hx);
+        const flare = Math.min(1.3, 1.25 * localKick) * clamp01(openK * 1.5) * (0.8 + 0.4 * f.z);
         const bloomPunch = f.state === 'open' ? Math.exp(-f.openAge / 0.35) * clamp01(react) : 0;
         g.globalCompositeOperation = 'lighter';
 
@@ -706,8 +768,9 @@
         }
         g.fill();
 
-        // Kick pollen: a puff from every open head.
-        if (ev.kick && openK > 0.5 && react > 0) {
+        // Kick pollen: a puff from each head as the ripple reaches it.
+        if (flare > 0.45 && f.puffed !== waveId) {
+          f.puffed = waveId;
           const nP = 2 + ((f.z * 3) | 0);
           for (let i = 0; i < nP; i++) {
             const a = this.rnd() * TAU;
@@ -786,7 +849,7 @@
         const q = this.flies[i];
         q.flash *= Math.exp(-dt / 0.13);
         if (i >= nFlies) continue;
-        const x = (q.x0 + q.ax * Math.sin(now * q.f1 + q.p1) + 0.05 * Math.sin(now * q.f3 + q.p3)) * W * 1.1 - W * 0.05 - cam * (0.3 + 0.7 * q.z);
+        const x = wrapX((q.x0 + q.ax * Math.sin(now * q.f1 + q.p1) + 0.05 * Math.sin(now * q.f3 + q.p3)) * W * 1.1 - W * 0.05 - cam * (0.3 + 0.7 * q.z), W);
         const y = (q.y0 + q.ay * Math.sin(now * q.f2 + q.p2)) * H;
         const glowOn = q.base * (0.6 + 0.4 * Math.sin(now * 1.7 + q.glowPh)) + q.flash * Math.min(1, react);
         const r = (3 + 5 * q.z) * (1 + 1.1 * q.flash);
@@ -812,10 +875,10 @@
         g.fillStyle = rgba(sch.moon, Math.min(1, a));
         g.fillRect(x - len / 2, y, len, 0.8 + 1.6 * d);
       }
-      // The waterline catches the light on each kick.
+      // The waterline catches the moonlight, brighter with the bass.
       gr = g.createLinearGradient(0, waterY - 3, 0, waterY + 5);
       gr.addColorStop(0, rgba(sch.mist, 0));
-      gr.addColorStop(0.5, rgba(mixRGB(sch.mist, sch.moon, 0.5), 0.1 + 0.3 * kick + 0.1 * e.bass));
+      gr.addColorStop(0.5, rgba(mixRGB(sch.mist, sch.moon, 0.5), 0.1 + 0.15 * e.bass));
       gr.addColorStop(1, rgba(sch.mist, 0));
       g.fillStyle = gr;
       g.fillRect(-W * 0.1, waterY - 3, W * 1.2, 8);
@@ -825,7 +888,7 @@
       g.fillStyle = rgba(mixRGB(sch.ground, [0, 0, 0], 0.4), 1);
       g.beginPath();
       for (const b of this.grassFront) {
-        const bx = b.u * W - cam * 1.3;
+        const bx = wrapX(b.u * W - cam * 1.7, W);
         const by = H + 6;
         const sw = swayAmp * 14 * Math.sin(now * 0.7 + b.ph + b.u * 4);
         const tx = bx + b.lean + sw, ty = by - b.h;
@@ -837,7 +900,7 @@
 
       g.restore();
 
-      // Vignette, outside the zoom so its edge never moves.
+      // Vignette.
       g.save();
       g.globalCompositeOperation = 'source-over';
       const vr = Math.hypot(W, H) * 0.6;

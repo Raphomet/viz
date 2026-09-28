@@ -15,12 +15,11 @@
 // viewer and short-lived glints thrown by the hats.
 //
 // Music vocabulary (each lands in a different plane):
-//   kick  — the pupil snaps open, the eye swells a few percent, a ripple of
-//           light runs out through the fibres into the aura, the limbal ring
-//           blooms, and the tunnel surges forward;
-//   clap  — the whole palette turns to a new harmony (a hue rotation that keeps
-//           the colours' relations), the fibres flick round, and a flare ring
-//           races outward;
+//   kick  — confined to the pupil: the ruff flares, the pupil snaps a little,
+//           the tunnel surges, and one ripple of light leaves the rim and
+//           fades before the limbus (whole-eye swell removed: too pulsey);
+//   clap  — a flare runs out along the lid lines; the palette itself drifts
+//           continuously rather than turning on each clap;
 //   bass  — the resting pupil size, iris glow and aura strength;
 //   hats  — the specular highlight glints, iris glitter twinkles, and star
 //           glints spark in the foreground;
@@ -57,6 +56,9 @@ uniform float mode;       // 0 starfall, 1 iris tunnel
 uniform float aura;
 uniform vec2  lid;        // mandorla half-width, half-height
 uniform vec2  tunOff;     // tunnel vanishing point offset
+uniform float roll;       // slow roll of the whole eye, radians
+uniform vec2  tiltAx;     // axis the eye disc turns about (unit)
+uniform float squash;     // cos of that turn: foreshortening across the axis
 out vec4 outColor;
 
 const float TAU = 6.2831853;
@@ -124,7 +126,7 @@ vec3 irisAt(float s, float a01, float depthFade, float ringLight) {
   col += pal(0.05) * coll * (0.5 + 0.8 * energy + 0.8 * pad);
   col = mix(col, col * 0.2 + hueM * cAccent * 0.06 * (0.3 + energy), crypt * 0.8);
   // Pigment ruff at the pupil margin: a hot inner glow.
-  col += pal(0.0) * exp(-s * 14.0) * (0.6 + 1.2 * punch + 0.6 * energy);
+  col += pal(0.0) * exp(-s * 14.0) * (0.6 + 1.4 * punch + 0.6 * energy);
   // Limbal ring: the iris darkens into its rim.
   col *= mix(1.0, 0.18, smoothstep(0.82, 1.0, s));
   // Kick ripple and clap flare ride on the fibres, so the fibres light up.
@@ -143,9 +145,15 @@ vec3 hsvHot(vec3 c) { return c + 0.15; }
 
 void main() {
   vec2 P = (gl_FragCoord.xy - 0.5 * res) / unitPx;
-  vec2 q = P - center;
-  float r = length(q);
-  float a01 = atan(q.y, q.x) / TAU + 0.5;
+  // The eye turns slowly in space: a roll of the whole eye, and the iris
+  // disc foreshortened as if it swung a few degrees on an axis, so it reads
+  // as an object hanging in depth rather than a flat decal.
+  vec2 q0 = P - center;
+  float cr0 = cos(roll), sr0 = sin(roll);
+  vec2 q = vec2(cr0 * q0.x + sr0 * q0.y, -sr0 * q0.x + cr0 * q0.y);
+  vec2 qd = q + tiltAx * dot(q, tiltAx) * (1.0 / squash - 1.0);
+  float r = length(qd);
+  float a01 = atan(qd.y, qd.x) / TAU + 0.5;
   vec3 col = vec3(0.0);
 
   // ---------- backdrop: night, haze, stars
@@ -155,7 +163,7 @@ void main() {
   float neb = vn2(nb * 3.0);
   vec3 bg = vec3(0.002, 0.002, 0.008);
   bg += hueM * cOuter * (0.006 + 0.02 * smoothstep(0.4, 0.95, neb)) * (1.0 + 0.8 * energy);
-  bg += hueM * cOuter * 0.03 * exp(-r / (R * 1.2)) * (0.4 + energy);
+  bg += hueM * cOuter * 0.03 * exp(-r / (R * 1.2)) * (0.15 + energy);
   vec2 sc = floor(P / 7.0);
   float sh = hash12(sc);
   if (sh > 0.975) {
@@ -172,38 +180,37 @@ void main() {
   h = lid.y * pow(max(0.0, 1.0 - xn * xn), 0.85);
   float dl = abs(q.y) - h;          // < 0 inside the mandorla
   float inside = 1.0 - smoothstep(-6.0, 6.0, dl);
-  float lidK = 0.3 + 0.7 * energy + 0.8 * punch + 0.6 * pad * (0.6 + 0.4 * sin(t * 1.3 - abs(q.x) * 0.01));
+  float lidK = 0.3 + 0.7 * energy + 0.6 * pad * (0.6 + 0.4 * sin(t * 1.3 - abs(q.x) * 0.01));
   float fadeX = smoothstep(1.0, 0.55, abs(xn));
   vec3 lidCol = hueM * mix(cInner, cAccent, 0.35);
   float lines = exp(-abs(dl) / 2.2) + 0.45 * exp(-abs(dl - 22.0) / 2.5) + 0.22 * exp(-abs(dl - 50.0) / 3.0);
   // The clap flare also runs along the lids.
-  float lidFlare = exp(-clapAge * 4.0) * exp(-pow((abs(q.x) - clapAge * 900.0) / 60.0, 2.0));
+  float lidFlare = exp(-clapAge * 2.5) * exp(-pow((abs(q.x) - R * 0.6 - clapAge * 700.0) / 45.0, 2.0));
   // Sclera: a dark pearl sheen inside the mandorla.
   float sheen = 0.5 + 0.5 * sin(r * 0.025 - t * 0.4 + a01 * TAU * 2.0);
-  vec3 sclera = mix(hueM * cMid, hueM * cAccent, sheen) * (0.025 + 0.05 * energy) * smoothstep(R * 2.2, R, r);
+  vec3 sclera = mix(hueM * cMid, hueM * cAccent, sheen) * (0.01 + 0.06 * energy) * smoothstep(R * 2.2, R, r);
   col += sclera * inside;
 
   // Aura: rays carrying the fibres out past the limbus, and the kick echo.
   if (r > R * 0.95) {
     float ra = vn(vec2(a01 * 48.0 + rot * 0.75, t * 0.15), 48.0);
     float rays = smoothstep(0.5, 0.95, ra) * exp(-(r - R) / (60.0 + 90.0 * energy));
-    float echoL = heard(r - rp) * exp(-(r - R) / 260.0);
     vec3 auraCol = pal(0.85 + 0.3 * ra);
-    col += auraCol * rays * aura * (0.06 + 0.5 * energy + 0.3 * bass + 0.3 * pad);
-    col += auraCol * echoL * aura * (0.08 + 1.4 * rays / max(aura, 0.3));
+    col += auraCol * rays * aura * (0.04 + 0.7 * energy + 0.2 * bass + 0.12 * pad);
     // Limbal bloom, the eye's corona.
-    col += pal(1.0) * exp(-(r - R) / 18.0) * (0.25 + 0.35 * energy + 1.6 * punch);
+    col += pal(1.0) * exp(-(r - R) / 18.0) * (0.25 + 0.35 * energy);
   }
 
-  col += lidCol * lines * (lidK + 3.0 * lidFlare) * fadeX;
+  col += lidCol * lines * lidK * fadeX + (lidCol + 0.35) * lines * lidFlare * 3.5;
 
   // ---------- iris
   float ringLight = 0.0;
   if (r < R + 2.0) {
     float s = clamp((r - rp) / (R - rp), 0.0, 1.0);
     float echoI = heard(max(r - rp, 0.0));
-    float flare = exp(-clapAge * 3.5) * exp(-pow((r - rp - clapAge * 520.0) / 30.0, 2.0));
-    ringLight = 1.2 * echoI + 1.3 * flare;
+    // The kick lives here: one ripple leaving the pupil rim, fading before
+    // it reaches the limbus so it never lights the whole eye at once.
+    ringLight = 1.3 * echoI * exp(-max(r - rp, 0.0) / (0.45 * (R - rp)));
     vec3 ic = irisAt(s, a01, 1.0, ringLight);
     float irisMask = smoothstep(R + 1.5, R - 1.5, r) * smoothstep(rp - 1.5, rp + 1.5, r);
     col = mix(col, ic, irisMask);
@@ -226,13 +233,13 @@ void main() {
       float hsh = hash12(vec2(mod(cell.x, S), cell.y));
       vec2 sp = vec2(0.2 + 0.6 * hash12(cell + 3.3), 0.2 + 0.6 * hsh);
       vec2 dd = fr - sp;
-      float sz = 0.05 + 0.1 * edge;
-      float star = step(0.45, hsh) * exp(-dot(dd, dd) / (sz * sz));
+      float sz = 0.06 + 0.14 * edge;
+      float star = step(0.3, hsh) * exp(-dot(dd, dd) / (sz * sz));
       vec3 sCol = mix(vec3(1.0), pal(hash12(cell) ), 0.55);
-      pc += sCol * star * (0.9 + 1.2 * punch) * smoothstep(0.0, 0.25, edge);
+      pc += sCol * star * (1.1 + 0.8 * punch + 0.5 * energy) * smoothstep(0.0, 0.25, edge);
       // Glowing rings of the tunnel wall, streaming outward.
       float band = 0.5 + 0.5 * sin(y * TAU * 0.5);
-      pc += hueM * cAccent * pow(band, 6.0) * 0.18 * edge * (0.4 + energy);
+      pc += hueM * cAccent * pow(band, 6.0) * 0.3 * edge * (0.5 + energy);
       // The light at the end.
       pc += pal(0.0) * exp(-rt / (rp * 0.08)) * (0.5 + 0.8 * bass + 0.8 * punch);
     } else {
@@ -252,7 +259,7 @@ void main() {
       pc += pal(0.0) * exp(-r / (rp * 0.05)) * (0.4 + bass);
     }
     // Depth: the pupil's rim is dark, like looking through a window.
-    pc *= smoothstep(0.98, 0.78, edge) * 0.85 + 0.15;
+    pc *= smoothstep(1.0, 0.85, edge) * 0.8 + 0.2;
     float pm = smoothstep(rp + 1.5, rp - 1.5, r);
     col = mix(col, pc, pm);
   }
@@ -345,7 +352,7 @@ void main() {
       { key: 'palette', label: 'Colours', type: 'select', options: PALETTES.map((p) => p.name), default: 0 },
       { key: 'world', label: 'Inside the pupil', type: 'select', options: ['Starfall', 'Iris tunnel'], default: 0 },
       { key: 'react', label: 'Reaction strength', type: 'range', min: 0, max: 2, default: 1, step: 0.01 },
-      { key: 'clapTurn', label: 'Colour turn on clap', type: 'range', min: 0, max: 1, default: 0.6, step: 0.01 },
+      { key: 'colourDrift', label: 'Colour drift', type: 'range', min: 0, max: 1, default: 0.5, step: 0.01 },
       { key: 'swirl', label: 'Fibre swirl', type: 'range', min: 0, max: 1, default: 0.4, step: 0.01 },
       { key: 'aura', label: 'Aura', type: 'range', min: 0, max: 1.5, default: 1, step: 0.01 },
       { key: 'drift', label: 'Drift', type: 'range', min: 0, max: 2, default: 1, step: 0.01 },
@@ -354,7 +361,7 @@ void main() {
     gallery: {
       title: 'Iris',
       technique: 'WebGL2 fragment shader (tileable polar value-noise fibres, starfall or Droste tunnel in the pupil, mandorla lid lines, aura, specular) under a Canvas 2D layer of additive bokeh motes and glint sprites',
-      brief: 'A giant eye of light fills the stage: a mandorla of luminous lid lines over deep night, a pearly sheen, an aura of rays, and an iris of fine flowing fibres with a golden collarette and dark crypts, its whole harmony slowly turning. The pupil is a window into another world: stars rushing out of a tunnel, or (Iris tunnel) a Droste fall into ever smaller irises. The kick snaps the pupil open and swells the eye, blooms the limbal corona and sends a ripple of light out through the fibres into the rays while the tunnel surges; the clap turns the palette to a new harmony, flicks the fibres round and races a flare ring out and along the lids; the bass sets the resting pupil and glow; hats glint the wet highlight into a cross flare, twinkle glitter in the fibres and throw star glints; the drop floods the iris and opens the pupil wide, and the breakdown exhales to a small pupil, slow fibres and lid lines breathing with the pad.',
+      brief: 'A giant eye of light fills the stage: a mandorla of luminous lid lines over deep night, a pearly sheen, an aura of rays, and an iris of fine flowing fibres with a golden collarette and dark crypts, its whole harmony slowly turning. The pupil is a window into another world: stars rushing out of a tunnel, or (Iris tunnel) a Droste fall into ever smaller irises. The whole eye drifts, rolls and swings slowly in depth. The kick lives in the pupil: the ruff flares, the pupil snaps a little, the tunnel surges and one ripple of light leaves the rim; the clap runs a flare out along the lid lines while the colour harmony drifts continuously; the bass sets the resting pupil and glow; hats glint the wet highlight into a cross flare, twinkle glitter in the fibres and throw star glints; the drop floods the iris and opens the pupil wide, and the breakdown exhales to a small pupil, slow fibres and lid lines breathing with the pad.',
       lineage: [
         'Brief 10 (batch 02): the psychedelic eye, arresting not creepy. Chose an eye of light (mandorla lid lines, no lashes, veins or flesh-pink sclera) so it reads as cosmic rather than anatomical.',
         'Iris fibres are periodic value noise in polar space (the noise tiles in angle, so there is no seam at ±π), three octaves over a slow warp, with a twist that spirals them; the iris coordinate is normalised between pupil and limbus so a dilating pupil compresses the fibres like a real iris.',
@@ -363,6 +370,7 @@ void main() {
         'Second pass: the kick echo in the aura made a solid ring washing the frame, and the clap flare along the lids had no vertical bound (beige pillars). Echo now rides the rays; lid flare confined to the lid lines; hat glitter changed from lit cells (little rectangles) to points.',
         'Breakdown was static: sustained mids (pad) now speed the fibre flow, brighten the collarette, breathe the lid lines and the pupil.',
         'Iris tunnel (Droste) checked in its own render with Ember: the strongest image for the altered viewer; left as a performer switch, Starfall stays default because the stars make the kick surge legible.',
+        'Batch 02 review (2026-09-28): Raph found it too pulsey; jolt meter kickArea 0.48 (jarring). Removed the whole-eye swell, the kick on the lid lines, limbal corona, aura echo and motes; pupil snap cut from 12% to 3.5% of R; bass level slowed so kicks do not breathe the eye. The kick now lives in the pupil (ruff glow, star surge) and one ripple that fades before the limbus. The per-clap palette turn and fibre flick (a second global jolt) became a continuous colour drift (new Colour drift param); the clap is now a flare running out along the lid lines only. Movement: the eye drifts, rolls and swings in depth (foreshortened iris), the pupil opens wider so the Starfall/Iris-tunnel flight is more prominent and faster in the drop. Jolt after: kickArea 0.219, ratio 1.35, calm.',
         'Performance: 1280×720 measured ~88 ms mean under SwiftShader on a machine shared with nine other renders; the shader now runs at 3/4 device resolution with high-quality upscaling (~69 ms on the same busy machine). Specular core shrunk after the 96 s run showed it reading as a small grey card in quiet sections.',
       ],
     },
@@ -434,7 +442,7 @@ void main() {
       const u = {};
       for (const n of ['res', 'unitPx', 'center', 'R', 'rp', 't', 'rot', 'twist', 'echo', 'clapAge', 'hueM',
         'cInner', 'cMid', 'cOuter', 'cAccent', 'energy', 'bass', 'pad', 'punch', 'hat', 'travel', 'zoomPh',
-        'mode', 'aura', 'lid', 'tunOff']) u[n] = gl.getUniformLocation(prog, n);
+        'mode', 'aura', 'lid', 'tunOff', 'roll', 'tiltAx', 'squash']) u[n] = gl.getUniformLocation(prog, n);
       this.gl = gl; this.glCanvas = c; this.u = u;
     },
 
@@ -454,10 +462,10 @@ void main() {
       e.hiSlow = ease(e.hiSlow, hi, 4, dt);
       e.punch = Math.max(e.punch * Math.exp(-dt * 6.5), kickT);
       e.hat = Math.max(e.hat * Math.exp(-dt * 10), hatT);
-      e.bassLvl = ease(e.bassLvl, bass, 3, dt);
+      e.bassLvl = ease(e.bassLvl, bass, 0.8, dt);
       e.pad = ease(e.pad, clamp01(((sig[2] + sig[3] + sig[4]) / 300 - 0.12) * 3), 1.5, dt);
       const loud = clamp01(bass * 1.3 + hi * 0.6);
-      e.energy = ease(e.energy, loud, loud > e.energy ? 1.2 : 0.45, dt);
+      e.energy = ease(e.energy, loud, loud > e.energy ? 1.2 : 0.8, dt);
 
       this.clapAge += dt;
       const now = this.clock;
@@ -465,8 +473,6 @@ void main() {
         this.lastClap = now;
         this.clapAge = 0;
         this.clapCount = (this.clapCount || 0) + 1;
-        this.hueTarget += this.clapTurn * 1.3 * (this.clapCount % 2 ? 1 : 0.6);
-        this.rotFlickTarget += 1.4 * react;
       }
     },
 
@@ -477,7 +483,6 @@ void main() {
       const dt = this.lastMs === null ? 1 / 60 : Math.min(0.1, Math.max(0, (ms - this.lastMs) / 1000));
       this.lastMs = ms;
       const react = params.react;
-      this.clapTurn = params.clapTurn;
       this.clock += dt;
       this.listen(signals, dt, react);
       const e = this.env;
@@ -492,23 +497,29 @@ void main() {
       this.echo[0] = Math.pow(punch, 2.5);
 
       // Colour: a slow wander within the harmony plus the clap turns.
-      this.hue = ease(this.hue, this.hueTarget, 12, dt);
+      // Colour: the harmony drifts continuously (a full turn in a few
+      // minutes, quicker when the track is full) instead of turning on each
+      // clap, which moved every pixel at once on every backbeat.
+      this.hue += dt * (0.02 + params.colourDrift * (0.03 + 0.06 * energy));
       const hueA = this.hue + 0.5 * Math.sin(T * 0.05) + 0.25 * Math.sin(T * 0.013 + 1);
 
-      this.rotFlick = ease(this.rotFlick, this.rotFlickTarget, 7, dt);
       this.rot = (this.rot + dt * (drift * 0.35 + 0.6 * e.pad)) % 64;
-      const rot = (this.rot + this.rotFlick) % 64;
+      const rot = this.rot;
 
-      this.travel += dt * (0.35 * drift + 0.8 * e.bassLvl + 5 * punch);
-      this.zoom += dt * (0.05 * drift + 0.15 * e.bassLvl + 0.9 * punch);
+      this.travel += dt * (0.6 * drift + 1.2 * e.bassLvl + 1.2 * energy + 3 * punch);
+      this.zoom += dt * (0.1 * drift + 0.2 * e.bassLvl + 0.15 * energy + 0.6 * punch);
 
       const S = Math.min(ctx.width, ctx.height);
       const Rbase = S * 0.42;
-      const R = Rbase * (1 + 0.045 * punch + 0.03 * e.bassLvl * react);
-      const pupilF = 0.2 + 0.1 * Math.sin(T * 0.11) * 0.3 + 0.16 * e.bassLvl * react + 0.1 * energy + 0.12 * punch
+      const R = Rbase * (1 + 0.03 * e.bassLvl * react);
+      const pupilF = 0.26 + 0.03 * Math.sin(T * 0.11) + 0.12 * e.bassLvl * react + 0.1 * energy + 0.035 * punch
         + 0.06 * e.pad * Math.sin(T * 0.9);
       const rp = R * Math.min(0.62, pupilF);
-      const gaze = [18 * Math.sin(T * 0.07 + 0.4) + 8 * Math.sin(T * 0.19), 12 * Math.sin(T * 0.053 + 2)];
+      // The eye drifts and turns slowly in space.
+      const gaze = [45 * Math.sin(T * 0.061 + 0.4) + 12 * Math.sin(T * 0.17), 22 * Math.sin(T * 0.047 + 2)];
+      const roll = 0.12 * Math.sin(T * 0.037 + 1) + 0.05 * Math.sin(T * 0.11);
+      const tiltA = T * 0.05 + 0.6 * Math.sin(T * 0.023);
+      const squash = Math.cos(0.38 * (0.6 + 0.4 * Math.sin(T * 0.071)));
       const twist = (params.swirl * 2 - 0.4) * (0.6 + 0.4 * Math.sin(T * 0.031));
 
       // The shader runs at 3/4 of device resolution and is scaled up with
@@ -557,7 +568,10 @@ void main() {
       gl.uniform1f(u.mode, params.world | 0);
       gl.uniform1f(u.aura, params.aura);
       gl.uniform2f(u.lid, Math.max(ctx.width * 0.5 * 0.97, R * 1.55), R * (1.12 + 0.05 * energy));
-      gl.uniform2f(u.tunOff, -gaze[0] * 1.2, -gaze[1] * 1.2);
+      gl.uniform2f(u.tunOff, -gaze[0] * 0.35, -gaze[1] * 0.35);
+      gl.uniform1f(u.roll, roll);
+      gl.uniform2f(u.tiltAx, Math.cos(tiltA), Math.sin(tiltA));
+      gl.uniform1f(u.squash, squash);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       const g2 = p.drawingContext;
       g2.imageSmoothingEnabled = true;
@@ -576,7 +590,7 @@ void main() {
       const cx = ctx.width / 2 + gaze[0], cy = ctx.height / 2 - gaze[1];
       const maxD = Math.hypot(ctx.width, ctx.height) * 0.6;
       for (const m of this.motes) {
-        m.z += dt * (0.025 + 0.05 * energy + 0.5 * punch);
+        m.z += dt * (0.04 + 0.12 * energy + 0.1 * punch);
         if (m.z > 1) { m.z -= 1; m.a = Math.random() * Math.PI * 2; m.d = Math.random(); }
         const z = m.z;
         const dist = (0.15 + m.d * 0.85) * maxD * (0.25 + z * z * 1.1);

@@ -63,8 +63,7 @@ uniform vec2  sheetWave;         // K, phase
 uniform float hatSeed;
 uniform float hatAmt;
 uniform float moteT;
-uniform vec4  kickW;             // shockwave: origin xy, radius, strength
-uniform vec3  kickCol;
+uniform vec3  kickPool;          // x, strength, width: the kick's one local light
 out vec4 outColor;
 
 const float PI = 3.14159265;
@@ -150,6 +149,11 @@ void main() {
   float spots = 0.55 + 0.45 * cos(p.x / 55.0 + washPh);
   col += washCol * band * spots * washAmt * (0.6 + 0.6 * dens);
 
+  // The kick lands in one place: a pool of stage light behind the crowd where
+  // this beat's wave starts, never the whole room.
+  col += washCol * kickPool.y * exp(-pow((p.x - kickPool.x) / kickPool.z, 2.0))
+       * exp(-pow((p.y - washY - 20.0) / 75.0, 2.0)) * (0.6 + 0.8 * dens);
+
   // Moving heads from the truss: wide soft cones.
   for (int k = 0; k < 2; k++) {
     vec2 v = p - cA[k].xy;
@@ -157,15 +161,6 @@ void main() {
     float da = wrapPi(atan(v.y, v.x) - cA[k].z);
     float c = exp(-pow(da / cA[k].w, 2.0)) * (1.0 - exp(-r / 70.0));
     col += cC[k] * c * cI[k] * (0.15 + 0.9 * dens);
-  }
-
-  // The kick: a soft ring of light that leaves the stage through the smoke,
-  // over a bloom at its origin. Coloured and partial, never a flash.
-  {
-    float r = length((p - kickW.xy) * vec2(0.75, 1.0));
-    float ring = exp(-pow((r - kickW.z) / (40.0 + 0.25 * kickW.z), 2.0));
-    float core = exp(-r / 140.0);
-    col += kickCol * kickW.w * (ring * (0.2 + 1.4 * dens) + core * (0.35 + 0.8 * dens));
   }
 
   // Lasers.
@@ -267,6 +262,9 @@ void main() {
   const NIGHT = lin('#12062e');
   const WARM = lin('#ffd2a0');
 
+  const KICK_HIST = 40;         // frames of kick envelope the crowd wave reads from
+  const ROWS = 8, DZ = 1.05, ZNEAR = 1.0, S0 = 2.8;
+
   const LOOKS = ['Fans', 'Scissors', 'Crossfire', 'Tunnel', 'Liquid sky', 'Scanners'];
 
   function ease(cur, target, rate, dt) { return cur + (target - cur) * (1 - Math.exp(-rate * dt)); }
@@ -298,17 +296,18 @@ void main() {
       { key: 'beams', label: 'Beams per head', type: 'range', min: 3, max: 24, default: 11, step: 1 },
       { key: 'haze', label: 'Smoke', type: 'range', min: 0.2, max: 1.6, default: 1, step: 0.01 },
       { key: 'crowd', label: 'Crowd', type: 'range', min: 0, max: 1, default: 1, step: 0.01 },
+      { key: 'dolly', label: 'Drift through crowd', type: 'range', min: 0, max: 3, default: 1, step: 0.01 },
       { key: 'sweep', label: 'Sweep speed', type: 'range', min: 0, max: 2.5, default: 1, step: 0.01 },
     ],
 
     actions: [
-      { id: 'cue', label: 'Next look', run() { this.nextLook(); } },
+      { id: 'cue', label: 'Next look', run() { this.cuePending = true; this.lastCue = this.t; } },
     ],
 
     gallery: {
       title: 'Rave',
       technique: 'WebGL2 fragment shader (warped fBm smoke; analytic laser fans resolved per pixel from the angle to each head; moving-head cones; a liquid-sky plane; hashed glints) under a Canvas 2D crowd of rim-lit silhouettes',
-      brief: 'Inside a club, from the middle of the floor. Smoke drifts through the room and the lasers only exist where it is thick. Four heads on the stage and a tunnel head fan thin saturated beams over a three-row crowd whose back rows fade into the haze. The kick drops the whole crowd on the beat, pumps fists, blooms the smoke and punches every fan open; the clap is a lighting cue that cuts to the next look (fans, scissors, crossfire, tunnel, liquid sky, scanners) and colour pair; hats throw fresh glitter into the beams; bass floods the smoke with colour. The drop opens every head and raises the hands; the breakdown folds the lasers back to one bundled beam under a slow undulating liquid-sky ceiling while the crowd sways.',
+      brief: 'Inside a club, drifting slowly forward through the crowd toward the stage. Smoke drifts through the room and the lasers only exist where it is thick. Four heads on the stage and a tunnel head fan thin saturated beams over rows of silhouettes that pass under the camera as it moves. The kick is confined: a wave of heads rolls across the crowd from a new place each beat, over a pool of stage light where it starts. The clap flares one laser head in turn; the look (fans, scissors, crossfire, tunnel, liquid sky, scanners) and colour pair change like lighting cues, every 2-4 bars and on section changes, as a quick fade. Hats throw fresh glitter into the beams; bass floods the smoke with colour. The drop opens every head, raises the hands and speeds the drift; the breakdown folds the lasers back to bundled beams under a slow liquid-sky ceiling while the crowd sways.',
       lineage: [
         'Brief 04 (batch 02): lasers over a crowd; layers of haze, beams, wash and silhouettes.',
         'Design choice: the smoke is the medium, not a backdrop. Every beam and cone is multiplied by the haze density, which is what makes real lasers look like lasers.',
@@ -320,6 +319,10 @@ void main() {
         'Revision: a soft coloured shockwave leaves the stage through the smoke on each kick, over a bloom at its origin; the crowd drop went from 9 to 22 units at full size; rim light on the crowd tracks the kick. Bass now floods the smoke with a per-pair flood colour, because a dim mix of red and amber lasers made brown smoke.',
         'Render 3: kick unmistakable (bloom, ring, fans punch open, crowd drops). Mid-crowd still slate grey, raised arms too long (antennae), truss cones grey; all fixed.',
         'Render 6 (1280x720): mid-crowd bodies showed pale pillars between them (row fog unequal), heads too small for the shoulders, hands stayed up well into the breakdown; fixed. Render 7: 96 s longevity.',
+        'Batch 02 feedback (Raph, 2026-09-28): super cool, but too pulsey (jolt meter: kickArea 0.55, jarring): each kick dropped the whole crowd, punched every fan open 45%, thickened the beams, surged the wash and sent a ring through the smoke, and every clap cut the whole look. Wanted more movement.',
+        'Revision: the kick keeps only the crowd, now a smaller wave rolling across it from a random origin, plus one local pool of stage light at that origin; the fan punch is 6%; everything global is gone. Claps flare one head in turn. Looks change every 2-4 bars or when the energy crosses into or out of the drop, as a 0.18 s dim and 0.35 s rise. Movement: the camera dollies through a recycling crowd (rows pass under it with parallax, faster in the drop) and sways sideways, with the stage moving a tenth as much.',
+        'Jolt after the first pass: kickArea 0.078, calm, but the kick had almost vanished, so the local light pool was added and the wave raised from 9 to 13 units.',
+        'Jolt 2: kickArea 0.105, calm, the pool reading as a clear local hot spot. The crowd had become a field of tiny heads (near rows left the frame too early), so near rows now sink more slowly and sweep past as large rim-lit figures. Jolt 3 (0.145, calm) caught the nearest row fading by alpha, its rim bleeding through as ghosts; rows now leave through the bottom edge instead.',
         'Render 4: the build (4-8 s) was indistinguishable from the intro. The riser and hats now speed the liquid-sky roll, lift the stage wash and raise the first hands, and the snare roll cuts looks into the drop.',
       ],
     },
@@ -334,8 +337,11 @@ void main() {
       this.lastMs = null;
       this.t = 0;
       this.T = 0;                 // sweep clock
-      this.kick = 0; this.snare = 0; this.hat = 0; this.kickAt = -10; this.kickPeak = 0;
-      this.kickHist = new Float32Array(12);
+      this.kick = 0; this.snare = 0; this.hat = 0; this.waveX = 0;
+      this.kickHist = new Float32Array(KICK_HIST);
+      this.flareHead = 0; this.kicksSinceCut = 0; this.cutAfter = 8; this.high = false;
+      this.lookFade = 1; this.cuePending = false;
+      this.camZ = 0; this.camX = 0; this.stageX = 0;
       this.bass = 0; this.pad = 0; this.kickSlow = 0; this.highSlow = 0;
       this.energy = 0; this.raise = 0;
       this.hatCount = 0;
@@ -353,41 +359,46 @@ void main() {
       this.buildCrowd();
     },
 
+    cue() {
+      if ((this.show | 0) !== 0) { this.lastCue = this.t; this.kicksSinceCut = 0; return; }
+      this.cuePending = true;
+      this.lastCue = this.t;
+      this.kicksSinceCut = 0;
+      this.cutAfter = 4 * (2 + Math.floor(Math.random() * 3));
+    },
+
     nextLook() {
       this.look = (this.look + 1 + (Math.random() < 0.3 ? 1 : 0)) % LOOKS.length;
       this.pairIdx++;
       this.lookSeed = Math.random() * 100;
       this.lastCue = this.t;
-      this.snare = 1;
     },
 
-    // Rows of people at fixed stage positions in virtual units, generated
-    // wider than any sane aspect ratio and culled at draw time, so a square
-    // stage shows the middle of the same crowd rather than a squeezed one.
+    // The crowd is rows at world depths the camera drifts through. A row
+    // that passes under the camera is recycled to the back with new people,
+    // so the dolly never runs out of floor. People are generated wider than
+    // any sane aspect ratio and culled at draw time.
     buildCrowd() {
+      this.rows = [];
+      for (let i = 0; i < ROWS; i++) this.rows.push(this.makeRow(ZNEAR + 0.3 + i * DZ));
+    },
+
+    makeRow(z) {
       const r = Math.random;
-      const rows = [
-        { y: -64, s: 0.42, gap: 24 },
-        { y: -118, s: 0.68, gap: 38 },
-        { y: -212, s: 1.12, gap: 66 },
-      ];
-      this.rows = rows.map((row, ri) => {
-        const people = [];
-        for (let x = -1000; x < 1000; x += row.gap * (0.75 + 0.5 * r())) {
-          people.push({
-            x: x + (r() - 0.5) * row.gap * 0.3,
-            dy: (r() - 0.5) * 10 * row.s,
-            s: row.s * (0.88 + 0.24 * r()),
-            lag: Math.floor(r() * 5),
-            ph: r() * Math.PI * 2,
-            style: r() < 0.08 ? 3 : Math.floor(r() * 3), // 0 V, 1 pump, 2 wave, 3 phone
-            eager: r(),            // how early in the energy ramp the hands go up
-            keep: r(),
-            side: r() < 0.5 ? -1 : 1,
-          });
-        }
-        return { y: row.y, s: row.s, people, ri };
-      });
+      const people = [];
+      for (let x = -2600; x < 2600; x += 62 * (0.75 + 0.5 * r())) {
+        people.push({
+          x: x + (r() - 0.5) * 18,
+          dy: (r() - 0.5) * 10,
+          sz: 0.88 + 0.24 * r(),
+          ph: r() * Math.PI * 2,
+          style: r() < 0.08 ? 3 : Math.floor(r() * 3), // 0 V, 1 pump, 2 wave, 3 phone
+          eager: r(),            // how early in the energy ramp the hands go up
+          keep: r(),
+          side: r() < 0.5 ? -1 : 1,
+        });
+      }
+      return { z, people };
     },
 
     initGL() {
@@ -416,7 +427,7 @@ void main() {
       const u = {};
       for (const n of ['res', 'unitPx', 'nFans', 'fA', 'fB', 'fC', 'beamW', 'hz', 'hazeAmt', 'hazeCol',
         'ambGain', 'washCol', 'washY', 'washAmt', 'washPh', 'cA', 'cC', 'cI', 'sheet', 'sheetCol',
-        'sheetWave', 'hatSeed', 'hatAmt', 'moteT', 'kickW', 'kickCol']) {
+        'sheetWave', 'hatSeed', 'hatAmt', 'moteT', 'kickPool']) {
         u[n] = gl.getUniformLocation(prog, n);
       }
       this.gl = gl; this.glCanvas = c; this.u = u;
@@ -428,7 +439,7 @@ void main() {
     listen(sg, dt, react) {
       const t = this.t, d = this.det;
       // Kick: band 0 transients. Clap: the low mids. Hats: the top two bands.
-      if (onset(d.kick, sg[0], t, 12, 12, 0.2)) { this.kick = Math.min(1, sg[0] / 85); this.kickAt = t; this.kickPeak = this.kick; }
+      if (onset(d.kick, sg[0], t, 12, 12, 0.2)) { this.kick = Math.min(1, sg[0] / 85); this.kickHit = true; this.waveX = (Math.random() - 0.5) * 700; }
       const sn = (sg[3] + sg[4] + sg[5]) / 3;
       if (onset(d.snare, sn, t, 11, 14, 0.22)) this.snareHit = true;
       const hh = (sg[7] + sg[8]) / 2;
@@ -456,17 +467,19 @@ void main() {
       const T = this.T, s = this.lookSeed;
       const pair = PAIRS[SCHEMES[params.scheme | 0][this.pairIdx % SCHEMES[params.scheme | 0].length]];
       const nMax = Math.round(params.beams);
-      const hx = [-0.38, -0.13, 0.13, 0.38].map((f) => Math.max(-W / 2 + 50, Math.min(W / 2 - 50, f * W)));
+      const hx = [-0.38, -0.13, 0.13, 0.38].map((f) => this.stageX + Math.max(-W / 2 + 50, Math.min(W / 2 - 50, f * W)));
       const hy = -22;
       const fans = [];
       const look = (params.show | 0) === 0 ? this.look : (params.show | 0) - 1;
       // Heads come on in order of rank as the energy rises; rank 0 is always on.
       const on = (rank) => smooth(rank * 0.28 - 0.05, rank * 0.28 + 0.2, open);
       // At low energy a head's beams are bundled into one; the drop opens it.
-      const spread = (sp) => sp * (0.08 + 0.92 * open) * (1 + 0.45 * kp);
+      const spread = (sp) => sp * (0.08 + 0.92 * open) * (1 + 0.06 * kp);
       const bundle = (n) => 1 / (1 + (n - 1) * (1 - open) * 0.85);
+      // The clap flares one head at a time, in turn: a local event.
+      const flare = (i) => (i === this.flareHead ? 1 + 1.4 * this.snare : 1);
       const head = (i, aim, sp, n, rank, colIdx) => {
-        fans.push({ x: hx[i], y: hy, aim, sp: spread(sp), n, I: on(rank) * bundle(n), kind: 0, rot: 0,
+        fans.push({ x: hx[i], y: hy, aim, sp: spread(sp), n, I: on(rank) * bundle(n) * flare(i), kind: 0, rot: 0,
           col: pair[colIdx % 2] });
       };
       let sheet = 0;
@@ -490,7 +503,7 @@ void main() {
         }
       } else if (look === 3) {   // Tunnel: a full circle of beams turning toward you
         const n = Math.max(12, nMax * 2);
-        fans.push({ x: 0, y: hy + 4, aim: T * 0.35 + s, sp: Math.PI * 2 / n, n,
+        fans.push({ x: this.stageX, y: hy + 4, aim: T * 0.35 + s, sp: Math.PI * 2 / n, n,
           I: 0.9 * (0.5 + 0.5 * on(0)), kind: 1, rot: T * 1.1 + s, col: pair[0] });
         head(0, Math.PI / 2 - 0.25 + 0.3 * Math.sin(T * 0.6), 0.05, 3, 2, 1);
         head(3, Math.PI / 2 + 0.25 - 0.3 * Math.sin(T * 0.6), 0.05, 3, 2, 1);
@@ -517,17 +530,40 @@ void main() {
       this.lastMs = ms;
       this.t += dt;
       const react = params.react;
+      this.show = params.show;
       this.listen(signals, dt, react);
       if (this.snareHit) {
         this.snareHit = false;
-        if ((params.show | 0) === 0) this.nextLook(); else this.snare = 1;
+        this.snare = 1;
+        this.flareHead = (this.flareHead + 1) % 4;
       }
-      // Without claps (a breakdown, a clap-less track) the show still moves on.
-      if (this.t - this.lastCue > 14) this.nextLook();
+      // Looks change like a lighting operator's cues: every 2-4 bars, and on
+      // section changes (energy crossing into the drop or out of it), never
+      // on every clap. Without kicks the show still moves on after 14 s.
+      if (this.kickHit) {
+        this.kickHit = false;
+        if (++this.kicksSinceCut >= this.cutAfter) this.cue();
+      }
+      if (!this.high && this.energy > 0.65) { this.high = true; this.cue(); }
+      if (this.high && this.energy < 0.35) { this.high = false; this.cue(); }
+      if (this.t - this.lastCue > 14) this.cue();
+      // A cue dims the lasers for a moment and brings the new look up, so the
+      // change is a fade of thin lines rather than a cut.
+      if (this.cuePending) {
+        this.lookFade -= dt / 0.18;
+        if (this.lookFade <= 0) { this.lookFade = 0; this.cuePending = false; this.nextLook(); }
+      } else {
+        this.lookFade = Math.min(1, this.lookFade + dt / 0.35);
+      }
 
       const e = this.energy;
       const kp = this.kick * react;
-      this.T += dt * params.sweep * (0.35 + 0.9 * e);
+      this.T += dt * params.sweep * (0.3 + 0.7 * e);
+      // The camera drifts forward through the crowd, faster in the drop,
+      // and sways sideways slowly; the stage is far, so it barely moves.
+      this.camZ += dt * params.dolly * (0.12 + 0.3 * e);
+      this.camX = 160 * Math.sin(this.t * 0.043 + 1) + 70 * Math.sin(this.t * 0.101);
+      this.stageX = -this.camX * 0.12;
       const W = ctx.width, H = ctx.height;
 
       const { fans, sheet, pair } = this.buildFans(W, e, kp, params);
@@ -558,8 +594,7 @@ void main() {
       gl.uniform2f(u.res, w, h);
       gl.uniform1f(u.unitPx, unitPx);
 
-      const flare = 1 + 0.9 * this.snare;
-      const beamGain = (0.55 + 0.45 * e) * (1 + 0.8 * kp) * flare;
+      const beamGain = (0.55 + 0.45 * e) * this.lookFade;
       const n = Math.min(MAX_FANS, fans.length);
       for (let i = 0; i < n; i++) {
         const f = fans[i];
@@ -571,15 +606,15 @@ void main() {
       gl.uniform4fv(u.fA, this.fA);
       gl.uniform4fv(u.fB, this.fB);
       gl.uniform3fv(u.fC, this.fC);
-      gl.uniform1f(u.beamW, 0.7 * (1 + 0.7 * kp));
+      gl.uniform1f(u.beamW, 0.7);
       gl.uniform4f(u.hz, this.hazeT[0], this.hazeT[0] * 0.7 + 3, -this.hazeT[0] * 0.4, -this.hazeT[1]);
       gl.uniform1f(u.hazeAmt, params.haze);
       gl.uniform3fv(u.hazeCol, this.hazeCol);
-      gl.uniform1f(u.ambGain, 0.1 + 0.35 * this.bass * react + 0.2 * this.pad + 0.8 * kp);
+      gl.uniform1f(u.ambGain, 0.1 + 0.35 * this.bass * react + 0.2 * this.pad);
       const washY = -46;
       gl.uniform3fv(u.washCol, mix3(pair[0], pair[2], 0.5));
       gl.uniform1f(u.washY, washY);
-      gl.uniform1f(u.washAmt, 0.18 + 0.25 * e + 0.6 * this.highSlow + 1.1 * kp + 0.3 * this.snare);
+      gl.uniform1f(u.washAmt, 0.18 + 0.25 * e + 0.6 * this.highSlow);
       gl.uniform1f(u.washPh, this.T * 0.7);
 
       // Moving heads on the truss: they carry the breakdown, breathing with
@@ -587,32 +622,29 @@ void main() {
       const coneCol = mix3(pair[1], WARM, 0.2);
       const cones = [];
       for (let k = 0; k < 2; k++) {
-        const sx = (k ? 1 : -1) * Math.min(0.3 * W, W / 2 - 40);
+        const sx = this.stageX * 1.6 + (k ? 1 : -1) * Math.min(0.3 * W, W / 2 - 40);
         const aim = -Math.PI / 2 - (k ? -1 : 1) * (0.28 + 0.22 * Math.sin(this.T * 0.4 + k * 2.4 + 1));
         cones.push(sx, H / 2 + 30, aim, 0.1 + 0.03 * this.pad);
       }
       gl.uniform4fv(u.cA, cones);
       gl.uniform3fv(u.cC, coneCol.concat(coneCol));
-      const cI = 0.08 + 0.35 * this.pad + 0.12 * (1 - e) + 0.5 * kp;
+      const cI = 0.08 + 0.35 * this.pad + 0.12 * (1 - e);
       gl.uniform1fv(u.cI, [cI, cI]);
 
       // Liquid sky: its own look, and the breakdown's ceiling.
-      const sheetI = Math.max(sheet * (0.5 + 0.5 * e), (1 - e) * 0.5) * (1 + 0.5 * kp);
+      const sheetI = Math.max(sheet * (0.5 + 0.5 * e), (1 - e) * 0.5) * (0.4 + 0.6 * this.lookFade);
       if (this.sheetPh === undefined) this.sheetPh = 0;
       // The build's riser and hats speed the ceiling's roll, so the room
       // visibly winds up before the drop.
       this.sheetPh += dt * (0.25 + 0.5 * this.pad + 0.6 * e + 2.2 * this.highSlow);
-      gl.uniform4f(u.sheet, 0, -20, sheetI, 34 + Math.round(params.beams) * 2);
+      gl.uniform4f(u.sheet, this.stageX, -20, sheetI, 34 + Math.round(params.beams) * 2);
       gl.uniform3fv(u.sheetCol, sheet ? pair[0] : mix3(pair[1], pair[0], 0.3));
       gl.uniform2f(u.sheetWave, 1400, this.sheetPh);
 
       gl.uniform1f(u.hatSeed, this.hatCount % 997);
       gl.uniform1f(u.hatAmt, this.hat * Math.min(1.6, react) * 1.4);
       gl.uniform1f(u.moteT, this.t);
-      const age = this.t - this.kickAt;
-      gl.uniform4f(u.kickW, 0, -40, 30 + 1300 * age * (1 - 0.3 * Math.min(1, age)),
-        this.kickPeak * react * 0.55 * Math.exp(-age / 0.22));
-      gl.uniform3fv(u.kickCol, mix3(pair[0], [1, 1, 1], 0.15));
+      gl.uniform3f(u.kickPool, this.waveX * 0.7 + this.stageX, 1.6 * kp, 110);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       p.drawingContext.drawImage(this.glCanvas, 0, 0, W, H);
 
@@ -631,63 +663,67 @@ void main() {
       g.lineJoin = 'round';
       const e = this.energy, react = params.react;
       const t = this.t;
-      const rim = toSrgb(mix3(mix3(pair[0], pair[1], 0.5), [1, 1, 1], 0.3).map((v) => v * (0.3 + 0.45 * e + 1.6 * this.kick * react)));
+      const rim = toSrgb(mix3(mix3(pair[0], pair[1], 0.5), [1, 1, 1], 0.3).map((v) => v * (0.3 + 0.45 * e)));
       const hz = this.hazeCol;
 
       for (const row of this.rows) {
-        const depth = row.ri;                  // 0 back .. 2 front
-        // Kept nearly equal: gaps between one row's bodies show the row
-        // behind, and a lighter back row reads as a colonnade of pillars.
-        const fog = [0.018, 0.01, 0.0][depth];  // atmosphere in front of the row
-        const body = toSrgb(mix3([0.0015, 0.001, 0.003], hz, fog * (0.8 + 0.8 * this.kick * react)));
-        const cy = H / 2 - row.y;
+        if (row.z - this.camZ < ZNEAR) { const nr = this.makeRow(row.z + ROWS * DZ); row.z = nr.z; row.people = nr.people; }
+      }
+      const order = this.rows.slice().sort((a, b) => b.z - a.z);
+      const zFar = ZNEAR + ROWS * DZ;
+      for (const row of order) {
+        const rel = row.z - this.camZ;
+        const rs = S0 / rel;
+        // Depth 0 (far) .. 1 (near): atmosphere in front of the row, and a
+        // fade-in for rows arriving at the back.
+        const near = clamp01((zFar - rel) / (zFar - ZNEAR));
+        const fog = 0.11 * (1 - near) * (1 - near);
+        const body = toSrgb(mix3([0.0015, 0.001, 0.003], hz, fog));
+        // Rows fade in at the back. They leave through the bottom edge rather
+        // than fading: a translucent silhouette shows its rim pass through the
+        // body as a ghost.
+        g.globalAlpha = smooth(zFar, zFar - 1.2, rel);
+        // Heads sink toward the bottom edge as a row nears, accelerating as it
+        // passes under the camera.
+        const cy = H / 2 + 30 + 95 * rs + 120 * Math.max(0, rs - 1.5) ** 2;
         for (const pp of row.people) {
           if (pp.keep > params.crowd) continue;
-          const x = W / 2 + pp.x;
-          if (x < -80 * pp.s || x > W + 80 * pp.s) continue;
-          const k = this.kickHist[pp.lag] * react;
-          // Bounce: down on the beat, more in the drop; sway in the breakdown.
-          const bob = pp.s * (22 * k * (0.4 + 0.6 * e) + 3 * Math.sin(t * 1.1 + pp.ph) * (1 - e));
-          const sway = pp.s * 6 * Math.sin(t * 0.7 + pp.ph) * (1 - 0.6 * e);
-          const hx = x + sway, hy = cy + pp.dy + bob;
+          const s = rs * pp.sz;
+          const x = W / 2 + (pp.x - this.camX) * rs;
+          if (x < -80 * s || x > W + 80 * s) continue;
+          // The kick rolls across the crowd as a wave from a new place each
+          // beat, so only a band of heads is moving at any instant.
+          const lag = Math.min(KICK_HIST - 1, Math.floor(Math.abs(x - W / 2 - this.waveX) / 26));
+          const k = this.kickHist[lag] * react;
+          const bob = s * (13 * k * (0.4 + 0.6 * e) + 3 * Math.sin(t * 1.1 + pp.ph) * (1 - e));
+          const sway = s * 6 * Math.sin(t * 0.7 + pp.ph) * (1 - 0.6 * e);
+          const hx = x + sway, hy = cy + pp.dy * rs + bob;
           const up = clamp01((this.raise - pp.eager * 0.55) / 0.45);
-          const pose = this.pose(pp, hx, hy, up, k, t);
-          if (depth > 0) {
+          const pose = this.pose(pp, s, hx, hy, up, k, t);
+          if (rs > 0.4) {
             // Rim light from the stage behind: the same silhouette, nudged up.
-            this.person(g, pp.s, hx, hy - 1.6 * pp.s, pose, 0, -1.6 * pp.s, rgba(rim, depth === 2 ? 0.9 : 0.6), H);
+            this.person(g, s, hx, hy - 1.6 * s, pose, 0, -1.6 * s, rgba(rim, Math.min(0.9, 0.3 + 0.3 * rs)), H);
           }
-          this.person(g, pp.s, hx, hy, pose, 0, 0, rgba(body, 1), H);
+          this.person(g, s, hx, hy, pose, 0, 0, rgba(body, 1), H);
           if (pp.style === 3 && up > 0.3) {
             // A phone held up: the one cold white point in the room.
             const hand = pose.raised;
             g.fillStyle = rgba([200, 220, 255], 0.85 * up);
-            g.fillRect(hand[0] - 3 * pp.s, hand[1] - 11 * pp.s, 6 * pp.s, 9 * pp.s);
+            g.fillRect(hand[0] - 3 * s, hand[1] - 11 * s, 6 * s, 9 * s);
           }
-        }
-        if (depth < 2) {
-          // Haze between rows, lit a little by the kick.
-          const y0 = H / 2 - row.y - 60 * row.s, y1 = H;
-          const grad = g.createLinearGradient(0, y0, 0, y1);
-          const hc = toSrgb(hz.map((v) => v * (0.6 + 0.8 * this.kick * react)));
-          grad.addColorStop(0, rgba(hc, 0));
-          grad.addColorStop(0.35, rgba(hc, 0.07));
-          grad.addColorStop(1, rgba(hc, 0.02));
-          g.fillStyle = grad;
-          g.fillRect(0, y0, W, y1 - y0);
         }
       }
       g.restore();
     },
 
     // Arm geometry in screen units: each arm is [elbow, hand].
-    pose(pp, hx, hy, up, k, t) {
-      const s = pp.s;
+    pose(pp, s, hx, hy, up, k, t) {
       const arm = (dir, lift) => {
         let ex = hx + dir * 34 * s, ey = hy + 55 * s;           // arms down
         let hxx = hx + dir * 36 * s, hyy = hy + 110 * s;
         const uex = hx + dir * 40 * s, uey = hy - 6 * s;        // arms up, a V
         let uhx = hx + dir * 44 * s, uhy = hy - 60 * s;
-        if (pp.style === 1) uhy -= 18 * s * k;                   // fist pump on the kick
+        if (pp.style === 1) uhy -= 12 * s * k;                   // fist pump on the kick
         if (pp.style === 2) uhx += 14 * s * Math.sin(t * 3.2 + pp.ph);
         ex += (uex - ex) * lift; ey += (uey - ey) * lift;
         hxx += (uhx - hxx) * lift; hyy += (uhy - hyy) * lift;

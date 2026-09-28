@@ -7,12 +7,16 @@
 // near flakes as out-of-focus bokeh); sparkling plankton; a vignette.
 //
 // The music has one job per layer, so the room can read each part:
-// - Kick: every bell contracts at once (tall and narrow, the margin pulling
-//   in), and because thrust is taken from the rate of contraction, each kick
-//   jets every jelly upward with its tentacles trailing. The halos flare, the
-//   stage makes a small zoom punch and the snow streaks as the column lurches.
-//   Between kicks (intro, breakdown) the bells pulse on their own slow,
-//   unsynchronised rhythms; the drop entrains them to the beat.
+// - Kick: the jellies take turns. Each beat two of them (rotating through the
+//   swarm) contract hard, tall and narrow, flash their own colour inside the
+//   bell, and jet upward, since thrust comes from the rate of contraction;
+//   the rest barely stir. The swarm pulses like a living thing, not a strobe.
+//   (2026-09-28: the first version contracted and flashed every bell, flared
+//   every halo, zoomed the stage and lurched the snow on each kick. It was
+//   too pulsey to watch for long: jolt kickArea 0.96.)
+// - Movement: a continuous descent. Snow and plankton rise past, the swarm
+//   drifts up past us with parallax, the rays fade and return as we pass
+//   through the column; bass and the drop set the sinking speed.
 // - Snare / clap: a bead of bioluminescence runs down every tentacle, in the
 //   palette's complementary colour, launched as a wave that sweeps across the
 //   swarm from one side (alternating sides), and the rims flash that colour.
@@ -105,7 +109,7 @@
     gallery: {
       title: 'Abyss',
       technique: 'Canvas 2D, additive light: verlet-chain tentacles and oral arms, bells as bezier domes with gradient fill and rim strokes, all glow from pre-rendered per-hue radial sprites; parallax marine snow in three depths, god-ray wedges, plankton glints',
-      brief: 'A deep-sea column. God rays fall from far above, marine snow drifts past at three depths, and a swarm of glowing jellies hangs in the dark, each bell a translucent dome with a lit rim and rows of iridescent comb light, trailing oral arms and fine tentacles. Every kick contracts every bell at once and jets the swarm upward, tentacles streaming, halos flaring, the snow streaking past; the snare sends beads of complementary light running down the tentacles in a wave across the swarm; bass deepens the glow; hats make the plankton glint. The drop brings more jellies swimming up from below and fans their colour out into rainbow; the breakdown lets them drift and pulse on their own.',
+      brief: 'A deep-sea column. God rays fall from far above, marine snow drifts past at three depths, and a swarm of glowing jellies hangs in the dark, each bell a translucent dome with a lit rim and rows of iridescent comb light, trailing oral arms and fine tentacles. We sink slowly and continuously through the column, snow and plankton rising past, the swarm drifting up by us with parallax, the surface light fading and returning; bass and the drop set the sinking speed. The kick takes turns: each beat two jellies, rotating through the swarm, contract hard, flash their own colour inside the bell and jet upward, so the swarm pulses like a living thing; the snare sends beads of complementary light running down the tentacles in a wave across the swarm; bass deepens the glow; hats make the plankton glint. The drop brings more jellies swimming up from below and fans their colour out into rainbow; the breakdown lets them drift and pulse on their own.',
       lineage: [
         'Batch 02 brief 01 (Abyss); layering after Flyover Night drive, music legibility after Interference.',
         'First pass (640x360): Canvas 2D, additive light, verlet tentacles, bells contracting on the kick with thrust taken from the rate of contraction. The drop read clearly bigger, but the swarm clumped in the centre (value-noise homes average to 0.5), tentacles hung like a comb, and jellies started off-screen below in the intro.',
@@ -117,6 +121,7 @@
         'Checked with a kick strip (11.90-12.5 s), a full-size render and a 96 s longevity run.',
         'Lead review: a lovely aquarium, not yet hard to look away from. Revision: fewer, far larger jellies (default 5, the foreground giant about a third of the frame and held in place so the breakdown is never empty); Prism the default palette; rainbow light flowing continuously down every tentacle (one stroke per segment index, hued by a travelling band); comb rows cycling faster in the drop; Trails 0.35 by default so motion leaves ghosts.',
         'Kick deepened: bells contract to ~54% width, each bell flashes its own colour, the halos and a soft water-wide bloom flare and decay in ~200 ms. The first attempt blew overlapping bells out to white across a large area; flash, halo and bloom were each tempered by about a third.',
+        'Raph on batch 02 (2026-09-28): too pulsey; more movement. Jolt before: kickArea 0.955, kickMean 0.221, ratio 2.14 (jarring). Removed the zoom punch, the water-wide bloom, the halo flare and the snow lurch; the kick now lives only in two rotating bells a beat (strong contraction, flash inside the dome), every other bell stirring by 15%. Movement: a continuous descent (snow and plankton rise, the swarm drifts up past with parallax and wraps, rays fade and return on a ~4 minute cycle), its speed eased from bass and drop energy. Drop arrivals now light up in the lower half of the frame instead of swimming in from below, and the swarm\'s light scales with drop energy, so the drop stays bigger than the breakdown. Jolt after: kickArea 0.206, kickMean 0.046, ratio 1.28 (calm).',
         'Drop quickens the bells\' own pulse threefold between kicks, adds up to five jellies and fans the colour out further.',
       ],
     },
@@ -131,7 +136,9 @@
       this.snareArmed = true;
       this.hatArmed = true;
       this.snareSide = 1;
-      this.rise = 0;
+      this.depth = 0;
+      this.sinkV = 10;
+      this.turn = 0;
       this.t = 0;
     },
 
@@ -208,6 +215,9 @@
       const e = this.env;
       const kRaw = clamp01((sig[0] - 42) / 48);
       e.kick = kRaw > e.kick ? ease(e.kick, kRaw, 45, dt) : ease(e.kick, kRaw, 9, dt);
+      let kickHit = false;
+      if (this.kickArmed !== false && kRaw > 0.5) { kickHit = true; this.kickArmed = false; }
+      if (kRaw < 0.2) this.kickArmed = true;
       const bass = (sig[1] + sig[2]) / 200;
       e.bass = ease(e.bass, bass, 3, dt);
       e.avg0 = ease(e.avg0, sig[0] / 100, 0.9, dt);
@@ -225,7 +235,7 @@
       let hatHit = false;
       if (this.hatArmed && hRaw > 0.38) { hatHit = true; this.hatArmed = false; }
       if (hRaw < 0.22) this.hatArmed = true;
-      return { snareHit, hatHit, hRaw };
+      return { snareHit, hatHit, hRaw, kickHit };
     },
 
     // Chains hang straight down from their anchor when a jelly (re)appears,
@@ -307,8 +317,14 @@
       const pal = PALETTES[(params.palette | 0) % PALETTES.length];
 
       // ---- the column rises: slowly at rest, faster in the drop, lurching on kicks
-      const riseV = 6 + 28 * energy + 150 * kick;
-      this.rise += riseV * dt;
+      // ---- the descent: we sink steadily through the column; the music sets
+      // the speed (bass and the drop), smoothly, and the kick never jerks it.
+      this.sinkV = ease(this.sinkV, 10 + 40 * energy + 14 * e.bass, 0.8, dt);
+      const riseV = this.sinkV;
+      this.depth += riseV * dt;
+      // Light from the surface comes and goes as we pass through the column
+      // (a ~4 minute cycle at a typical speed), so the rays fade as we sink.
+      const surface = 0.3 + 0.7 * (0.5 + 0.5 * Math.cos(this.depth / 900));
 
       // Everything soft (water, rays, vignette, halos, bloom, bokeh) is drawn
       // into quarter-resolution buffers and scaled up: it has no edges to
@@ -329,7 +345,7 @@
       B.globalCompositeOperation = 'source-over';
       B.globalAlpha = 1;
       const glow = clamp01(0.55 + 0.6 * e.bass + 0.35 * energy);
-      const top = pal.top.map((v) => Math.round(v * (0.7 + 0.8 * glow)));
+      const top = pal.top.map((v) => Math.round(v * (0.45 + 0.8 * glow) * (0.6 + 0.4 * surface)));
       let gr = B.createLinearGradient(0, 0, 0, H);
       gr.addColorStop(0, `rgb(${top[0]},${top[1]},${top[2]})`);
       gr.addColorStop(0.55, `rgb(${Math.round(top[0] * 0.3)},${Math.round(top[1] * 0.3)},${Math.round(top[2] * 0.35)})`);
@@ -339,7 +355,7 @@
 
       // ---- god rays: wedges from a sun far above, swaying
       B.globalCompositeOperation = 'lighter';
-      const rayK = params.rays * (0.35 + 0.45 * e.bass + 0.25 * energy);
+      const rayK = params.rays * (0.35 + 0.45 * e.bass + 0.25 * energy) * surface;
       if (rayK > 0.01) {
         const sx = W * (0.5 + 0.18 * noise1(t * 0.03 + 3)), sy = -H * 0.9;
         const rc = pal.ray;
@@ -381,18 +397,12 @@
       g.globalAlpha = 1;
       g.globalCompositeOperation = 'lighter';
 
-      // ---- zoom punch on the kick, for everything in the water
-      const zoom = 1 + 0.035 * kick;
-      g.translate(W / 2, H * 0.45);
-      g.scale(zoom, zoom);
-      g.translate(-W / 2, -H * 0.45);
-
       // ---- marine snow; layer 0 far, 1 mid, drawn before the jellies; 2 near after
       const drawSnow = (near) => {
         for (const s of this.snow) {
           if ((s.d > 0.8) !== near) continue;
           const span = H + 40;
-          const y = ((s.y * span + this.rise * s.d + T * 4 * s.d) % span + span) % span - 20;
+          const y = ((s.y * span - this.depth * s.d * 1.4 + T * 3 * s.d) % span + span) % span - 20;
           const x = ((s.x * W + 14 * noise1(s.ph + t * 0.1) + t * 6 * (params.current - 0.5) * s.d) % W + W) % W;
           if (near) {
             const rr = 7 + 12 * s.s;
@@ -416,10 +426,11 @@
         const j = this.order[i];
         const target = i < nVis ? 1 : 0;
         if (target && j.pres < 0.02 && !j.spawned) {
-          // Enter from below, so new arrivals are seen swimming up.
-          j.x = W * (0.1 + 0.8 * j.homeX);
-          j.y = H + j.R * 1.5 + 60 * Math.random();
-          j.vx = 0; j.vy = -40;
+          // Arrivals switch their light on in the lower half of the frame, so
+          // the drop's extra jellies are there within a bar, not seconds later.
+          j.x = W * (0.1 + 0.8 * Math.random());
+          j.y = H * (0.5 + 0.45 * Math.random());
+          j.vx = 0; j.vy = -20;
           if (!this.started) {
             // The opening swarm is already in the water.
             j.x = W * (0.1 + 0.8 * j.homeX);
@@ -431,10 +442,24 @@
           this.resetChains(j, W);
         }
         if (!target && j.pres < 0.01) j.spawned = false;
-        j.pres = ease(j.pres, target, target ? 1.1 : 0.6, dt);
+        j.pres = ease(j.pres, target, target ? 1.6 : 1.3, dt);
       }
       this.started = true;
 
+      // The kick takes turns: each beat two jellies (rotating through the
+      // swarm) make the big contraction and flash, the rest barely stir. A
+      // kick that lit every bell at once changed most of the frame (jolt
+      // kickArea 0.96) and was jarring to watch for long.
+      if (hits.kickHit) {
+        const live = this.order.filter((q) => q.spawned);
+        if (live.length) {
+          const n = live.length;
+          live[this.turn % n].kick = 1;
+          if (n > 2) live[(this.turn + Math.ceil(n / 2)) % n].kick = 1;
+          this.turn++;
+        }
+      }
+      const kickAll = kick;
       const snareHue = pal.snare;
       if (hits.snareHit) {
         this.snareSide = -this.snareSide;
@@ -456,13 +481,15 @@
       for (const j of this.drawOrder) {
         if (!j.spawned) continue;
         const z = j.z;
+        j.kick = (j.kick || 0) * Math.exp(-9 * dt);
+        const kick = clamp01(j.kick * react);
         // Idle pulse: quick contraction, slow relaxation; the kick overrides it.
         // The drop quickens the bells' own pulse, so between kicks they
         // flutter rather than rest.
         j.ph += dt * j.rate * (1 + 2.2 * energy);
         const f = j.ph % 1;
         const idle = f < 0.18 ? Math.sin((f / 0.18) * Math.PI / 2) : Math.exp(-(f - 0.18) * 5);
-        const cT = Math.max(idle * (0.5 - 0.2 * energy), kick);
+        const cT = Math.max(idle * (0.5 - 0.2 * energy), kick, 0.15 * kickAll);
         j.cPrev = j.c;
         j.c = cT;
         const c = j.c;
@@ -484,7 +511,7 @@
         // A weak, capped pull home: enough to gather the swarm back in quiet
         // passages, too weak to hold it against a drop's kicks, so in the drop
         // the jellies climb out of the top and new ones rise from below.
-        let fx = (hx - j.x) * 0.35, fy = (hy - j.y) * 0.8 + 6;
+        let fx = (hx - j.x) * 0.35, fy = z > 1 ? (hy - j.y) * 0.8 + 6 : 0;
         const fm = Math.hypot(fx, fy);
         const cap = z > 1 ? 160 : 45;
         if (fm > cap) { fx *= cap / fm; fy *= cap / fm; }
@@ -492,6 +519,8 @@
         const drag = Math.exp(-2.0 * dt);
         j.vx *= drag; j.vy *= drag;
         j.x += j.vx * dt; j.y += j.vy * dt;
+        // We sink, so the swarm drifts up past us, nearer jellies faster.
+        if (z <= 1) j.y -= riseV * (0.3 + 0.55 * z) * dt;
         if (j.y < -j.R * (1.5 + 3.6 * params.tentacles)) {
           j.y = H + j.R * 1.3;
           j.x = W * (0.08 + 0.84 * Math.random());
@@ -522,7 +551,8 @@
 
         // ---- colour
         const hue = wrapHue(hueMid + (j.u - 0.5) * (hueHi - hueLo) * spread);
-        const depthA = (z > 1 ? 0.7 : 0.35 + 0.65 * z) * j.pres;
+        // The drop turns the swarm's light up; the breakdown lets it dim.
+        const depthA = (z > 1 ? 0.7 : 0.35 + 0.65 * z) * j.pres * (0.72 + 0.4 * energy);
         const sat = 70 + 25 * energy;
         // Two-tone: tentacles lean toward the far end of the palette, more so
         // in the drop, so each jelly carries a gradient of colour.
@@ -541,13 +571,13 @@
         // ---- halo
         const bodyCy = -Hb * 0.45;
         const [cx, cy] = toW(0, bodyCy);
-        const haloR = R * (2.5 + 1.3 * e.bass + 1.6 * kick);
-        G.globalAlpha = clamp01((0.28 + 0.3 * e.bass + 0.5 * kick) * depthA);
+        const haloR = R * (2.5 + 1.3 * e.bass);
+        G.globalAlpha = clamp01((0.28 + 0.3 * e.bass) * depthA);
         G.drawImage(spr.halo[hi], cx - haloR, cy - haloR, haloR * 2, haloR * 2);
-        // Kick flash: each bell lights up in its own colour.
+        // Kick flash, confined to the bell: its own colour, no wider than the dome.
         if (kick > 0.02) {
-          const fr = R * (1.3 + 0.6 * kick);
-          G.globalAlpha = clamp01(0.55 * kick * depthA);
+          const fr = R * 0.8;
+          G.globalAlpha = clamp01(0.5 * kick * depthA);
           G.drawImage(spr.pt[hi], cx - fr, cy - fr, fr * 2, fr * 2);
         }
 
@@ -558,7 +588,7 @@
           const q = a / 0.45;
           const ra = clamp01((1 - q) * (1 - q) * depthA * Math.min(1.2, react));
           g.beginPath();
-          g.arc(cx, cy, R * (0.9 + 2.0 * Math.sqrt(q)), 0, Math.PI * 2);
+          g.arc(cx, cy, R * (0.9 + 1.4 * Math.sqrt(q)), 0, Math.PI * 2);
           g.strokeStyle = `hsl(${snareHue},100%,58%)`;
           g.globalAlpha = ra * 0.3;
           g.lineWidth = (9 - 5 * q) * (0.5 + 0.5 * z);
@@ -733,7 +763,7 @@
       const sparkDecay = Math.exp(-7 * dt);
       for (const q of this.plank) {
         const span = H + 20;
-        const y = ((q.y * span + this.rise * 0.7 * q.d + 6 * noise1(q.ph + t * 0.2)) % span + span) % span - 10;
+        const y = ((q.y * span - this.depth * 0.9 * q.d + 6 * noise1(q.ph + t * 0.2)) % span + span) % span - 10;
         const x = ((q.x * W + 10 * noise1(q.ph * 3 + t * 0.15)) % W + W) % W;
         const base = 0.25 + 0.15 * Math.sin(T * 1.3 + q.ph);
         g.globalAlpha = base * q.d;
@@ -754,15 +784,8 @@
 
       drawSnow(true);
 
-      // ---- kick bloom: a soft lift of light over the swarm, never a strobe
-      if (kick > 0.02) {
-        const bh2 = Math.round(wrapHue(hueMid) / 10) % HUES;
-        const br = Math.max(W, H) * 0.8;
-        G.globalAlpha = 0.32 * kick;
-        G.drawImage(spr.halo[bh2], W / 2 - br, H * 0.45 - br, br * 2, br * 2);
-      }
       G.globalAlpha = 1;
-      // The glow buffer is composited inside the zoom, like the rest of the water.
+      // The glow buffer goes on in one additive pass.
       g.globalAlpha = 1;
       g.drawImage(this.bufs.glow.c, 0, 0, W, H);
       g.restore();
