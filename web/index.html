@@ -258,6 +258,13 @@
   .viz-list button:hover { background: var(--fill); }
   .viz-list button[aria-current="true"] { background: var(--active); color: #001018; font-weight: 500; }
   .viz-list kbd { font: 400 12px var(--mono); opacity: 0.8; }
+  .viz-list .vtag {
+    margin-left: auto; padding: 1px 4px;
+    font: 400 9px var(--pixel); letter-spacing: 0.1em; white-space: nowrap;
+    border: 1px solid currentColor; opacity: 0.7;
+  }
+  .viz-list .vtag.live { background: var(--ink); color: var(--track); border-color: var(--ink); opacity: 1; }
+  .viz-list button[aria-current="true"] .vtag.live { background: #001018; color: var(--active); border-color: #001018; }
 
   .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
   .empty { color: var(--muted); font-size: 13px; margin: 0; }
@@ -344,6 +351,7 @@
         <dt>1–9</dt><dd>Pick a visual</dd>
         <dt>H</dt><dd>Hide or show this panel</dd>
         <dt>F</dt><dd>Fullscreen the stage</dd>
+        <dt>V</dt><dd>Switch between V1 and V2</dd>
       </dl>
       <p>Ported from <a href="https://github.com/Raphomet/viz" target="_blank" rel="noopener">github.com/Raphomet/viz</a> (2016)</p>
     </footer>

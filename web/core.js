@@ -92,10 +92,60 @@
       if (typeof def.setup === 'function') safeCall(def, 'setup', [p5inst, ctx]);
       buildVizList();
       if (!current) selectViz(def.id);
+      // A late version of the live scene needs the Version control to appear.
+      else if (familyOf(current) === familyOf(def)) buildControls();
     }
   }
 
   window.VIZ = { register: register };
+
+  // ---------------------------------------------------------------- versions
+  // A redesign registers as its own def with versionOf pointing at the
+  // original, so both stay runnable side by side with separate params. The
+  // list shows one entry per scene (the original's); the Version control and
+  // the V key pick which def that entry puts on the stage. Everything here is
+  // resolved at use time rather than at register time, because V2 scripts load
+  // after V1s and a V2 may arrive before, after, or without its original.
+  function byId(id) { return registry.filter(function (d) { return d.id === id; })[0] || null; }
+
+  // The id of the list entry a def belongs to. A V2 whose original never
+  // registered falls back to being its own entry rather than vanishing.
+  function familyOf(def) {
+    return def.versionOf && def.versionOf !== def.id && byId(def.versionOf) ? def.versionOf : def.id;
+  }
+
+  function versionLabel(def) { return def.version || (def.versionOf ? 'V2' : 'V1'); }
+
+  // The original first, then its versions by label (V2, V3, ...).
+  function versionsOf(familyId) {
+    var base = byId(familyId);
+    if (!base) return [];
+    var others = registry.filter(function (d) { return d !== base && familyOf(d) === familyId; });
+    others.sort(function (a, b) { return versionLabel(a) < versionLabel(b) ? -1 : versionLabel(a) > versionLabel(b) ? 1 : 0; });
+    return [base].concat(others);
+  }
+
+  function listedDefs() { return registry.filter(function (d) { return familyOf(d) === d.id; }); }
+
+  // The def a family's entry currently stands for: the remembered version if
+  // it is still registered, otherwise the original.
+  function chosenVersion(familyId) {
+    var versions = versionsOf(familyId);
+    var remembered = readStore('viz.version.' + familyId);
+    return versions.filter(function (d) { return d.id === remembered; })[0] || versions[0] || null;
+  }
+
+  function selectScene(familyId) {
+    var def = chosenVersion(familyId);
+    if (def) selectViz(def.id);
+  }
+
+  function toggleVersion() {
+    if (!current) return;
+    var versions = versionsOf(familyOf(current));
+    if (versions.length < 2) return;
+    selectViz(versions[(versions.indexOf(current) + 1) % versions.length].id);
+  }
 
   function safeCall(def, method, args) {
     try { def[method].apply(def, args); }
@@ -459,12 +509,27 @@
       list.appendChild(el('p', { class: 'empty' }, 'No visuals loaded.'));
       return;
     }
-    registry.forEach(function (def, i) {
+    var liveFamily = current ? familyOf(current) : null;
+    listedDefs().forEach(function (def, i) {
       var b = el('button', { type: 'button', id: 'viz-' + def.id });
       if (i < 9) b.appendChild(el('kbd', null, String(i + 1)));
       b.appendChild(el('span', null, def.name || def.id));
-      b.setAttribute('aria-current', String(current === def));
-      b.addEventListener('click', function () { selectViz(def.id); });
+      var versions = versionsOf(def.id);
+      if (versions.length > 1) {
+        // The tag names the newest version and is filled in while that version
+        // is the one this entry shows, outlined while the original is.
+        var live = liveFamily === def.id ? current : chosenVersion(def.id);
+        var newest = versions[versions.length - 1];
+        var tag = el('span', {
+          class: 'vtag' + (live === newest ? ' live' : ''),
+          id: 'viz-' + def.id + '-version',
+          title: 'Showing ' + versionLabel(live)
+        }, versionLabel(newest));
+        b.appendChild(tag);
+        b.setAttribute('data-version', versionLabel(live));
+      }
+      b.setAttribute('aria-current', String(liveFamily === def.id));
+      b.addEventListener('click', function () { selectScene(def.id); });
       list.appendChild(b);
     });
   }
@@ -593,6 +658,20 @@
       return;
     }
     var def = current, params = paramValues[def.id];
+    var versions = versionsOf(familyOf(def));
+    if (versions.length > 1) {
+      var vrow = el('div', { class: 'row' });
+      var vhead = rowHead('Version', null, null, 'ctl-version-label');
+      var vseg = el('div', { class: 'seg', role: 'group', 'aria-labelledby': 'ctl-version-label', id: 'ctl-version' });
+      versions.forEach(function (v) {
+        var b = el('button', { type: 'button', id: 'ctl-version-' + v.id }, versionLabel(v));
+        b.setAttribute('aria-pressed', String(v === def));
+        b.addEventListener('click', function () { selectViz(v.id); });
+        vseg.appendChild(b);
+      });
+      vrow.appendChild(vhead.head); vrow.appendChild(vseg);
+      box.appendChild(vrow);
+    }
     (def.params || []).forEach(function (spec) {
       var row = buildControl(def, spec, params);
       if (row) box.appendChild(row);
@@ -630,6 +709,7 @@
       current = def;
       if (p5ready && typeof def.enter === 'function') safeCall(def, 'enter', [p5inst, ctx]);
       writeStore('viz.selected', def.id);
+      if (versionsOf(familyOf(def)).length > 1) writeStore('viz.version.' + familyOf(def), def.id);
     }
     buildVizList();
     buildControls();
@@ -670,9 +750,10 @@
     var k = e.key;
     if (k === 'h' || k === 'H') { togglePanel(); e.preventDefault(); }
     else if (k === 'f' || k === 'F') { toggleFullscreen(); e.preventDefault(); }
+    else if (k === 'v' || k === 'V') { toggleVersion(); e.preventDefault(); }
     else if (/^[1-9]$/.test(k)) {
-      var def = registry[Number(k) - 1];
-      if (def) { selectViz(def.id); e.preventDefault(); }
+      var def = listedDefs()[Number(k) - 1];
+      if (def) { selectScene(def.id); e.preventDefault(); }
     }
   }
 
@@ -759,11 +840,11 @@
       registry.forEach(function (def) {
         if (typeof def.setup === 'function') safeCall(def, 'setup', [p, ctx]);
       });
-      var remembered = readStore('viz.selected');
-      var first = registry.filter(function (d) { return d.id === remembered; })[0] || registry[0];
+      var remembered = byId(readStore('viz.selected'));
+      var first = remembered ? familyOf(remembered) : (listedDefs()[0] || {}).id;
       if (first) {
         current = null;   // so selectViz runs enter() now that p5 exists
-        selectViz(first.id);
+        selectScene(first);
       } else {
         buildVizList();
         buildControls();

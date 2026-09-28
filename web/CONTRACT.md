@@ -61,6 +61,19 @@ VIZ.register({
 });
 ```
 
+### Versions
+
+A redesign of an existing scene lives in its own file under `scenes/v2/` and
+registers a separate def with `id: '<v1 id>v2'`, the same `name` as the
+original, `versionOf: '<v1 id>'` and `version: 'V2'`. The Visual list shows the
+scene once, at the original's position, with a small V2 tag (filled while V2 is
+live); a Version control at the top of Controls and the `V` key switch between
+the two defs (with the usual `leave` / `enter`). Each def keeps its own params
+under its own id. The chosen version is remembered per scene in `localStorage`
+(`viz.version.<v1 id>`). A def whose `versionOf` names an id that never
+registered is listed as its own entry. The harness hosts one def and ignores
+both fields.
+
 ### draw arguments
 
 - `p` — the p5 instance. **Every** Processing call becomes `p.xxx(...)`:
