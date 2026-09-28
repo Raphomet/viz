@@ -1,87 +1,97 @@
 # Taste
 
-The standard every scene is made and judged against. The maker reads it before
-starting; the critic scores against it. It is deliberately opinionated.
+What we're making, and what good looks like. Read it before making a scene.
+It is guidance for taste, not a scoring rubric: the question is always whether
+a room full of people at a party would be captivated.
 
 ## The goal
 
-**Mesmerizing.** Someone at a party glances at the projection, and a minute later
-they are still looking. That happens when a piece has structure that keeps
-emerging, so the eye keeps finding something new, and when its motion is
-continuous enough to be hypnotic rather than busy.
+**Extremely hard to look away from, for someone who is very high.** That is
+Raph's bar, in his words. Everything below serves it.
 
-The reference point is the golden age of Processing, roughly 2004–2014:
-Jared Tarbell's Complexification (Substrate, Sand Traveler, Happy Place),
-Robert Hodgin's Magnetosphere and flocking work, Casey Reas's Process
-series, Marius Watz, Erik Natzke, Glenn Marshall, Memo Akten, early
-OpenProcessing. Take their *techniques and seriousness*, never their pieces:
-nothing that would read as a copy of a named work.
+**A music visualizer that mesmerizes a room.** Someone glances at the
+projection while their friend is DJing, and a minute later they're still
+watching, and they can *see the music in it*. Two things have to be true at
+once:
 
-## What makes a piece good
+1. **It is captivating to look at.** Rich, layered, often psychedelic imagery
+   with depth and atmosphere, whether it is abstract or figurative (a jellyfish,
+   an aurora over mountains, a crowd under lasers are all fair game).
+2. **The music is obvious.** Anyone in the room can tell it is dancing to the
+   track, without being told.
 
-1. **Emergence over animation.** The best pieces are systems (agents, fields,
-   growth, simulation) whose look arises from simple rules running for a long
-   time. A thing that is merely keyframed or rotated is rarely mesmerizing.
-2. **Density and accumulation.** Golden-age work often never cleared the
-   background, or cleared it at a low alpha: thousands of faint marks building
-   into tone. Detail should reward a closer look on a big screen.
-3. **A restrained palette.** One or two hues plus a neutral usually beats a
-   rainbow. Colour is a decision, not `hue = frameCount % 360`. HSB cycling is
-   allowed only when the piece is about colour and it is earned.
-4. **Music you feel, not music you read.** The audio should change the
-   system's physics (force, growth rate, spawn rate, turbulence, a phase) so
-   the piece breathes with the track. Avoid literal meters: no bars, no
-   spectrum strips, no shapes that simply scale with the kick. A good test:
-   with the sound off it is still beautiful; with the sound on it is alive.
-   The drop should look different from the breakdown, and it should be the
-   most *structured and intense* section, not the most disordered. At 124 BPM
-   four-on-the-floor a kick lands every 0.48 s, so a per-kick event becomes a
-   constant disruption: drive rates, phases and pressures with the kick, and
-   save one-off events for rarer sounds.
-5. **Continuity.** No popping, strobing, or jitter unless it is deliberate and
-   rare. Changes ease. Nothing resets visibly.
-6. **It holds for minutes.** The piece must not saturate to a white or black
-   mess, freeze into stasis, or run out of particles after 30 seconds. Build in
-   renewal (fade, respawn, re-seeding) so minute five is as good as minute one.
-7. **Somewhere for the eye to go.** Neither an all-over wallpaper of equal
-   texture nor a single centred object. There should be large-scale form
-   (fronts, voids, clusters, a focal region that moves) and it should change
-   over minutes.
-8. **Composition at every aspect ratio.** It fills the stage in 16:9 and in a
-   square; nothing important is cropped or huddled in a corner.
-9. **Craft.** Antialiased where it matters, no banding in gradients where it
-   shows, no visible seams, legible at projector resolution.
+History (2026-09-27): batch 01 was judged on "music felt, not read", and Raph's
+verdict was that apart from Interference you couldn't tell how the pieces
+reacted to the music: gen-art, not music visualization. That rule is retired.
+He also asked for more psychedelic imagery and more layering, pointing at
+Flyover's Night drive (stars + sun + moving ground) as the kind of combination
+he likes.
 
-## Instant rejections
+## Music the room can see
 
-- A centred shape spinning or pulsing to the kick.
-- A generic particle fountain, starfield warp, or plasma with nothing else.
-- Rainbow everything.
+Give each scene a small vocabulary of distinct, legible reactions:
+
+- **Kick → a punch that lands.** A flash, a bloom, a pulse outward, a zoom
+  kick, a launch, a bell contraction: something unmistakable on every beat
+  that *decays* back (a few hundred milliseconds) rather than wrecking the
+  structure. At 124 BPM a kick lands every 0.48 s, so the punch must be quick
+  to rise and quick to fall, and the underlying scene must survive it.
+- **Snare / clap → a different event.** A colour flip, a burst, a camera cut,
+  a flock turning. Visibly not the same as the kick.
+- **Bass and pad → continuous swell.** Size, glow, height, density, speed.
+- **Hats → sparkle.** Glints, twinkles, fine particles, flicker in the detail.
+- **The drop is obviously bigger.** More layers switch on, more colour, more
+  motion. The breakdown clearly exhales.
+
+Legible does not mean literal: no spectrum bars and no meters. The reaction
+lives inside the imagery.
+
+## What makes it captivating
+
+- **Layers.** Three or more planes working together: a sky or backdrop, a main
+  subject, foreground particles or light, atmosphere (haze, glow, fog,
+  reflections, bloom). Layers are also where the music can land in different
+  places at once.
+- **Depth and light.** Glow, additive light, soft bloom, parallax, fog,
+  reflections. Light on black reads beautifully on a projector.
+- **Colour with intent.** Psychedelic is welcome: saturated, shifting palettes,
+  complementary pops, iridescence. But it is chosen, not `hue = frameCount`.
+- **Motion that never stops being interesting.** Something is always
+  evolving, and minute five is as good as minute one: no saturation, no
+  stasis, no death.
+- **Composition at every aspect ratio.** It fills a 16:9 stage and a square.
+- **Craft.** Smooth, antialiased where it matters, no seams, no accidental
+  jitter, 60 fps on a laptop.
+
+## For the altered viewer
+
+Someone very high is exquisitely sensitive to motion, depth, colour and
+rhythm, and gets pulled into things that unfold, breathe and recurse:
+tunnels, fractal zooms, slow morphs, colour that keeps finding new harmonies,
+detail inside detail, symmetry that shifts. Give them somewhere to fall into.
+Avoid what feels bad in that state: harsh full-screen strobing, jittery
+noise, sudden ugly cuts, and anything menacing. Rapid high-contrast flashing
+of large areas (roughly 3 to 30 flashes a second) can also trigger seizures, so
+kick punches use glow, bloom, scale and colour, never hard full-screen
+black/white strobes.
+
+## Things that fall flat
+
+- A centred shape pulsing to the kick with nothing else going on.
 - A spectrum analyser in disguise.
-- Visible frame-to-frame jitter from randomness that should have been noise.
-- Blows out to a flat colour, or dies to black, within the 24-second test.
-- Too slow for 60 fps. Read `renderTime` p95 in `report.json` at 1280×720.
-  Canvas 2D scenes: at most ~12 ms. WebGL scenes: the harness emulates the GPU
-  on the CPU (SwiftShader), which overstates cost several times over, so the
-  ceiling there is ~30 ms; keep shaders and iteration counts modest anyway.
+- One effect alone (a lone particle fountain, a lone plasma).
+- Rainbow cycling as a substitute for a palette.
+- Reactions so subtle that you need the band strip to notice them.
 
 ## Controls
 
-Each scene declares 4–8 params that a performer would actually want to turn
-mid-set: the ones that change the character of the piece, not its plumbing.
-Plain labels ("Turbulence", "Trail fade", "Growth rate"). At least one control
-should produce a dramatic, satisfying change. Every default must already look
-good. Include a band picker only where choosing the band matters. An action
-button ("Re-seed", "Clear") is welcome when the piece has a natural reset.
+4–8 params a performer would want to turn mid-set, with plain labels, and at
+least one that changes the character dramatically. A "reaction strength" style
+control is welcome. Every default must already look great.
 
-## How the critic scores
+## Performance
 
-Score 1–5 on each: **Mesmerizing** (would you keep watching?), **Originality**
-(does it avoid the defaults above and have a point of view?), **Music**
-(felt, not read; drop vs breakdown visible in the contact sheet), **Longevity**
-(frame 24 s as good as frame 6 s; no saturation or death), **Craft**
-(composition, palette, smoothness, performance).
-
-A scene ships at 4+ on Mesmerizing and no score below 3. The critic's notes
-must be specific and actionable ("the trails saturate to white by 14 s: fade
-at 3% per frame instead of 1%"), never generic praise.
+Read `renderTime` p95 in `report.json` at 1280×720, measured on an idle
+machine. Canvas 2D scenes: at most ~12 ms. WebGL scenes: the harness emulates
+the GPU on the CPU (SwiftShader), which overstates cost several times over, so
+the ceiling there is ~30 ms.
