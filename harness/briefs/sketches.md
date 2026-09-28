@@ -51,3 +51,26 @@ and the palette inverting. Keep the crisp arcade vector/pixel graphics as the
 starting grammar, then break it. Music: the chomper's jaw on the kick, the snare
 makes the pursuers turn, hats flicker the pellets, the drop triggers the power
 pellet and the surreal escalation; the breakdown returns to a calm single maze.
+
+## Stamps (`stamps`) · 2026-09-28
+"Another sketch I wanted to see for a long time (I think I saw this in a dream):
+as an isometric view, a cube that's rolling, leaving squares of ink behind it.
+Maybe a bunch of cubes at the same time that are doing this and stepping over
+each others' trails."
+
+True isometric view of a plane (paper, or a floor). Cubes tip over edge by edge
+(the proper 90° roll about the leading bottom edge, with weight: a lift, a
+tip, a small settle), and each time a face lands it prints a square of ink the
+size of that face. A cube's faces can carry different inks, so the trail
+records which face landed where. Several cubes roam at once and cross each
+other's trails, overprinting (ink over ink: darker where it overlaps, or
+the colours mix like risograph overprints), so the floor becomes a record of
+their paths. The ink should look like ink: slightly uneven, a little
+misregistration or pressure variation, maybe fading very slowly so the floor
+never saturates. The dreamlike quality matters: a calm, strange, inevitable
+motion. Movement: the camera can drift slowly across the endless floor.
+Music: each kick is one roll (a cube tips and stamps on the beat, cubes taking
+turns so the stamps walk around the floor); the snare turns a cube's heading
+or drops a new cube in; the bass sets how firmly the ink prints; hats spatter
+a few ink flecks; the drop sets every cube rolling at once, in step, printing
+a pattern.
