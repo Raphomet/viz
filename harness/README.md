@@ -81,6 +81,64 @@ and clamping), with percussive fast-attack exponential-decay envelopes. Past 24 
 the track loops. `VIZ_TRACK.bands(t)` and `VIZ_TRACK.section(t)` are globals in
 the stage page if a tool needs them.
 
+## Jolt meter
+
+A number for "too pulsey": how much of the frame each kick disturbs, compared
+with the scene's ordinary motion. Added after Raph's 2026-09-28 feedback that
+scenes changing most of the screen on every kick (full-frame flashes, zoom
+punches, global glow) are jarring over a set, even when each frame is lovely.
+
+```sh
+node harness/jolt.mjs web/scenes/foo.js [--size 640x360] [--seed 1] \
+  [--params '{...}'] [--out harness/renders/jolt/foo]
+```
+
+It steps the scene as `render.mjs` does (the two share `lib.mjs`) and compares
+Rec.709 luma (0–1), averaged over blocks 1/45 of the short side (8 px at
+640×360) so a thin line drifting by its own width does not count as a change:
+
+- **kick** — the frame ~2 frames before a kick against every frame in the
+  0.165 s after it; the frame with the largest mean difference is the worst.
+  `kickArea` is the fraction of the frame whose luma moved more than 0.06;
+  `kickMean` is the mean |ΔL|.
+- **drift** — the same between the end of that window and 0.15 s later, with no
+  kick in between: the scene's ordinary motion.
+- **ratio** — `kickMean / max(driftMean, 0.002)`.
+
+Kicks measured: two in the drop (11.935 s, a plain downbeat; 13.387 s, which
+has a clap with it), averaged for the verdict, and one in the build (9.516 s),
+reported alongside. Outputs in the out directory: `jolt.json` (every number)
+and **`heat.png`**, one row per kick — before, worst after, and a heat map of
+|ΔL| per block (black → violet → red → amber → white at 0.3), so you can see
+*which* parts of the frame the kick moves. The one-line verdict:
+
+| Verdict | Rule (drop average) |
+|---|---|
+| calm | ratio ≤ 1.4, or kickArea ≤ 0.25 and ratio ≤ 3 |
+| noticeable | kickArea ≤ 0.45 |
+| jarring | anything else |
+
+These live in `JOLT_THRESHOLDS` in `jolt.mjs` and are a starting point,
+calibrated on 2026-09-28 at 640×360, seed 1:
+
+| Scene | Raph's judgement | kickArea | kickMean | driftMean | ratio | Verdict |
+|---|---|---|---|---|---|---|
+| `iris` | too pulsey | 0.48 | 0.095 | 0.057 | 1.68 | jarring |
+| `rave` | too pulsey | 0.55 | 0.125 | 0.065 | 1.92 | jarring |
+| `mandala` | too pulsey | 0.73 | 0.188 | 0.084 | 2.25 | jarring |
+| `abyss` | too pulsey | 0.96 | 0.221 | 0.103 | 2.14 | jarring |
+| `current` | calm | 0.03 | 0.012 | 0.010 | 1.21 | calm |
+| `interference` | calm | 0.38 | 0.055 | 0.047 | 1.16 | calm |
+
+The `calmRatio` escape was added in calibration: Interference's moving line
+texture changes a third of the frame every 0.15 s with or without a kick, so
+area alone called it "noticeable". Read ratio as "is it the kick doing this?"
+and area as "how much of the screen?". Ratios run low overall (the drift window
+still catches the tail of the kick's decay), so a ratio of 2 is already a
+strong kick response. Aim new scenes at calm; if Raph's judgement of a new
+batch disagrees with the verdicts, retune the constant and add the scene to
+this table.
+
 ## Determinism
 
 The same scene file, size, seed, params and density produce byte-identical

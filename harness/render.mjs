@@ -6,16 +6,10 @@
 //     [--size 1280x720] [--seed 1] [--params '{"k":v}'] [--seconds 24]
 //     [--frames 2,4,6,...] [--density 1]
 
-import http from 'node:http';
 import fs from 'node:fs/promises';
-import { createReadStream, existsSync, statSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
-import { fileURLToPath } from 'node:url';
-
-const HARNESS_DIR = path.dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = path.dirname(HARNESS_DIR);
-const FPS = 60;
+import { HARNESS_DIR, REPO_ROOT, FPS, serve, launch, openStage, pngBuffer, sha } from './lib.mjs';
 
 function usage(msg) {
   if (msg) console.error('render: ' + msg);
@@ -77,58 +71,6 @@ function parseArgs(argv) {
   };
 }
 
-// ------------------------------------------------------------ static server
-const MIME = {
-  '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
-  '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json', '.css': 'text/css',
-  '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif',
-  '.svg': 'image/svg+xml', '.ttf': 'font/ttf', '.otf': 'font/otf', '.woff': 'font/woff',
-  '.woff2': 'font/woff2', '.glsl': 'text/plain', '.frag': 'text/plain', '.vert': 'text/plain',
-  '.txt': 'text/plain', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.mp4': 'video/mp4'
-};
-
-function serve() {
-  const server = http.createServer((req, res) => {
-    let urlPath;
-    try { urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname); }
-    catch { res.writeHead(400).end(); return; }
-    const file = path.join(REPO_ROOT, urlPath);
-    // Never serve outside the repo, whatever the URL says.
-    if (file !== REPO_ROOT && !file.startsWith(REPO_ROOT + path.sep)) { res.writeHead(403).end(); return; }
-    let st;
-    try { st = statSync(file); } catch { res.writeHead(404).end('not found'); return; }
-    if (!st.isFile()) { res.writeHead(404).end('not found'); return; }
-    res.writeHead(200, {
-      'Content-Type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream',
-      'Content-Length': st.size,
-      'Cache-Control': 'no-store'
-    });
-    createReadStream(file).pipe(res);
-  });
-  // Loopback only, on whatever port is free.
-  return new Promise(resolve => server.listen(0, '127.0.0.1', () => resolve(server)));
-}
-
-// ------------------------------------------------------------------ browser
-// swiftshader gives headless Chromium a working WebGL/WebGL2 with no GPU, and
-// renders identically run to run, which the determinism guarantee relies on.
-const CHROMIUM_ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist',
-  '--enable-webgl', '--disable-background-timer-throttling', '--disable-renderer-backgrounding'];
-
-async function launch() {
-  let chromium;
-  try { ({ chromium } = await import('playwright')); }
-  catch { usage('Playwright is not installed; run `npm install` inside harness/'); }
-  try {
-    return { browser: await chromium.launch({ headless: true, args: CHROMIUM_ARGS }), via: 'playwright chromium' };
-  } catch (e) {
-    // The cached headless shell must match this Playwright's expected build;
-    // if it does not, the installed Google Chrome is a working substitute.
-    const browser = await chromium.launch({ headless: true, channel: 'chrome', args: CHROMIUM_ARGS });
-    return { browser, via: 'installed Google Chrome (bundled Chromium failed: ' + e.message.split('\n')[0] + ')' };
-  }
-}
-
 function stats(arr) {
   if (!arr.length) return null;
   const s = [...arr].sort((a, b) => a - b);
@@ -138,8 +80,6 @@ function stats(arr) {
   return { frames: s.length, meanMs: r(mean), p50Ms: r(pct(0.5)), p95Ms: r(pct(0.95)), maxMs: r(s[s.length - 1]) };
 }
 
-function pngBuffer(dataUrl) { return Buffer.from(dataUrl.slice(dataUrl.indexOf(',') + 1), 'base64'); }
-function sha(buf) { return crypto.createHash('sha256').update(buf).digest('hex').slice(0, 16); }
 function frameName(t) {
   const s = Number.isInteger(t) ? String(t).padStart(2, '0') : t.toFixed(2).replace(/0$/, '').padStart(4, '0');
   return 'frame-' + s + 's.png';
@@ -152,29 +92,15 @@ async function main() {
 
   const server = await serve();
   const port = server.address().port;
-  const { browser, via } = await launch();
+  const { browser, via } = await launch(usage);
   const console_ = [];
   const exceptions = [];
   const failedRequests = [];
   let report;
 
   try {
-    const page = await browser.newPage({ viewport: { width: o.width, height: o.height }, deviceScaleFactor: 1 });
-    page.on('console', m => {
-      if (m.type() === 'error' || m.type() === 'warning') console_.push({ type: m.type(), text: m.text() });
-    });
-    page.on('pageerror', e => exceptions.push(String(e && e.stack || e)));
-    page.on('requestfailed', r => failedRequests.push(r.url() + ' ' + (r.failure()?.errorText ?? '')));
-    page.on('response', r => { if (r.status() >= 400) failedRequests.push(r.url() + ' HTTP ' + r.status()); });
-
-    const qs = new URLSearchParams({ scene: o.sceneUrl, w: o.width, h: o.height, seed: o.seed, density: o.density });
-    if (o.params) qs.set('params', o.params);
-    await page.goto(`http://127.0.0.1:${port}/harness/stage.html?${qs}`);
-    await page.waitForFunction(() => window.HARNESS && window.HARNESS.status !== 'loading', null, { timeout: 30000 })
-      .catch(() => { throw new Error('the stage did not become ready in 30 s (a preload that never finishes?)'); });
-    const status = await page.evaluate(() => ({ status: HARNESS.status, error: HARNESS.error, info: HARNESS.info }));
-    if (status.status !== 'ready') throw new Error(status.error);
-    const info = status.info;
+    const { page, info } = await openStage(browser, port, o,
+      { console: console_, exceptions, failedRequests });
 
     const lastFrame = Math.round(o.lastT * FPS);
     const header = `${info.name} (${info.id}) · ${o.width}x${o.height} · seed ${o.seed}` +
