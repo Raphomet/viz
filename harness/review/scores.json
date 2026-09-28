@@ -1,0 +1,1730 @@
+[
+ {
+  "id": "text",
+  "name": "Text",
+  "group": "2016 originals",
+  "scores": {
+   "floor": 2,
+   "psychonaut": 1,
+   "designer": 2,
+   "purist": 3,
+   "director": 2,
+   "curator": 1
+  },
+  "mean": 1.83,
+  "judges": 6,
+  "spread": 2,
+  "verdicts": {
+   "floor": "A dotted \"VIZ\" logo on black. It's an ident, not a visual. Fine for the ten seconds before doors.",
+   "psychonaut": "A logo breathing on black. It's a watermark, not a world.",
+   "designer": "White dotted \"VIZ\" on black; the kick turns it into blobs. A test pattern, not a piece.",
+   "purist": "A 2016 first gesture: \"VIZ\" in dots that metaball in the drop. Small and centred, but it is at least a rule.",
+   "director": "A dotted \"VIZ\" whose blobs balloon on the drop. It's a meter with a logo.",
+   "curator": "A logo, not a work. The drop turns it to white mush."
+  }
+ },
+ {
+  "id": "arcs",
+  "name": "Arcs",
+  "group": "2016 originals",
+  "scores": {
+   "floor": 2,
+   "psychonaut": 1,
+   "designer": 1,
+   "purist": 3,
+   "director": 2,
+   "curator": 3
+  },
+  "mean": 2.0,
+  "judges": 6,
+  "spread": 2,
+  "verdicts": {
+   "floor": "Not broken; the even-second frames just caught every arc at zero length. The x.5 s render shows a single small white crescent in the centre, a touch thicker in the drop. It fills about 1% of the frame, and the black gap between sweeps reads as a dropout.",
+   "psychonaut": "Judged on the offset sheet: one small white crescent sweeping at the centre of a black frame, slightly thicker in the drop. A loading spinner.",
+   "designer": "One small white crescent in the middle of a black field (judged from the x.5 s sheet). Nothing is composed.",
+   "purist": "At its defaults (one arc, a 1\u00d71 grid) it is one crescent. The real piece, a Whitney-style grid of phase-staggered sweeps, is hidden behind Grid size and the staggers.",
+   "director": "Judged from the offset sheet: one small crescent in the middle of a black field. Nothing is staged around it.",
+   "curator": "One white crescent on black: the purest gesture in the set, drawn at a tenth of the size it needs."
+  }
+ },
+ {
+  "id": "rings",
+  "name": "Rings",
+  "group": "2016 originals",
+  "scores": {
+   "floor": 2,
+   "psychonaut": 2,
+   "designer": 2,
+   "purist": 3,
+   "director": 2,
+   "curator": 2
+  },
+  "mean": 2.17,
+  "judges": 6,
+  "spread": 1,
+  "verdicts": {
+   "floor": "Tiny concentric dotted rings covering maybe 5% of the frame. Nobody past row three will know it's on.",
+   "psychonaut": "Tiny dotted rings lost in the middle of a big dark frame.",
+   "designer": "Tiny concentric dotted rings in the middle of a black field. Most of the frame is empty and the rest is timid.",
+   "purist": "Dotted concentric rings, too small for the stage. The segmented-ring grammar that Orphism later inherits starts here.",
+   "director": "A tiny dotted target that jitters on the drop. The staging is far too small.",
+   "curator": "Dotted rings the size of a postage stamp in the middle of a black field. Empty, but not in a way that means anything."
+  }
+ },
+ {
+  "id": "jags",
+  "name": "Jags",
+  "group": "2016 originals",
+  "scores": {
+   "floor": 2,
+   "psychonaut": 2,
+   "designer": 3,
+   "purist": 4,
+   "director": 3,
+   "curator": 4
+  },
+  "mean": 3.0,
+  "judges": 6,
+  "spread": 2,
+  "verdicts": {
+   "floor": "Thin zigzags on cream. One effect, a bright ground, nothing to hold on to.",
+   "psychonaut": "A zigzag band that looks like a test pattern. Nothing to follow.",
+   "designer": "Zigzags in brick, sage and teal on buff. A pleasant palette with no composition, like 1950s textile trim with nothing else on the page.",
+   "purist": "Zigzag polylines on cream in three muted inks: flat daylight years before TASTE.md asked for it. An honest sketch that needs density.",
+   "director": "Nice palette, but the zigzag bands just thicken with level. It's an EQ in disguise.",
+   "curator": "Hairline zigzags on parchment in three muted inks. An Agnes Martin in waiting that nobody finished."
+  }
+ },
+ {
+  "id": "parametric",
+  "name": "Parametric Lines",
+  "group": "2016 originals",
+  "scores": {
+   "floor": 2,
+   "psychonaut": 2,
+   "designer": 2,
+   "purist": 3,
+   "director": 3,
+   "curator": 2
+  },
+  "mean": 2.33,
+  "judges": 6,
+  "spread": 1,
+  "verdicts": {
+   "floor": "Faint string-art on black. Only the 10 s tile shows anything; the rest is a screensaver with the brightness off.",
+   "psychonaut": "String-art fans that only show up at the drop and vanish otherwise.",
+   "designer": "A hairline string-art figure that is invisible most of the time, and neon green on black when it does appear.",
+   "purist": "String art between two parametric curves, a lovely old idea, nearly invisible at defaults. Most frames are black.",
+   "director": "One gorgeous string-art frame at the drop. Everything else is near-black. All punch, no phrasing.",
+   "curator": "Invisible for most of its life, then one green flash."
+  }
+ },
+ {
+  "id": "toph",
+  "name": "Twinkle Toph",
+  "group": "2016 originals",
+  "scores": {
+   "floor": 2,
+   "psychonaut": 1,
+   "designer": 3,
+   "purist": 4,
+   "director": 1,
+   "curator": 1
+  },
+  "mean": 2.0,
+  "judges": 6,
+  "spread": 3,
+  "verdicts": {
+   "floor": "A stippled portrait on pure white. An in-joke and a floodlight.",
+   "psychonaut": "A halftone face staring out of a bright white field. An in-joke that becomes a stare.",
+   "designer": "A stipple portrait in two inks on white. The halftone idea is sound, but the frame never changes and there is no design around it.",
+   "purist": "Photo pointillism of a friend. Affectionate and personal, and static as a system.",
+   "director": "A static dotted portrait. Nothing happens across 24 s.",
+   "curator": "A private portrait on a white field. It belongs in a family album, not on a dance floor."
+  }
+ },
+ {
+  "id": "planets",
+  "name": "Planets",
+  "group": "2016 originals",
+  "scores": {
+   "floor": 3,
+   "psychonaut": 3,
+   "designer": null,
+   "purist": 5,
+   "director": 5,
+   "curator": 4
+  },
+  "mean": 4.0,
+  "judges": 5,
+  "spread": 2,
+  "verdicts": {
+   "floor": "White orbits and comet trails, small in the centre. Tasteful, monochrome, too small.",
+   "psychonaut": "Tasteful white orrery, but too small in the frame to swallow you.",
+   "designer": "Not seen.",
+   "purist": "A monochrome orrery with trails. The half-built 2016 sketch was finished with care, but it is a clockwork, not a system.",
+   "director": "Real follow-through: the drop flings comets out on long ellipses and the breakdown reels them back. It's tiny and monochrome.",
+   "curator": "A white orrery with comet trails. Tasteful and tiny."
+  }
+ },
+ {
+  "id": "flyover",
+  "name": "Flyover",
+  "group": "2016 originals",
+  "scores": {
+   "floor": 5,
+   "psychonaut": 3,
+   "designer": null,
+   "purist": 5,
+   "director": 4,
+   "curator": 4
+  },
+  "mean": 4.2,
+  "judges": 5,
+  "spread": 2,
+  "verdicts": {
+   "floor": "Wireframe terrain on black, with real travel and mountains that rise in the drop. The default preset is plain; Night drive is the one to keep.",
+   "psychonaut": "The default wireframe is bare. The Night drive mode, the one Raph liked, should be the default.",
+   "designer": "Not seen.",
+   "purist": "A spectrogram turned into terrain, in the *Unknown Pleasures* lineage. Honest and literal, and the ancestor of Scanlines.",
+   "director": "A clear arc (flat, then ridges, then mountains, then flat again), but the camera is a bare wireframe with nothing to look at.",
+   "curator": "Honest wireframe terrain, but it is 1983 and Scanlines has already moved in."
+  }
+ },
+ {
+  "id": "dotmatrix",
+  "name": "Dot Matrix",
+  "group": "2016 originals",
+  "scores": {
+   "floor": 4,
+   "psychonaut": 2,
+   "designer": null,
+   "purist": 3,
+   "director": 3,
+   "curator": 2
+  },
+  "mean": 2.8,
+  "judges": 5,
+  "spread": 2,
+  "verdicts": {
+   "floor": "An honest amber LED ticker that reads across the room, but it only ever says three letters.",
+   "psychonaut": "An LED sign. Signs are for reading.",
+   "designer": "Not seen.",
+   "purist": "An amber LED marquee. A display, not a drawing.",
+   "director": "An LED scroller. The drop only adds ghosting.",
+   "curator": "A sign that says VIZ. Warm amber material, nothing to say."
+  }
+ },
+ {
+  "id": "current",
+  "name": "Current",
+  "group": "Batch 1",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 7,
+   "designer": null,
+   "purist": 8,
+   "director": 7,
+   "curator": 7
+  },
+  "mean": 7.2,
+  "judges": 5,
+  "spread": 1,
+  "verdicts": {
+   "floor": "Teal silk smoke that tangles into bright filaments in the drop. Dark-room perfect and one hue; the kick itself is hard to pick out.",
+   "psychonaut": "Silk smoke you can breathe with. Monochrome and flat, and the drop turns scribbly.",
+   "designer": "Not seen.",
+   "purist": "Flow-field ink that departed from curl noise on purpose to make drains. It is still alive at 96 s.",
+   "director": "Silk swirls tangle tight in the drop and loosen into long strands in the breakdown. A genuine exhale.",
+   "curator": "Single-hue silk smoke, disciplined. The drop turns it to scribble; at full size it reads as tangled wire, not silk."
+  }
+ },
+ {
+  "id": "coral",
+  "name": "Coral",
+  "group": "Batch 1",
+  "scores": {
+   "floor": 5,
+   "psychonaut": 6,
+   "designer": null,
+   "purist": 8,
+   "director": 5,
+   "curator": 6
+  },
+  "mean": 6.0,
+  "judges": 5,
+  "spread": 3,
+  "verdicts": {
+   "floor": "Salmon reaction-diffusion worms on teal. Striking for a minute, then it's wallpaper: the drop barely differs from the build.",
+   "psychonaut": "Maze-reading is hypnotic, but at 96 s it has barely changed and the music hardly shows.",
+   "designer": "Not seen.",
+   "purist": "Gray-Scott with a spatial feed/kill map, so three morphologies share one dish. Real emergence.",
+   "director": "The reef grows and then stays grown. The drop and breakdown frames are interchangeable.",
+   "curator": "Lovely bevelled reaction-diffusion that fills the frame by the drop and never gives the space back."
+  }
+ },
+ {
+  "id": "attractor",
+  "name": "Attractor",
+  "group": "Batch 1",
+  "scores": {
+   "floor": 6,
+   "psychonaut": 8,
+   "designer": null,
+   "purist": 8,
+   "director": 7,
+   "curator": 9
+  },
+  "mean": 7.6,
+  "judges": 5,
+  "spread": 3,
+  "verdicts": {
+   "floor": "Champagne silk loops on black. Elegant and restrained, but it's a centred object.",
+   "psychonaut": "Long-exposure silk that keeps becoming new creatures. It floats in a void with no depth.",
+   "designer": "Not seen.",
+   "purist": "Clifford/de Jong as a long exposure, with a Lyapunov guard and colour from the age of the light. A textbook form done with discipline.",
+   "director": "Breathes wider in the drop and thins to hairlines in the breakdown. A lovely diminuendo on an object that stays centred.",
+   "curator": "A long exposure of one orbit in champagne and steel. The breakdown thins it to single threads. Exemplary."
+  }
+ },
+ {
+  "id": "magnetosphere",
+  "name": "Magnetosphere",
+  "group": "Batch 1",
+  "scores": {
+   "floor": 6,
+   "psychonaut": 7,
+   "designer": null,
+   "purist": 7,
+   "director": 6,
+   "curator": 5
+  },
+  "mean": 6.2,
+  "judges": 5,
+  "spread": 2,
+  "verdicts": {
+   "floor": "Orange and blue filament trails around vortex eyes. Rich and dark, but busy, with no clear beat.",
+   "psychonaut": "Warm and cool light braiding into eye-like drains. A little tangled, like hair.",
+   "designer": "Not seen.",
+   "purist": "Two charge species braiding around poles that flip on the clap. Hodgin's title, honestly earned, though it tends to settle into the same three-ring rosette.",
+   "director": "Rosettes loosen on the drop and re-coil in the breakdown. The physics has follow-through, but it's glow by default.",
+   "curator": "Current and Attractor again, in two colours and with more hair."
+  }
+ },
+ {
+  "id": "interference",
+  "name": "Interference",
+  "group": "Batch 1",
+  "scores": {
+   "floor": 5,
+   "psychonaut": 6,
+   "designer": null,
+   "purist": 9,
+   "director": 7,
+   "curator": 9
+  },
+  "mean": 7.2,
+  "judges": 5,
+  "spread": 4,
+  "verdicts": {
+   "floor": "Grey moir\u00e9 stripes with blob cells in the drop. On a real projector moir\u00e9 turns to shimmer and aliasing, and mid-grey dulls the room.",
+   "psychonaut": "Real optical magic, but fine black-and-white lines at full screen buzz on the eye.",
+   "designer": "Not seen.",
+   "purist": "Two near-twin line sheets and a kick echo in phase. The whole piece is the system. It has a 90 s arc and no illustration anywhere.",
+   "director": "The drop bubbles the moir\u00e9 into cells with red hairlines. At 20 s it snaps back to clean diagonals, a sharp and legible exhale.",
+   "curator": "Two sheets of lines and one red accent, and the music lives in the moir\u00e9 itself. Riley would nod."
+  }
+ },
+ {
+  "id": "abyss",
+  "name": "Abyss",
+  "group": "Batch 2",
+  "scores": {
+   "floor": 8,
+   "psychonaut": 8,
+   "designer": null,
+   "purist": 4,
+   "director": 8,
+   "curator": 6
+  },
+  "mean": 6.8,
+  "judges": 5,
+  "spread": 4,
+  "verdicts": {
+   "floor": "Glowing jellyfish, light shafts and halo rings on the kick. Deep and gorgeous, but the drops clip to white on the big bells (the 12, 60 and 84 s frames).",
+   "psychonaut": "Gentle, alive and deep. The drop kicks blow whole bells to white.",
+   "designer": "Not seen.",
+   "purist": "Verlet tentacles are a real mechanism, but this is a neon jellyfish screensaver, and the drop blows out to wash.",
+   "director": "At 10 s gold halo rings flare on three jellies at once, which is a real \"hit\". The breakdown sinks and dims.",
+   "curator": "Beautifully made jellies in a rainbow nobody chose. Half as many jellies and one hue would make it great."
+  }
+ },
+ {
+  "id": "aurora",
+  "name": "Aurora",
+  "group": "Batch 2",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 8,
+   "designer": null,
+   "purist": 5,
+   "director": 8,
+   "curator": 6
+  },
+  "mean": 6.8,
+  "judges": 5,
+  "spread": 3,
+  "verdicts": {
+   "floor": "Curtains over a mirror lake, with kick ripples on the water and shooting stars. A clear exhale, but every drop is the same green wall.",
+   "psychonaut": "A cathedral of green over still water. By 96 s it has only two moods.",
+   "designer": "Not seen.",
+   "purist": "A beautiful postcard with two moods. The curtain-per-column texture is clever; the scene around it is illustration.",
+   "director": "Purple creeps in during the build (anticipation), the drop spots the curtains white-hot, and the fade-out takes all six breakdown seconds.",
+   "curator": "The lake mirror is lovely. The drop floods it purple and blows a white blotch into the curtain."
+  }
+ },
+ {
+  "id": "skyline",
+  "name": "Skyline",
+  "group": "Batch 2",
+  "scores": {
+   "floor": 8,
+   "psychonaut": 6,
+   "designer": null,
+   "purist": 4,
+   "director": 9,
+   "curator": 7
+  },
+  "mean": 6.8,
+  "judges": 5,
+  "spread": 5,
+  "verdicts": {
+   "floor": "Fireworks over a city on water. The kick is a shell burst in one place, which is exactly right. At 84 s the drop blooms into a pink white-out.",
+   "psychonaut": "A lovely lone shell in the breakdown. The drop fills the sky with clutter.",
+   "designer": "Not seen.",
+   "purist": "Particle fireworks over a city: the oldest demo in the book, done competently.",
+   "director": "Each shell rises for exactly one beat, so anticipation is built in. The breakdown thins to a single lone shell. Textbook decrescendo.",
+   "curator": "Intro and breakdown are perfect: one shell, one place in a dark sky. The drop fills the whole sky and forgets why that worked."
+  }
+ },
+ {
+  "id": "rave",
+  "name": "Rave",
+  "group": "Batch 2",
+  "scores": {
+   "floor": 9,
+   "psychonaut": 6,
+   "designer": null,
+   "purist": 3,
+   "director": 7,
+   "curator": 4
+  },
+  "mean": 5.8,
+  "judges": 5,
+  "spread": 6,
+  "verdicts": {
+   "floor": "Lasers over a crowd silhouette, with a new palette each drop (green, then red and amber, then pink). The room recognises itself. Peak-time banker.",
+   "psychonaut": "Beams through smoke work. The repeated silhouettes and the red section feel harsh.",
+   "designer": "Not seen.",
+   "purist": "A rave visual that depicts a rave. Lasers, silhouettes, palette swaps: the subject has eaten the system.",
+   "director": "Reads like a lighting designer's cue list (teal, then magenta, then red and amber, then rose), but the crowd barely moves in stills.",
+   "curator": "An illustration of a party, recoloured every section."
+  }
+ },
+ {
+  "id": "oil",
+  "name": "Oil",
+  "group": "Batch 2",
+  "scores": {
+   "floor": 6,
+   "psychonaut": 9,
+   "designer": null,
+   "purist": 5,
+   "director": 6,
+   "curator": 5
+  },
+  "mean": 6.2,
+  "judges": 5,
+  "spread": 4,
+  "verdicts": {
+   "floor": "A hot lava-lamp field. Psychedelic and full-frame, but orange everywhere is a lot of light in the room.",
+   "psychonaut": "Liquid light that finds a new colour chord every section. The longevity champion.",
+   "designer": "Not seen.",
+   "purist": "Metaballs over marbled water. Saturated and pleasant; the 1990s demoscene in a 1960s costume.",
+   "director": "A push-in on the drop, then a new primary palette in the breakdown. Loose, and it blows out in patches.",
+   "curator": "An authentic 60s material, lurid at every moment, and the breakdown's RGB swap is cheaper still."
+  }
+ },
+ {
+  "id": "mandala",
+  "name": "Mandala",
+  "group": "Batch 2",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 9,
+   "designer": null,
+   "purist": 6,
+   "director": 7,
+   "curator": 5
+  },
+  "mean": 6.8,
+  "judges": 5,
+  "spread": 4,
+  "verdicts": {
+   "floor": "The kaleidoscope classic, glowing on black. Reliable trip fuel, and yes, a rainbow.",
+   "psychonaut": "The purest trance in the set: a mandala tunnel that breathes.",
+   "designer": "Not seen.",
+   "purist": "Video feedback is an honest system and the warm-to-cool ageing is well judged. The drop saturates to a white core.",
+   "director": "The centre ignites on the drop, and the halo contracts ring by ring through the breakdown. Nice, but dead centre.",
+   "curator": "A competent feedback kaleidoscope. It is the clich\u00e9 of the genre, and it knows it."
+  }
+ },
+ {
+  "id": "descent",
+  "name": "Descent",
+  "group": "Batch 2",
+  "scores": {
+   "floor": 6,
+   "psychonaut": 5,
+   "designer": null,
+   "purist": 6,
+   "director": 5,
+   "curator": 3
+  },
+  "mean": 5.0,
+  "judges": 5,
+  "spread": 3,
+  "verdicts": {
+   "floor": "A crimson fractal zoom that travels well, but it's muddy maroon with a blown white hotspot.",
+   "psychonaut": "Should be a top-three tunnel, but it's murky crimson, low-res and blown out.",
+   "designer": "Not seen.",
+   "purist": "A real Apollonian fractal. At stage resolution it reads as murky crimson, and every minute has the same palette.",
+   "director": "Murky crimson geometry, so the camera path and the \"shell of light\" are hard to read.",
+   "curator": "Muddy crimson foam around a blown-out core. I cannot find the tunnel."
+  }
+ },
+ {
+  "id": "murmuration",
+  "name": "Murmuration",
+  "group": "Batch 2",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 7,
+   "designer": null,
+   "purist": 5,
+   "director": 9,
+   "curator": 7
+  },
+  "mean": 7.0,
+  "judges": 5,
+  "spread": 4,
+  "verdicts": {
+   "floor": "A sunset lake with a starling flock. The black flock is poetry. In the drops (36, 60 and 84 s) the sun rays wash the frame to white, and the tinted flock looks worse than the black one.",
+   "psychonaut": "The black flock at dusk is sublime. The rainbow-gradient flock in the drop is cheap.",
+   "designer": "Not seen.",
+   "purist": "Not boids: a deformed 3D ribbon. Clever animation passing as emergence, with iridescent birds that no dusk sky produces.",
+   "director": "One flock carries the whole piece with pure line of action. It ends as a lone curl drifting off.",
+   "curator": "A black flock over a marsh at sunset is one of the best images in the set. The drop paints the flock teal and magenta and loses it."
+  }
+ },
+ {
+  "id": "bloom",
+  "name": "Bloom",
+  "group": "Batch 2",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 6,
+   "designer": null,
+   "purist": 4,
+   "director": 7,
+   "curator": 4
+  },
+  "mean": 5.6,
+  "judges": 5,
+  "spread": 3,
+  "verdicts": {
+   "floor": "A moonlit meadow whose flowers bloom with kick rings. A dreamy comedown piece.",
+   "psychonaut": "A pretty night garden, but the kick ellipses read as UI and the flowers as clip-art.",
+   "designer": "Not seen.",
+   "purist": "A glowing night garden. The flare that ripples from flower to flower is the only systemic idea in it.",
+   "director": "Pretty flare rings on single flowers, and the breakdown drains the colour flower by flower. Glow-heavy.",
+   "curator": "Generic glowing flowers, and drop rings that look like UI focus rings."
+  }
+ },
+ {
+  "id": "iris",
+  "name": "Iris",
+  "group": "Batch 2",
+  "scores": {
+   "floor": 5,
+   "psychonaut": 7,
+   "designer": null,
+   "purist": 3,
+   "director": 5,
+   "curator": 3
+  },
+  "mean": 4.6,
+  "judges": 5,
+  "spread": 4,
+  "verdicts": {
+   "floor": "A giant psychedelic eye. Hypnotic for three minutes and faintly menacing for thirty. The composition never moves.",
+   "psychonaut": "A cosmic eye with a starfall pupil. Mesmerising, but it's always looking at you.",
+   "designer": "Not seen.",
+   "purist": "A giant centred psychedelic eye. A poster that turns.",
+   "director": "An unblinking stare with identical framing in all 12 tiles. Only the palette acts.",
+   "curator": "A frontal cosmic eye in magenta and gold that stares at the room. Maximal and menacing."
+  }
+ },
+ {
+  "id": "nighttrain",
+  "name": "Night Train",
+  "group": "Batch 3",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 6,
+   "designer": null,
+   "purist": 5,
+   "director": 9,
+   "curator": 6
+  },
+  "mean": 6.6,
+  "judges": 5,
+  "spread": 4,
+  "verdicts": {
+   "floor": "A pixel train under the moon; the windows go disco and fireworks go off in the drop. Charming, but the details are small.",
+   "psychonaut": "A cosy ride on a pixel-art CRT. Charming, not trance.",
+   "designer": "Not seen.",
+   "purist": "Superb pixel-and-CRT craft and eight parallax layers. Illustration through and through.",
+   "director": "A tracking shot with a party in the windows, a bridge on the drop, and the sky's palette drifting over 96 s.",
+   "curator": "Charming pixel-art tracking shot. A picture book, not an installation."
+  }
+ },
+ {
+  "id": "sumi",
+  "name": "Sumi",
+  "group": "Batch 3",
+  "scores": {
+   "floor": 6,
+   "psychonaut": 7,
+   "designer": null,
+   "purist": 6,
+   "director": 9,
+   "curator": 9
+  },
+  "mean": 7.4,
+  "judges": 5,
+  "spread": 3,
+  "verdicts": {
+   "floor": "Ink-wash landscape with a boatman and ripples on the kick. Beautiful, but it's a cream ground and the reactions are tiny at distance.",
+   "psychonaut": "Ink breath and a red lantern. The calmest good scene here, maybe too pale for a room.",
+   "designer": "Not seen.",
+   "purist": "Real restraint: ink density, mist, suminagashi on the snare. The drop's red lantern blob breaks the ink.",
+   "director": "A small figure in a big world. The lantern-and-ring kick is the most confined, most poetic hit in the set.",
+   "curator": "A handscroll with a red sun, and a kick that lives only in the rings around one hull. The lantern glow is the one false note: a blurred blob in a scene with no other glow."
+  }
+ },
+ {
+  "id": "stargate",
+  "name": "Stargate",
+  "group": "Batch 3",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 9,
+   "designer": null,
+   "purist": 5,
+   "director": 7,
+   "curator": 6
+  },
+  "mean": 6.8,
+  "judges": 5,
+  "spread": 4,
+  "verdicts": {
+   "floor": "A laser tunnel from the vanishing point. Big and full-frame, and pure house-style rainbow glow.",
+   "psychonaut": "Constant flight into the gate. Your body leans forward.",
+   "designer": "Not seen.",
+   "purist": "The slit-scan quoted faithfully from Trumbull. It toggles between a blue state and a gold one and never leaves them.",
+   "director": "Two walls open to four on the drop, which is a real set change, but it's relentless and the composition never shifts off centre.",
+   "curator": "Faithful slit-scan, relentless, all glow and spectrum. It is a quotation more than a work."
+  }
+ },
+ {
+  "id": "scanlines",
+  "name": "Scanlines",
+  "group": "Batch 3",
+  "scores": {
+   "floor": 8,
+   "psychonaut": 8,
+   "designer": null,
+   "purist": 7,
+   "director": 8,
+   "curator": 6
+  },
+  "mean": 7.4,
+  "judges": 5,
+  "spread": 2,
+  "verdicts": {
+   "floor": "Joy Division terrain where the kick is a glowing ring rolling across the land. Each section gets its own palette. A model of the confined kick.",
+   "psychonaut": "A flight over glowing terrain whose hidden image keeps changing. Deep longevity.",
+   "designer": "Not seen.",
+   "purist": "A Rutt/Etra raster over hidden terrains that change. Flyover's grandchild, and the best of the \"flying over a field\" family.",
+   "director": "A ripple crest rises in the build, the drop recolours the sky, and the breakdown swaps the hidden landscape. Good section cuts.",
+   "curator": "The kick ring travelling across the terrain is excellent. It is Flyover's second life, with a palette per section."
+  }
+ },
+ {
+  "id": "chladni",
+  "name": "Chladni",
+  "group": "Batch 3",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 7,
+   "designer": null,
+   "purist": 8,
+   "director": 8,
+   "curator": 8
+  },
+  "mean": 7.6,
+  "judges": 5,
+  "spread": 1,
+  "verdicts": {
+   "floor": "Gold sand on a violet plate that re-forms a new pattern each section. A science-museum trance.",
+   "psychonaut": "Sand that snaps between sacred geometries. Symmetry that shifts, exactly.",
+   "designer": "Not seen.",
+   "purist": "Grains descending the gradient of f\u00b2 on real plate modes, so sand migrates between figures. Physics you can watch think.",
+   "director": "Sand sprays from one spot per kick, the figure breaks up, then it re-crystallises into a new lattice. Resolution you can see.",
+   "curator": "Sand finding a figure, losing it, and finding a new one. The breakdown's re-settling is the best section change in the set."
+  }
+ },
+ {
+  "id": "physarum",
+  "name": "Physarum",
+  "group": "Batch 3",
+  "scores": {
+   "floor": 6,
+   "psychonaut": 7,
+   "designer": null,
+   "purist": 8,
+   "director": 8,
+   "curator": 6
+  },
+  "mean": 7.0,
+  "judges": 5,
+  "spread": 2,
+  "verdicts": {
+   "floor": "A slime-mould network with a pink branch in the drop. Organic and dark, but the lines are thin at distance.",
+   "psychonaut": "Living veins with food stars. Organic and hypnotic, but no depth.",
+   "designer": "Not seen.",
+   "purist": "Jones's agent model in two species, with music bending the sensor angle. Lace in the calm, cells in the drop. The bloom is too heavy.",
+   "director": "Lace grows into cells, then a magenta invader arrives and later retreats. A drop with an antagonist.",
+   "curator": "The teal lace is beautiful on its own. The magenta invader in the drop is a second idea it doesn't need."
+  }
+ },
+ {
+  "id": "expressway",
+  "name": "Expressway",
+  "group": "Batch 3",
+  "scores": {
+   "floor": 9,
+   "psychonaut": 6,
+   "designer": null,
+   "purist": 3,
+   "director": 10,
+   "curator": 5
+  },
+  "mean": 6.6,
+  "judges": 5,
+  "spread": 7,
+  "verdicts": {
+   "floor": "A night drive that enters a neon tunnel at the drop and exits at the breakdown. The section change is a change of place. Best in show.",
+   "psychonaut": "A good drive, but the drop's rainbow tunnel of nested squares is a Tron clich\u00e9.",
+   "designer": "Not seen.",
+   "purist": "Synthwave: neon grid, frames and rays. A genre costume.",
+   "director": "You see the tunnel mouth before you enter it, the drop is the tunnel, and the breakdown is the exit portal. The best-staged drop in the collection.",
+   "curator": "Driving into a tunnel on the drop is superb staging. What waits inside is a Tron screensaver."
+  }
+ },
+ {
+  "id": "nebula",
+  "name": "Nebula",
+  "group": "Batch 3",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 8,
+   "designer": null,
+   "purist": 4,
+   "director": 7,
+   "curator": 5
+  },
+  "mean": 6.2,
+  "judges": 5,
+  "spread": 4,
+  "verdicts": {
+   "floor": "Nebula fly-through, red to purple to teal with star flares. Travel plus a palette arc, though the centre goes to mush.",
+   "psychonaut": "Flying into a womb of gas. Soft, but it toggles between a red state and a teal state.",
+   "designer": "Not seen.",
+   "purist": "A volumetric noise cloud, red in the calm and teal in the drop. Pleasant and interchangeable.",
+   "director": "A palindromic colour journey from red through teal and back to red, with stars ignited one at a time. No foreground anchor.",
+   "curator": "A palette journey without a form. Soft all the way down."
+  }
+ },
+ {
+  "id": "paper",
+  "name": "Paper",
+  "group": "Batch 3",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 5,
+   "designer": null,
+   "purist": 5,
+   "director": 8,
+   "curator": 7
+  },
+  "mean": 6.4,
+  "judges": 5,
+  "spread": 3,
+  "verdicts": {
+   "floor": "A papercut forest diorama; a sunset opens behind the layers in the drop. Real depth, and a dark-ish ground.",
+   "psychonaut": "Layered paper-cut forest with real depth. Sweet, but small in ambition.",
+   "designer": "Not seen.",
+   "purist": "Lovely cut-paper material and backlight. A diorama with two states.",
+   "director": "The rabbit sits, then leaps at the drop as the theatre is backlit. A real character with a real pose change.",
+   "curator": "Cut-paper depth with a single character. The warm clearing that opens on the drop is earned light."
+  }
+ },
+ {
+  "id": "terminal",
+  "name": "Terminal",
+  "group": "Batch 3",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 4,
+   "designer": null,
+   "purist": 5,
+   "director": 7,
+   "curator": 5
+  },
+  "mean": 5.6,
+  "judges": 5,
+  "spread": 3,
+  "verdicts": {
+   "floor": "Amber ASCII sun at rest; the drops (96 s sheet) become a colour ASCII flight with a spinning torus. A great two-state design.",
+   "psychonaut": "An ASCII sunburst tunnel in murky amber. The idea is better than the result.",
+   "designer": "Not seen.",
+   "purist": "ASCII raymarching (tunnel, canyon, torus). A demoscene form done right that says little new.",
+   "director": "Swaps worlds reliably every drop (amber tunnel for colour canyon, torus for moon). The 24 s sheet has only 3 tiles.",
+   "curator": "The amber ASCII sun-wheel is superb. The rainbow canyon that replaces it in the drop is not."
+  }
+ },
+ {
+  "id": "poster",
+  "name": "Poster",
+  "group": "Batch 4",
+  "scores": {
+   "floor": 6,
+   "psychonaut": 3,
+   "designer": 8,
+   "purist": 5,
+   "director": 7,
+   "curator": 8
+  },
+  "mean": 6.17,
+  "judges": 6,
+  "spread": 5,
+  "verdicts": {
+   "floor": "Swiss poster where the section is a word (KLANG, LICHT, NACHT). Smart, but a cream ground.",
+   "psychonaut": "Swiss poster with changing words. Graphic, not immersive.",
+   "designer": "A disciplined Swiss/Bauhaus sheet: KLANG set vertically, a red disc, and a marquee on the drop. Real hierarchy, with one weak spot where \"NAC\" gets cropped.",
+   "purist": "Clean Swiss grid tweens in two inks. Hand-built compositions; the grid is a template, not a generator.",
+   "director": "Layout resets work as chapters (KLANG, LICHT, NACHT), and one frame catches the reset mid-wipe. Motion stays small.",
+   "curator": "Swiss poster whose sections are words. The NACHT breakdown (disc, square, one word) is gallery-grade."
+  }
+ },
+ {
+  "id": "zen",
+  "name": "Zen",
+  "group": "Batch 4",
+  "scores": {
+   "floor": 6,
+   "psychonaut": 5,
+   "designer": 7,
+   "purist": 7,
+   "director": 8,
+   "curator": 8
+  },
+  "mean": 6.83,
+  "judges": 6,
+  "spread": 3,
+  "verdicts": {
+   "floor": "Raked sand where the kick presses rings around the rocks. Perfect reaction design on a floodlight-beige ground.",
+   "psychonaut": "Raked sand and kick ripples. Meditative, but almost still.",
+   "designer": "Raked sand and stones seen from above. Its restraint is earned, and a rake that redraws the rings is wit you can see.",
+   "purist": "A rake that writes the height field: patterns are drawn, not swapped. Process made visible, the way Reas would want it.",
+   "director": "The rake is a character with a job. The drop presses rings round the stones, and the leaves stay afterwards as memory.",
+   "curator": "A garden that is raked while you watch, with one pressed ring per kick. The maple leaves pile up and are never cleared."
+  }
+ },
+ {
+  "id": "pop",
+  "name": "Pop",
+  "group": "Batch 4",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 2,
+   "designer": 7,
+   "purist": 4,
+   "director": 8,
+   "curator": 4
+  },
+  "mean": 5.33,
+  "judges": 6,
+  "spread": 6,
+  "verdicts": {
+   "floor": "Lichtenstein panels; the drop fills with BZZT and BLAM. The big words land, the captions are dead weight, and it's bright.",
+   "psychonaut": "Comic panels and SFX lettering. Nowhere for the eye to rest.",
+   "designer": "A Lichtenstein-style comic grid with Ben-Day dots and a set of onomatopoeia. Crowded, but it knows the grammar.",
+   "purist": "Nine hand-drawn comic panels recycled. A library, not a system.",
+   "director": "The captions narrate the track (\"is the floor\u2026 breathing?\", \"one last light stayed on\"). A storyboard that scrolls.",
+   "curator": "Dense by genre, with no rest anywhere."
+  }
+ },
+ {
+  "id": "destijl",
+  "name": "De Stijl",
+  "group": "Posters",
+  "scores": {
+   "floor": 6,
+   "psychonaut": 3,
+   "designer": 8,
+   "purist": 6,
+   "director": 8,
+   "curator": 7
+  },
+  "mean": 6.33,
+  "judges": 6,
+  "spread": 5,
+  "verdicts": {
+   "floor": "The Mondrian grid rotates 45\u00b0 in the drop, which is a great move, but half the frame is small Dutch text.",
+   "psychonaut": "Mondrian plus text. The grid rotating in the drop is its one good moment.",
+   "designer": "Understood: the grid re-divides, and the drop brings the 45\u00b0 counter-composition. The pixel type in \"NACHT RITME\" is a fair nod to van Doesburg.",
+   "purist": "A binary space partition that grows and turns into a lozenge in the drop, which is a real generator. Half the frame is spent on static type.",
+   "director": "The drop tilts the whole panel 45 degrees into a counter-composition, and the breakdown un-tilts it. The schedule highlights each section.",
+   "curator": "Tilting the panel 45\u00b0 on the drop is Van Doesburg's counter-composition, and it is a structural move rather than an added layer. Half the frame is timetable."
+  }
+ },
+ {
+  "id": "opart",
+  "name": "Op Art",
+  "group": "Posters",
+  "scores": {
+   "floor": 3,
+   "psychonaut": 4,
+   "designer": 6,
+   "purist": 6,
+   "director": 6,
+   "curator": 5
+  },
+  "mean": 5.0,
+  "judges": 6,
+  "spread": 3,
+  "verdicts": {
+   "floor": "A full-frame black and white checker that warps. On a projector it's retina-frying shimmer, too close to the flashing we're told to avoid, and the words are unreadable.",
+   "psychonaut": "The bulging checkerboard is promising. The slogans and the retinal buzz are not.",
+   "designer": "The checkerboard warps convincingly, but the headline dissolves into it and cannot be read. The red is under control.",
+   "purist": "A box-filtered checkerboard through sphere warps: honest Vasarely. The poster frame and slogan put it in a box.",
+   "director": "A red sphere blushes in the build and swells in the drop. Legible but crowded, and the checks fight the headline.",
+   "curator": "Interference's idea with a headline in it, and a full-field checker that tires the eye on a projector."
+  }
+ },
+ {
+  "id": "cube",
+  "name": "Cube",
+  "group": "Sketches",
+  "scores": {
+   "floor": 5,
+   "psychonaut": 3,
+   "designer": 7,
+   "purist": 3,
+   "director": 9,
+   "curator": 6
+  },
+  "mean": 5.5,
+  "judges": 6,
+  "spread": 6,
+  "verdicts": {
+   "floor": "An isometric toy machine whose antenna rises. Cute, but one small object on light grey.",
+   "psychonaut": "An isometric gadget box. Nothing to fall into.",
+   "designer": "An isometric machine with fine technical-illustration detail and matte grey plus one orange. Wit shows in how the panels open.",
+   "purist": "An isometric illustrated machine whose panels reshuffle. A toy render.",
+   "director": "Idle smoke rings, then the drop telescopes the mast and swings the hatch with weight, then the turntable shows a new face. The best mechanical acting here.",
+   "curator": "A Braun object as an instrument panel, in daylight with real shadows. Witty, but the reactions are small."
+  }
+ },
+ {
+  "id": "knit",
+  "name": "Knit",
+  "group": "Batch 4",
+  "scores": {
+   "floor": 4,
+   "psychonaut": 4,
+   "designer": 6,
+   "purist": 7,
+   "director": 7,
+   "curator": 7
+  },
+  "mean": 5.83,
+  "judges": 6,
+  "spread": 3,
+  "verdicts": {
+   "floor": "Fair Isle knitting that adds a red band row by row. Cosy, but from the back it's a photo of a jumper.",
+   "psychonaut": "Cosy fair-isle, flat as a blanket.",
+   "designer": "Fair Isle stitches on a wooden table. Charming material fidelity, but the composition is flat and the drop changes too little.",
+   "purist": "Rows are knitted and the fabric accumulates band by band. The image is a record of time: the best \"memory\" scene outside the simulations.",
+   "director": "The drop knits a red band that is still there in the breakdown: the fabric remembers the track. Kicks are hard to read.",
+   "curator": "The fabric records the drop as a red band that stays. Memory as material."
+  }
+ },
+ {
+  "id": "impasto",
+  "name": "Impasto",
+  "group": "Batch 4",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 7,
+   "designer": 6,
+   "purist": 6,
+   "director": 9,
+   "curator": 6
+  },
+  "mean": 6.83,
+  "judges": 6,
+  "spread": 3,
+  "verdicts": {
+   "floor": "Van Gogh wheatfield: the sun and crows arrive on the drop, and the brushwork flows. Iconic daylight, bright.",
+   "psychonaut": "A walk through a living Van Gogh wheatfield with swirling sky.",
+   "designer": "Van Gogh brushwork over a wheatfield, with crows arriving on the drop. Skilful, but a borrowed masterpiece rather than a point of view.",
+   "purist": "Brushstrokes laid along a flow field is a real system (Hodgin's and Tarbell's painterly descendants), put to work as a Van Gogh pastiche.",
+   "director": "Overcast calm, then the sun ignites and crows pour across on the drop, then the crows exit and the sun fades. A complete arc in paint.",
+   "curator": "Accomplished pastiche. The sun igniting and the crows arriving are clear, but it is Van Gogh's idea, not ours."
+  }
+ },
+ {
+  "id": "isle",
+  "name": "Isle",
+  "group": "Batch 4",
+  "scores": {
+   "floor": 5,
+   "psychonaut": 3,
+   "designer": 6,
+   "purist": 4,
+   "director": 8,
+   "curator": 5
+  },
+  "mean": 5.17,
+  "judges": 6,
+  "spread": 5,
+  "verdicts": {
+   "floor": "A low-poly island where balloons launch in the drop. A charming toy, small and pastel-bright.",
+   "psychonaut": "A toy diorama.",
+   "designer": "A low-poly diorama island with balloons on the drop. Tidy, but generic Monument Valley and stock-asset in feel.",
+   "purist": "A low-poly island diorama with balloons in the drop. Charming and inert.",
+   "director": "Balloons rise one by one from the village and land in the breakdown as dusk creeps in. Charming turntable staging.",
+   "curator": "A toy on a plinth, with a festival of balloons."
+  }
+ },
+ {
+  "id": "plate",
+  "name": "Plate",
+  "group": "Batch 4",
+  "scores": {
+   "floor": 4,
+   "psychonaut": 5,
+   "designer": 8,
+   "purist": 5,
+   "director": 6,
+   "curator": 7
+  },
+  "mean": 5.83,
+  "judges": 6,
+  "spread": 4,
+  "verdicts": {
+   "floor": "A Haeckel plate on parchment. A museum label, not a dancefloor.",
+   "psychonaut": "Haeckel radiolaria are born for this, but they're pinned still like specimens.",
+   "designer": "A Haeckel plate in sepia and verdigris with correct symmetry and an engraved frame. The drop fills the plate like a naturalist's second edition.",
+   "purist": "Haeckel radiolaria whose species change over 96 s. Generative morphology is underused here; the specimens are drawn, not grown.",
+   "director": "Satellites bloom in and fade out one by one, but the whole piece is locked in symmetry with nothing travelling.",
+   "curator": "A Haeckel plate in sepia and flat tint. The drop's extra organisms and triangles are clutter; the breakdown's retreat to near-empty paper is not."
+  }
+ },
+ {
+  "id": "constructivist",
+  "name": "Constructivist",
+  "group": "Posters",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 2,
+   "designer": 9,
+   "purist": 4,
+   "director": 9,
+   "curator": 5
+  },
+  "mean": 6.0,
+  "judges": 6,
+  "spread": 7,
+  "verdicts": {
+   "floor": "DANCE UNTIL THE MORNING rolls down a megaphone, and stick dancers appear on the drop and leave at the breakdown. Legible and funny.",
+   "psychonaut": "Shouting red type and stick dancers.",
+   "designer": "Understood: a diagonal banner, a megaphone wedge, and a photo-grain speaker. The red and black discipline holds, and the figures lock on the beat.",
+   "purist": "A Rodchenko layout with a marquee and stick dancers. Graphic, and it never reorganises.",
+   "director": "Three dancers pop in on the drop, change poses on the beat, then leave one at a time. The breakdown is a character's exit.",
+   "curator": "The dancers leaving in the breakdown is a good exhale, but every square inch is worked."
+  }
+ },
+ {
+  "id": "cubist",
+  "name": "Cubist",
+  "group": "Posters",
+  "scores": {
+   "floor": 3,
+   "psychonaut": 4,
+   "designer": 8,
+   "purist": 5,
+   "director": 6,
+   "curator": 5
+  },
+  "mean": 5.17,
+  "judges": 6,
+  "spread": 5,
+  "verdicts": {
+   "floor": "A beige still life with changes you need a loupe for. A sleeping pill.",
+   "psychonaut": "The refracting facets are a seed of vision. The poster type smothers it.",
+   "designer": "Analytic cubism done properly: an ochre and grey oval, stencilled \"VIN\", and a newspaper collage. The Didone headline is a smart period choice.",
+   "purist": "Facets reshuffle across a Gris still life, which touches cubism's real idea of several views at once. The titles do more work than the facets.",
+   "director": "The title fractures at 10 s and collage planes arrive, but it's tonal and slow. Hard to feel from across a room.",
+   "curator": "A tasteful oval still life beside a headline that takes half the stage."
+  }
+ },
+ {
+  "id": "vorticism",
+  "name": "Vorticism",
+  "group": "Posters",
+  "scores": {
+   "floor": 5,
+   "psychonaut": 2,
+   "designer": 6,
+   "purist": 3,
+   "director": 5,
+   "curator": 3
+  },
+  "mean": 4.0,
+  "judges": 6,
+  "spread": 4,
+  "verdicts": {
+   "floor": "A pink ROAR with shards. Loud but cluttered, with a set-list card nobody can read.",
+   "psychonaut": "A loud pink wall of ROAR.",
+   "designer": "Pink and black with BLAST-style HAIL/SCORN lists, which is well researched. But the shards are too sparse and ROAR sits on top of the vortex instead of being part of it.",
+   "purist": "A pink BLAST bulletin with scattering shards. Nearly identical at 96 s.",
+   "director": "ROAR never moves. More shards arrive in the drop, but the composition stays flat pink with no depth.",
+   "curator": "Static and shouting."
+  }
+ },
+ {
+  "id": "suprematism",
+  "name": "Suprematism",
+  "group": "Posters",
+  "scores": {
+   "floor": 6,
+   "psychonaut": 4,
+   "designer": 8,
+   "purist": 6,
+   "director": 8,
+   "curator": 7
+  },
+  "mean": 6.5,
+  "judges": 6,
+  "spread": 4,
+  "verdicts": {
+   "floor": "Malevich forms scatter into confetti on the drop. Elegant, but cream.",
+   "psychonaut": "Weightless drift is pleasant, and the ghost-white square in the breakdown is lovely.",
+   "designer": "Weightless forms on cream and correct in spirit. The drop's flight of forms genuinely changes the page, and the breakdown fades the square to white.",
+   "purist": "Malevich forms with weight and drift, scattered in the drop and ghosted in the breakdown. The compositions at 96 s genuinely differ.",
+   "director": "\"Weightless\", then \"In flight\", then \"the forms come down to rest\". The copy is the direction, and the forms obey it.",
+   "curator": "The intro is weightless and spare, and the breakdown's ghost square is gallery-grade. The drop's confetti is Malevich misread."
+  }
+ },
+ {
+  "id": "orphism",
+  "name": "Orphism",
+  "group": "Posters",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 5,
+   "designer": 8,
+   "purist": 6,
+   "director": 7,
+   "curator": 6
+  },
+  "mean": 6.5,
+  "judges": 6,
+  "spread": 3,
+  "verdicts": {
+   "floor": "Delaunay discs spin like records and warm up in the drop. Colour with intent, and it reads big.",
+   "psychonaut": "Rotating Delaunay discs make a real hypnotic target, then a text column takes a third of the stage.",
+   "designer": "A full palette used matte, the one place it belongs, with discs that rotate like the Delaunays'. The poster type grid is clever.",
+   "purist": "Delaunay discs whose ring segments rotate independently. This is Raph's Arcs and Rings grown up, and it deserves to become a system rather than a poster.",
+   "director": "The disc flips from cool to warm, satellites bloom, and an angular wipe cools it back half and half.",
+   "curator": "The simultaneous disc is a genuinely hypnotic object, crowded by satellites and a column of type."
+  }
+ },
+ {
+  "id": "zagreb",
+  "name": "Zagreb",
+  "group": "Posters",
+  "scores": {
+   "floor": 6,
+   "psychonaut": 4,
+   "designer": 9,
+   "purist": 5,
+   "director": 10,
+   "curator": 5
+  },
+  "mean": 6.5,
+  "judges": 6,
+  "spread": 6,
+  "verdicts": {
+   "floor": "A cartoon night city: the moon turns red and a crowd dances. Charming storytelling, but the details are small.",
+   "psychonaut": "A charming walking cartoon. Narrative, not immersive.",
+   "designer": "A real little cartoon: a stylised gentleman, a tram, and a dancing crowd on the drop. The palette is limited, the paper textured, and the wit is intact.",
+   "purist": "A delightful Zagreb-school walk cycle with procedural houses. Animation, not generation, and good at being that.",
+   "director": "A real limited-animation film: a walk on twos, the tram's nose as anticipation, a red coat, a conga line, then a stroll.",
+   "curator": "A delightful small film, but a narrative that wants watching rather than a space to be in."
+  }
+ },
+ {
+  "id": "thresholds",
+  "name": "Thresholds",
+  "group": "Batch 3",
+  "scores": {
+   "floor": 8,
+   "psychonaut": 8,
+   "designer": 8,
+   "purist": 7,
+   "director": 9,
+   "curator": 7
+  },
+  "mean": 7.83,
+  "judges": 6,
+  "spread": 2,
+  "verdicts": {
+   "floor": "An engraved tunnel of doors, gears and film reels that never repeats over 96 s. True travel, black and white with no glow.",
+   "psychonaut": "An engraved tunnel of doorways inside doorways. True recursion in two inks.",
+   "designer": "Engraved linework tunnels in black and cream, like Dor\u00e9 crossed with a machine manual. Dense, with no colour needed.",
+   "purist": "An endless descent through engraved vault doors, all hatching and fwidth line work. Recursive, monochrome and strange.",
+   "director": "The door is the drop: steam bursts as it unlatches, the woodcut inverts to daylight, and the next door waits in the dark.",
+   "curator": "Two inks, a woodcut tunnel, and a drop that inverts dark to light. Dense, but coherent in its one material."
+  }
+ },
+ {
+  "id": "wpa",
+  "name": "WPA",
+  "group": "Posters",
+  "scores": {
+   "floor": 5,
+   "psychonaut": 4,
+   "designer": 8,
+   "purist": 2,
+   "director": 7,
+   "curator": 5
+  },
+  "mean": 5.17,
+  "judges": 6,
+  "spread": 6,
+  "verdicts": {
+   "floor": "National-park poster with small fireworks. Mostly a still image.",
+   "psychonaut": "A gorgeous palette frozen behind a title band.",
+   "designer": "A convincing silkscreen: flat layers and a Futura-style headline. Fireworks and headline changes on the drop, and the lake at rest after.",
+   "purist": "A national-park poster whose taglines cycle. A picture with a beat attached.",
+   "director": "A halo round the moon in the build, fireworks on the drop, and \"the lake at rest\" with a canoe afterwards. Lovely beats, little motion.",
+   "curator": "A handsome poster that barely moves."
+  }
+ },
+ {
+  "id": "pennydreadful",
+  "name": "Penny Dreadful",
+  "group": "Posters",
+  "scores": {
+   "floor": 4,
+   "psychonaut": 2,
+   "designer": 8,
+   "purist": 3,
+   "director": 8,
+   "curator": 4
+  },
+  "mean": 4.83,
+  "judges": 6,
+  "spread": 6,
+  "verdicts": {
+   "floor": "A newspaper page where the only live image is a stamp in the middle; the rest is text columns.",
+   "psychonaut": "A skeletal ghost that turns blood-red in the drop. Menace, plus a newspaper to read.",
+   "designer": "The wood-type masthead is well mixed, there are body-text columns and a price in pence. The phantom turning red and the \"GRAND DOUBLE NUMBER\" band are good pulp wit.",
+   "purist": "A woodcut front page that turns red in the drop. The subtitle grammar is the most generative part.",
+   "director": "Serial chapters: \"the bell that tolled thirteen\" is an omen, the phantom turns red, the sash slides off, \"last waltz before dawn\".",
+   "curator": "Sixty per cent of the frame is body text nobody will read."
+  }
+ },
+ {
+  "id": "actup",
+  "name": "Direct Address",
+  "group": "Posters",
+  "scores": {
+   "floor": 6,
+   "psychonaut": 2,
+   "designer": 8,
+   "purist": 4,
+   "director": 5,
+   "curator": 6
+  },
+  "mean": 5.17,
+  "judges": 6,
+  "spread": 6,
+  "verdicts": {
+   "floor": "Huge WE KEEP EACH OTHER ALIVE on black. The one type scene that reads from the bar. A moment, not a set.",
+   "psychonaut": "A kind message, but for someone high it becomes a reading test.",
+   "designer": "Respectful and strong: bold grotesk on black, hot pink, and a crowd of names. The pink bar reversing out of the headline is the right gesture.",
+   "purist": "Sincere typographic slogans over marquee rows of people-words. Text, and nothing else.",
+   "director": "The headline is a static wall. The tear-down catches a lone \"1\" mid-repaste, and the crowd row is too small to carry the kick.",
+   "curator": "The only scene that speaks to the room, and it earns it. The word-crowd strip at the foot is noise."
+  }
+ },
+ {
+  "id": "tdr",
+  "name": "Republic",
+  "group": "Posters",
+  "scores": {
+   "floor": 5,
+   "psychonaut": 1,
+   "designer": 9,
+   "purist": 3,
+   "director": 5,
+   "curator": 3
+  },
+  "mean": 4.33,
+  "judges": 6,
+  "spread": 8,
+  "verdicts": {
+   "floor": "Designers Republic cool, with lots of tiny UI text and a bright grey ground.",
+   "psychonaut": "Maximal micro-text clutter in acid yellow. A panic attack in poster form.",
+   "designer": "The best-researched homage in the batch: dense data type, a fake corporate mark, bilingual copy, acid and grey. It lives like a machine display.",
+   "purist": "A Designers Republic HUD pastiche whose slogans rotate. Busy, and static in structure.",
+   "director": "A dense machine UI where the only big move is a panel inversion. Unreadable across a room.",
+   "curator": "An information dump staged as irony. It is still an information dump."
+  }
+ },
+ {
+  "id": "futurist",
+  "name": "Futurist",
+  "group": "Posters",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 4,
+   "designer": 8,
+   "purist": 6,
+   "director": 9,
+   "curator": 4
+  },
+  "mean": 6.33,
+  "judges": 6,
+  "spread": 5,
+  "verdicts": {
+   "floor": "BOMM and TUMB explode off a starburst on the kick. Onomatopoeia is the best \"see the beat\" device in the collection.",
+   "psychonaut": "Radial energy around a black sun, built from words.",
+   "designer": "Parole in libert\u00e0 that really makes noise: onomatopoeia at every size and radiating beams. The breakdown clears the page, which is correct.",
+   "purist": "*Parole in libert\u00e0* as a particle system: onomatopoeia emitted from a sunburst that drift and pile up. Type with memory.",
+   "director": "BOMM forms in the build, then each kick brings a new word out of the burst, and the breakdown is aftermath as debris drifts off the sheet.",
+   "curator": "Noise about noise. Accurate, and exhausting."
+  }
+ },
+ {
+  "id": "soviet",
+  "name": "Mass Poster",
+  "group": "Posters",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 3,
+   "designer": 7,
+   "purist": 2,
+   "director": 10,
+   "curator": 4
+  },
+  "mean": 5.5,
+  "judges": 6,
+  "spread": 8,
+  "verdicts": {
+   "floor": "Sunburst, a high-five and DANCE TOGETHER. Peak-time cheese, and the room will love it once.",
+   "psychonaut": "Propaganda silhouettes and a sunburst, mostly static.",
+   "designer": "Silhouettes, rays, and red, black and cream handled with care. But the composition is static and the headline is the only thing that changes.",
+   "purist": "Two silhouettes high-five over a sunburst. A puppet.",
+   "director": "Arms crossed and coiled through the build, then they spring into a high-five on the downbeat. The single best gesture in the collection.",
+   "curator": "One gesture (the high five), loud red, repeated for the whole set."
+  }
+ },
+ {
+  "id": "newyorker",
+  "name": "Magazine Cover",
+  "group": "Posters",
+  "scores": {
+   "floor": 5,
+   "psychonaut": 4,
+   "designer": 7,
+   "purist": 1,
+   "director": 7,
+   "curator": 4
+  },
+  "mean": 4.67,
+  "judges": 6,
+  "spread": 6,
+  "verdicts": {
+   "floor": "A rooftop party illustration with small figures. Lovely print, dead at distance.",
+   "psychonaut": "A warm rooftop party with tiny figures and a masthead.",
+   "designer": "A charming gouache rooftop and an invented masthead. The masthead serif is fine, but the painting is flatter vector than true gouache.",
+   "purist": "A flat illustrated rooftop party that barely changes. The 96 s sheet is eight copies of one picture.",
+   "director": "On the drop, dancers step into the extreme foreground: real depth staging. There are only 3 tiles to judge.",
+   "curator": "A nice illustration that stays an illustration."
+  }
+ },
+ {
+  "id": "liquidglass",
+  "name": "Liquid Glass",
+  "group": "Posters",
+  "scores": {
+   "floor": 5,
+   "psychonaut": 3,
+   "designer": 6,
+   "purist": 5,
+   "director": 4,
+   "curator": 5
+  },
+  "mean": 4.67,
+  "judges": 6,
+  "spread": 3,
+  "verdicts": {
+   "floor": "Handsome refracting type on cream. A lobby screen.",
+   "psychonaut": "Beautiful glass blobs pinned behind a wall of type.",
+   "designer": "The refraction is technically impressive, but it swallows its own headline. A \"fun lozenges\" demo more than a poster.",
+   "purist": "Glass capsules refracting marquee type: a real optical system over a fashionable surface.",
+   "director": "Glass pills clutter the type and there's no hierarchy. The drop is a text swap.",
+   "curator": "Glass lozenges bending type is a lovely idea, drowned in type."
+  }
+ },
+ {
+  "id": "isocity",
+  "name": "Iso City",
+  "group": "Sketches",
+  "scores": {
+   "floor": 5,
+   "psychonaut": 5,
+   "designer": 5,
+   "purist": 7,
+   "director": 6,
+   "curator": 3
+  },
+  "mean": 5.17,
+  "judges": 6,
+  "spread": 4,
+  "verdicts": {
+   "floor": "Towers grow in the drop, which is fun, but it's low-contrast mush from the back.",
+   "psychonaut": "Real detail inside detail, grey and busy. The gold tower growing in the drop is nice.",
+   "designer": "Busy isometric sprawl. The drop raises towers, which is legible, but the colour is a muddy sim-game default.",
+   "purist": "A procedural city whose towers grow on the drop, with a full day-night cycle over 96 s. SimCity as growth.",
+   "director": "The lone gold tower is good anticipation and the growth wave is nice, but there's no focal subject in a sea of detail.",
+   "curator": "There is no negative space anywhere in the frame."
+  }
+ },
+ {
+  "id": "mobile",
+  "name": "Mobile",
+  "group": "Batch 4",
+  "scores": {
+   "floor": 4,
+   "psychonaut": 5,
+   "designer": 8,
+   "purist": 7,
+   "director": 8,
+   "curator": 9
+  },
+  "mean": 6.83,
+  "judges": 6,
+  "spread": 5,
+  "verdicts": {
+   "floor": "A Calder mobile on a white wall: gallery-beautiful, with a floodlight ground and tiny elements.",
+   "psychonaut": "Real soft shadows and slow balance. Serene, sparse.",
+   "designer": "Calder, understood: primaries on a white wall with real shadows and restraint. The drop adds arms, the kind of economy I want to see more of.",
+   "purist": "A tree of balanced arms, damped oscillators and real cast shadows, with more mobiles swinging in on the drop. Calm, physical and never the same.",
+   "director": "Pendulum weight, and the camera pushes in on the drop while a new arm swings into frame. The rebalance reads.",
+   "curator": "A Calder in a white room, and the shadows on the wall are the second artwork. The breakdown recedes to a few leaves."
+  }
+ },
+ {
+  "id": "diner",
+  "name": "Diner",
+  "group": "Posters",
+  "scores": {
+   "floor": 5,
+   "psychonaut": 4,
+   "designer": 7,
+   "purist": 2,
+   "director": 5,
+   "curator": 3
+  },
+  "mean": 4.33,
+  "judges": 6,
+  "spread": 5,
+  "verdicts": {
+   "floor": "A neon diner on a wet street, dark and projector-friendly. Almost nothing happens between intro and drop.",
+   "psychonaut": "A neon sign that stays a sign.",
+   "designer": "Neon script well drawn, with reflections on a wet car park. Glow is justified here, though the composition is a front elevation with no drama.",
+   "purist": "A neon diner sign and its reflection. The same frame for 96 s.",
+   "director": "The sign strikes, then the arrow turns green. Static camera, and the breakdown equals the drop.",
+   "curator": "Neon kitsch that looks the same at every section."
+  }
+ },
+ {
+  "id": "lowpoly",
+  "name": "Low Poly",
+  "group": "Posters",
+  "scores": {
+   "floor": 4,
+   "psychonaut": 5,
+   "designer": 6,
+   "purist": 2,
+   "director": 4,
+   "curator": 3
+  },
+  "mean": 4.0,
+  "judges": 6,
+  "spread": 4,
+  "verdicts": {
+   "floor": "A pastel whale sunset. Mostly static.",
+   "psychonaut": "Flying whales over a sunset river is dreamlike. The camera never moves and the title never leaves.",
+   "designer": "A faceted whale over a dusk sea. It is period-correct, but the gradient is generic and SONG turning yellow is a weak drop.",
+   "purist": "A triangulated whale poster, the 2014 low-poly clich\u00e9, which flips facets in the drop.",
+   "director": "The whale is practically frozen for 24 s. The calves are the only event.",
+   "curator": "2014 stock art, nearly static."
+  }
+ },
+ {
+  "id": "koi",
+  "name": "Koi",
+  "group": "Batch 4",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 7,
+   "designer": 7,
+   "purist": 6,
+   "director": 9,
+   "curator": 8
+  },
+  "mean": 7.33,
+  "judges": 6,
+  "spread": 3,
+  "verdicts": {
+   "floor": "Koi from above, with ripples on the kick and fry schooling in the drop. Calm and alive, a great opener.",
+   "psychonaut": "Daylight caustics and ripples. The best confined kick in the collection.",
+   "designer": "Caustics, lily pads and petals seen from above. Natural and lovely, and ripples on the kick are the right confined reaction.",
+   "purist": "Steering fish, caustics and ripples in daylight. Honest agents, a little decorative.",
+   "director": "Cause and effect: the rain rings land and the fry swim toward them. Daylight calm, and the breakdown empties the pond.",
+   "curator": "Daylight, caustics, and a kick that falls as rain on one spot. Nothing glows and it doesn't need to."
+  }
+ },
+ {
+  "id": "glitch",
+  "name": "Glitch",
+  "group": "Posters",
+  "scores": {
+   "floor": 5,
+   "psychonaut": 1,
+   "designer": 7,
+   "purist": 3,
+   "director": 5,
+   "curator": 6
+  },
+  "mean": 4.5,
+  "judges": 6,
+  "spread": 6,
+  "verdicts": {
+   "floor": "Giant SIGNAL and STATIC with slice glitches. One idea.",
+   "psychonaut": "Tearing and datamosh jitter on a text poster. The worst possible texture for this audience.",
+   "designer": "A controlled palette of red disc, black and cream. SIGNAL becomes STATIC and the tears cut the type, not the whole screen.",
+   "purist": "Swiss type with pixel-sort drips. Glitch has been a worn effect since about 2012.",
+   "director": "One great hit at 10 s (SIGNAL shatters), then a steady STATIC state with no arc.",
+   "curator": "One idea, SIGNAL to STATIC, with the damage confined to the word. Honest."
+  }
+ },
+ {
+  "id": "letterpress",
+  "name": "Letterpress",
+  "group": "Posters",
+  "scores": {
+   "floor": 7,
+   "psychonaut": 2,
+   "designer": 7,
+   "purist": 5,
+   "director": 9,
+   "curator": 10
+  },
+  "mean": 6.67,
+  "judges": 6,
+  "spread": 8,
+  "verdicts": {
+   "floor": "The words press into the paper over the build and ink in on the drop. The best build-to-drop story of any scene, but the 20 s breakdown is a blank sheet of paper.",
+   "psychonaut": "An invitation card that fades in and out.",
+   "designer": "Blind debossing in the build, then two-colour ink on the drop. The process is the story, though the empty breakdown frames look like dead air.",
+   "purist": "The print process as a timeline: blind emboss, inking, an overprint in the drop. A clever idea on a thin frame.",
+   "director": "Blind type builds during the build (anticipation you can read), it all inks on the drop, and the breakdown feeds a blank sheet.",
+   "curator": "Blank paper, blind impression, ink on the drop, blank paper again, then SWAY rises uninked. The best-edited object in the collection."
+  }
+ },
+ {
+  "id": "zine",
+  "name": "Zine",
+  "group": "Posters",
+  "scores": {
+   "floor": 5,
+   "psychonaut": 2,
+   "designer": 8,
+   "purist": 4,
+   "director": 6,
+   "curator": 5
+  },
+  "mean": 5.0,
+  "judges": 6,
+  "spread": 6,
+  "verdicts": {
+   "floor": "Great photocopy texture, but the typewriter text is dead at distance.",
+   "psychonaut": "Ransom letters and body copy. Reading.",
+   "designer": "Ransom-note letters, halftone photos and a typewriter column all ring true, and the pink is an earned second ink.",
+   "purist": "A ransom-note collage whose layouts recombine. A template generator.",
+   "director": "Page turns work as chapters, but the build is dead: nothing moves for eight seconds.",
+   "curator": "Busy by genre. The 3 AM breakdown photo (moon over tower blocks) is the one quiet thing in it."
+  }
+ },
+ {
+  "id": "grunge",
+  "name": "Grunge",
+  "group": "Posters",
+  "scores": {
+   "floor": 4,
+   "psychonaut": 2,
+   "designer": 6,
+   "purist": 4,
+   "director": 4,
+   "curator": 2
+  },
+  "mean": 3.67,
+  "judges": 6,
+  "spread": 4,
+  "verdicts": {
+   "floor": "FEEDBACK, STATIC and HUM in mid-grey mud.",
+   "psychonaut": "A murk of layered type.",
+   "designer": "Carson-flavoured layered type and speaker halftones, but it tips into murk. The \"legible in part\" balance is off.",
+   "purist": "Carson-style layered type. Recombination without a rule you can feel.",
+   "director": "Muddy. The mirrored STATIC loses all hierarchy, and there's no single thing to watch.",
+   "curator": "Carson without the eye. Cacophony."
+  }
+ },
+ {
+  "id": "clay",
+  "name": "Clay",
+  "group": "Batch 4",
+  "scores": {
+   "floor": 6,
+   "psychonaut": 5,
+   "designer": 5,
+   "purist": 3,
+   "director": 8,
+   "curator": 3
+  },
+  "mean": 5.0,
+  "judges": 6,
+  "spread": 5,
+  "verdicts": {
+   "floor": "Claymation meadow where blobs pour in on the drop. Kids-TV joy; a daytime or closer piece.",
+   "psychonaut": "Friendly googly-eyed blobs and a smiling sun. Good faces-in-things, kid-TV energy.",
+   "designer": "Pleasing plasticine, but its sweetness reads as a Sesame Street stock scene. It has no design point of view.",
+   "purist": "An SDF claymation meadow with googly blobs. Cute, and nothing emerges.",
+   "director": "The critters pop up and crowd the camera on the drop, then sink back down. Pure charm, but the camera is locked.",
+   "curator": "Cute plasticine that gets more crowded in the drop."
+  }
+ },
+ {
+  "id": "ophanim",
+  "name": "Ophanim",
+  "group": "Sketches",
+  "scores": {
+   "floor": 8,
+   "psychonaut": 6,
+   "designer": 6,
+   "purist": 2,
+   "director": 7,
+   "curator": 4
+  },
+  "mean": 5.5,
+  "judges": 6,
+  "spread": 6,
+  "verdicts": {
+   "floor": "A biblically accurate angel: gold eye-rings turning, with a starburst core on navy. Iconic from anywhere in the room, but it looks the same at every point of the 96 s sheet.",
+   "psychonaut": "A biblically accurate angel with gyroscope rings of eyes. Awe, bordering on scrutiny.",
+   "designer": "A biblically accurate angel as heraldry: bold and symmetrical, but loud in orange and blue with a central glow clich\u00e9.",
+   "purist": "A biblically accurate angel as a centred emblem that turns forever.",
+   "director": "The wing lift and ray burst on the drop are fine. The wheel going edge-on at 20 s is a gorgeous graphic beat. Always dead centre.",
+   "curator": "A centred icon of maximal symmetry, the third in the set (after Mandala and Iris)."
+  }
+ },
+ {
+  "id": "chomper",
+  "name": "Chomper",
+  "group": "Sketches",
+  "scores": {
+   "floor": 9,
+   "psychonaut": 5,
+   "designer": 7,
+   "purist": 8,
+   "director": 9,
+   "curator": 7
+  },
+  "mean": 7.5,
+  "judges": 6,
+  "spread": 4,
+  "verdicts": {
+   "floor": "A Pac-Man maze that folds into a torus, a sphere and a tunnel ride on the drop, then swaps palette by 84 s. The best surprise and the best longevity here.",
+   "psychonaut": "The maze folding into a spinning torus at the drop is a genuine trip moment. The rest is a game.",
+   "designer": "Maze tiles fold into a torus on the drop, which is a genuinely surprising transformation. The palette is teal and cream.",
+   "purist": "A self-playing maze game that leaves flowers where it has eaten, folded onto a torus, drum and tunnel in the drop. Rules, memory and topology.",
+   "director": "Every drop folds the board into a different chapter: torus, table, tunnel, new-ink level. Great variety over 96 s.",
+   "curator": "The maze lifting off the plane into a torus on the drop is a single, great turn."
+  }
+ },
+ {
+  "id": "stamps",
+  "name": "Stamps",
+  "group": "Sketches",
+  "scores": {
+   "floor": 4,
+   "psychonaut": 4,
+   "designer": 7,
+   "purist": 9,
+   "director": 7,
+   "curator": 7
+  },
+  "mean": 6.33,
+  "judges": 6,
+  "spread": 5,
+  "verdicts": {
+   "floor": "Pastel cubes stamping on cream. Pretty and low contrast.",
+   "psychonaut": "Soft pastel cubes stamping a floor. Gentle, low stakes.",
+   "designer": "A riso palette of pink, yellow and blue, with isometric stamped cubes laying a quilt. Light and good-humoured.",
+   "purist": "Rolling cubes print their landing face on paper, and the carpet of prints is the picture. Pure rule, pure accumulation.",
+   "director": "The print carpet records the track, but nothing clears in the breakdown, so there's no exhale.",
+   "curator": "Riso dice printing a pastel sheet: a delightful material. The sheet fills and never clears."
+  }
+ }
+]
