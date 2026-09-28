@@ -469,6 +469,7 @@
       peak[b] = 0;
     }
     $('fps').textContent = Math.round(p.frameRate()) + ' fps';
+    perfUiTick(now);
   }
 
   function setRangeFill(input, v, min, max) {
@@ -549,7 +550,7 @@
   function buildControl(def, spec, params) {
     var base = 'ctl-' + def.id + '-' + spec.key;
     var row = el('div', { class: 'row' });
-    var commit = function (v) { params[spec.key] = v; saveParams(def); };
+    var commit = function (v) { params[spec.key] = v; noteManual(def, spec.key); saveParams(def); };
     var h;
 
     if (spec.type === 'range') {
@@ -672,6 +673,13 @@
       vrow.appendChild(vhead.head); vrow.appendChild(vseg);
       box.appendChild(vrow);
     }
+    if ((def.params || []).length) {
+      perfBox = el('div', { class: 'perf', id: 'perf' });
+      box.appendChild(perfBox);
+      renderPerf();
+    } else {
+      perfBox = null;
+    }
     (def.params || []).forEach(function (spec) {
       var row = buildControl(def, spec, params);
       if (row) box.appendChild(row);
@@ -690,11 +698,20 @@
     });
     var reset = el('button', { type: 'button', class: 'btn', id: 'reset-params' }, 'Reset to defaults');
     reset.addEventListener('click', function () {
+      cancelMotion(def);
+      holds[def.id] = {};
       (def.params || []).forEach(function (spec) { params[spec.key] = defaultFor(spec); });
       saveParams(def);
       syncControls();
     });
     actions.appendChild(reset);
+    // Separate from Reset on purpose: resetting a look mid-set must never cost
+    // the performer the snapshots they built it from.
+    if ((def.params || []).length) {
+      var clearSnaps = el('button', { type: 'button', class: 'btn', id: 'clear-snapshots' }, 'Clear snapshots');
+      clearSnaps.addEventListener('click', function () { clearAllSlots(def); });
+      actions.appendChild(clearSnaps);
+    }
     box.appendChild(actions);
     syncControls();
   }
@@ -705,6 +722,7 @@
     var def = registry.filter(function (d) { return d.id === id; })[0];
     if (!def) return;
     if (def !== current) {
+      if (current) leavePerf(current);
       if (current && p5ready && typeof current.leave === 'function') safeCall(current, 'leave', [p5inst]);
       current = def;
       if (p5ready && typeof def.enter === 'function') safeCall(def, 'enter', [p5inst, ctx]);
@@ -713,6 +731,538 @@
     }
     buildVizList();
     buildControls();
+  }
+
+  // ------------------------------------------------------ performer controls
+  // Raph's direction (2026-09-28): the VJ shapes a scene with intention across
+  // all of its params at once, not along a single Intensity axis. Snapshots
+  // capture a whole look; glides and the morph fader travel between looks. The
+  // Drop button and Follow the music are conveniences, opt-in and off by default,
+  // so the performer's hands are always the primary input.
+  var SLOT_NAMES = ['A', 'B', 'C', 'D'];
+  // Q W E R sit directly over 1-4, so scene picks and look recalls live under
+  // one hand without sharing a key (1-9, H, F and V are already taken).
+  var SLOT_KEYS = ['q', 'w', 'e', 'r'];
+  var GLIDES = [
+    { id: 'cut', label: 'Cut', beats: 0 },
+    { id: 'beat', label: '1 beat', beats: 1 },
+    { id: 'bar', label: '1 bar', beats: 4 },
+    { id: 'bars4', label: '4 bars', beats: 16 }
+  ];
+  var DEFAULT_GLIDE = 'bar';
+  // Core detects no tempo. Demo is a known 120 BPM; for real audio 124 is a
+  // middle-of-the-floor house tempo, near enough that "1 bar" feels like a bar.
+  var DEMO_BPM = 120, ASSUMED_BPM = 124;
+
+  var perfState = {};      // def id -> { slots, glide, ends, fader, dropOn, dropSlot, followOn, cleared }
+  var holds = {};          // def id -> { key: true }: params taken by hand, skipped by automatic motion
+  var lastRecalled = {};   // def id -> slot index whose look is on stage, or null
+  var motion = null;       // the one running glide: { def, from, to, specs, keys, t0, dur }
+  var dropHeld = null;     // { def, back } while the Drop button is held
+  var storeArmed = false;
+  var perfBox = null, perfUi = null;
+  var perfDirty = false;   // stage-side values moved; repaint controls on the next UI tick
+  var paramsDirtyDef = null, lastParamsSave = 0, lastStep = 0;
+
+  function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+  function ease(t) { return t * t * (3 - 2 * t); }
+
+  function sanitizeSnapshot(def, raw) {
+    if (!raw || typeof raw !== 'object' || !raw.values || typeof raw.values !== 'object') return null;
+    var values = {};
+    (def.params || []).forEach(function (spec) {
+      if (spec.key in raw.values) values[spec.key] = sanitize(spec, raw.values[spec.key]);
+    });
+    return { values: values, name: typeof raw.name === 'string' ? raw.name : '' };
+  }
+
+  // Scene-suggested looks (def.presets) fill empty slots so the fader works
+  // the first time a scene is opened: calm in A, drop in B, the rest after.
+  // Keys a preset leaves out take the param's default, so a slot is always a
+  // complete look rather than depending on whatever was on stage.
+  function prefillFromPresets(def, st) {
+    var presets = def.presets;
+    if (!presets || typeof presets !== 'object') return;
+    var names = Object.keys(presets).filter(function (n) { return presets[n] && typeof presets[n] === 'object'; });
+    var order = [null, null, null, null];
+    if (names.indexOf('calm') >= 0) order[0] = 'calm';
+    if (names.indexOf('drop') >= 0) order[1] = 'drop';
+    names.forEach(function (n) {
+      if (n === 'calm' || n === 'drop') return;
+      var free = order.indexOf(null);
+      if (free >= 0) order[free] = n;
+    });
+    order.forEach(function (n, i) {
+      if (!n) return;
+      var values = {};
+      (def.params || []).forEach(function (spec) {
+        values[spec.key] = spec.key in presets[n] ? sanitize(spec, presets[n][spec.key]) : defaultFor(spec);
+      });
+      st.slots[i] = { values: values, name: n };
+      if (n === 'drop') st.dropSlot = i;
+    });
+  }
+
+  function perfFor(def) {
+    if (perfState[def.id]) return perfState[def.id];
+    var s = readStore('viz.perform.' + def.id) || {};
+    var ends = Array.isArray(s.ends) ? s.ends : [0, 1];
+    var st = {
+      slots: [0, 1, 2, 3].map(function (i) { return sanitizeSnapshot(def, Array.isArray(s.slots) ? s.slots[i] : null); }),
+      glide: GLIDES.some(function (g) { return g.id === s.glide; }) ? s.glide : DEFAULT_GLIDE,
+      ends: [clampInt(ends[0], 0, 3, 0), clampInt(ends[1], 0, 3, 1)],
+      fader: isFinite(s.fader) ? clamp01(Number(s.fader)) : 0,
+      dropOn: s.dropOn === true,
+      dropSlot: s.dropSlot == null ? 3 : clampInt(s.dropSlot, 0, 3, 3),
+      followOn: s.followOn === true,
+      cleared: s.cleared === true
+    };
+    if (st.ends[0] === st.ends[1]) st.ends[1] = (st.ends[0] + 1) % 4;
+    // "Clear snapshots" is remembered, so a scene's suggestions do not creep
+    // back into slots the performer deliberately emptied.
+    if (!st.cleared && st.slots.every(function (x) { return !x; })) prefillFromPresets(def, st);
+    perfState[def.id] = st;
+    return st;
+  }
+
+  function savePerf(def) {
+    var st = perfFor(def);
+    writeStore('viz.perform.' + def.id, {
+      slots: st.slots, glide: st.glide, ends: st.ends, fader: st.fader,
+      dropOn: st.dropOn, dropSlot: st.dropSlot, followOn: st.followOn, cleared: st.cleared
+    });
+  }
+
+  function glideSeconds(st) {
+    var g = GLIDES.filter(function (x) { return x.id === st.glide; })[0] || GLIDES[0];
+    return g.beats * 60 / (source === 'demo' ? DEMO_BPM : ASSUMED_BPM);
+  }
+
+  // Ranges travel; everything discrete (select, palette, band, text) has no
+  // in-between, so it switches at the halfway point of the travel.
+  function blendParam(spec, a, b, t) {
+    if (spec.type === 'range') {
+      a = Number(a); b = Number(b);
+      if (!isFinite(a)) return isFinite(b) ? b : defaultFor(spec);
+      if (!isFinite(b)) return a;
+      return Math.min(spec.max, Math.max(spec.min, a + (b - a) * t));
+    }
+    return t < 0.5 ? a : b;
+  }
+
+  function markParamsDirty(def) { paramsDirtyDef = def; perfDirty = true; }
+
+  // Motion writes params every frame; localStorage gets them at most once a
+  // second and when the page goes away, not sixty times a second.
+  function flushParams() {
+    if (!paramsDirtyDef) return;
+    saveParams(paramsDirtyDef);
+    paramsDirtyDef = null;
+    lastParamsSave = performance.now();
+  }
+
+  function startGlide(def, target, seconds) {
+    var params = paramValues[def.id];
+    var from = {}, to = {}, specs = {}, keys = [];
+    (def.params || []).forEach(function (spec) {
+      var k = spec.key;
+      if (!(k in target)) return;
+      keys.push(k); specs[k] = spec; from[k] = params[k]; to[k] = target[k];
+    });
+    motion = null;
+    if (!(seconds > 0)) {
+      keys.forEach(function (k) { params[k] = to[k]; });
+      markParamsDirty(def);
+      syncControls();
+      return;
+    }
+    motion = { def: def, from: from, to: to, specs: specs, keys: keys, t0: performance.now(), dur: seconds * 1000 };
+  }
+
+  function stepMotion(now) {
+    if (!motion) return;
+    var m = motion, params = paramValues[m.def.id];
+    var t = Math.min(1, (now - m.t0) / m.dur), e = ease(t);
+    m.keys.forEach(function (k) { params[k] = t >= 1 ? m.to[k] : blendParam(m.specs[k], m.from[k], m.to[k], e); });
+    markParamsDirty(m.def);
+    if (t >= 1) motion = null;
+  }
+
+  function cancelMotion(def) { if (motion && (!def || motion.def === def)) motion = null; }
+
+  // The override rule: a control touched by hand is held where the performer
+  // put it. A running glide drops it, the drop will not pull it back, and
+  // Follow the music skips it. A hand on the fader or a recall releases every
+  // hold, because those are the performer asking for the whole look again.
+  function noteManual(def, key) {
+    (holds[def.id] = holds[def.id] || {})[key] = true;
+    if (motion && motion.def === def) motion.keys = motion.keys.filter(function (k) { return k !== key; });
+    if (dropHeld && dropHeld.def === def) delete dropHeld.back[key];
+    if (lastRecalled[def.id] != null) { lastRecalled[def.id] = null; syncPerfLive(); }
+  }
+
+  // Sets params to the fader's blend of its two end slots. A key only one
+  // end knows (a param added after the snapshot) holds that end's value.
+  function applyFader(def, pos, respectHolds) {
+    var st = perfFor(def), a = st.slots[st.ends[0]], b = st.slots[st.ends[1]];
+    if (!a || !b) return false;
+    var params = paramValues[def.id], held = holds[def.id] || {};
+    (def.params || []).forEach(function (spec) {
+      var k = spec.key;
+      if (respectHolds && held[k]) return;
+      var inA = k in a.values, inB = k in b.values;
+      if (!inA && !inB) return;
+      params[k] = blendParam(spec, inA ? a.values[k] : b.values[k], inB ? b.values[k] : a.values[k], pos);
+    });
+    markParamsDirty(def);
+    return true;
+  }
+
+  // Any hand on the fader or a slot takes the fader back from the music.
+  function handBack(def) {
+    var st = perfFor(def);
+    if (!st.followOn) return;
+    st.followOn = false;
+    showFollowNote('Follow the music is off: the fader is yours again.');
+    savePerf(def);
+    // Updated in place, not rebuilt: this often fires mid-drag on the fader.
+    syncPerfLive();
+  }
+
+  var followNote = '', followNoteTimer = 0;
+  function showFollowNote(text) {
+    followNote = text;
+    clearTimeout(followNoteTimer);
+    followNoteTimer = setTimeout(function () { followNote = ''; syncPerfLive(); }, 6000);
+    syncPerfLive();
+  }
+
+  function helpText(st) {
+    if (followNote) return followNote;
+    if (!st.slots[st.ends[0]] || !st.slots[st.ends[1]]) {
+      return 'Store looks in ' + SLOT_NAMES[st.ends[0]] + ' and ' + SLOT_NAMES[st.ends[1]] + ' to morph between them.';
+    }
+    return 'A control you touch stays where you put it until the fader or a recall moves it.';
+  }
+
+  function faderMoved(def, pos) {
+    var st = perfFor(def);
+    handBack(def);
+    cancelMotion(def);
+    holds[def.id] = {};
+    lastRecalled[def.id] = null;
+    st.fader = clamp01(pos);
+    applyFader(def, st.fader, false);
+    syncControls();
+    syncPerfLive();
+  }
+
+  function slotTapped(def, i, shift) {
+    var st = perfFor(def);
+    if (storeArmed || shift || !st.slots[i]) storeSlot(def, i);
+    else recallSlot(def, i);
+  }
+
+  function storeSlot(def, i) {
+    var st = perfFor(def), params = paramValues[def.id], values = {};
+    (def.params || []).forEach(function (spec) { values[spec.key] = params[spec.key]; });
+    st.slots[i] = { values: values, name: '' };
+    st.cleared = false;
+    storeArmed = false;
+    lastRecalled[def.id] = i;
+    handBack(def);
+    savePerf(def);
+    renderPerf();
+  }
+
+  function recallSlot(def, i) {
+    var st = perfFor(def), slot = st.slots[i];
+    if (!slot) return;
+    handBack(def);
+    holds[def.id] = {};
+    // A recall is a new home: a drop still held has nothing left to return to.
+    if (dropHeld && dropHeld.def === def) dropHeld = null;
+    lastRecalled[def.id] = i;
+    // Park the fader at the recalled end so grabbing it next does not jump.
+    if (i === st.ends[0]) st.fader = 0;
+    else if (i === st.ends[1]) st.fader = 1;
+    startGlide(def, slot.values, glideSeconds(st));
+    savePerf(def);
+    syncPerfLive();
+  }
+
+  function clearSlot(def, i) {
+    var st = perfFor(def);
+    st.slots[i] = null;
+    if (lastRecalled[def.id] === i) lastRecalled[def.id] = null;
+    if (st.followOn && st.ends.indexOf(i) >= 0) handBack(def);
+    savePerf(def);
+    renderPerf();
+  }
+
+  function clearAllSlots(def) {
+    var st = perfFor(def);
+    st.slots = [null, null, null, null];
+    st.cleared = true;
+    st.followOn = false;
+    lastRecalled[def.id] = null;
+    if (dropHeld && dropHeld.def === def) releaseDrop();
+    savePerf(def);
+    renderPerf();
+  }
+
+  function dropEnabled() {
+    return !!(current && (current.params || []).length && perfFor(current).dropOn);
+  }
+
+  function pressDrop() {
+    if (dropHeld || !current || !(current.params || []).length) return;
+    var def = current, st = perfFor(def), slot = st.slots[st.dropSlot];
+    if (!st.dropOn || !slot) return;
+    var params = paramValues[def.id], back = {};
+    // Mid-glide, "where they were" means where the glide was heading.
+    (def.params || []).forEach(function (spec) {
+      var k = spec.key;
+      back[k] = motion && motion.def === def && motion.keys.indexOf(k) >= 0 ? motion.to[k] : params[k];
+    });
+    dropHeld = { def: def, back: back };
+    startGlide(def, slot.values, glideSeconds(st));
+    syncPerfLive();
+  }
+
+  function releaseDrop() {
+    if (!dropHeld) return;
+    var d = dropHeld;
+    dropHeld = null;
+    if (d.def === current) startGlide(d.def, d.back, glideSeconds(perfFor(d.def)));
+    syncPerfLive();
+  }
+
+  // Switching away finishes whatever was in flight, so a scene is never left
+  // frozen half-way through a glide or stuck in its drop.
+  function leavePerf(def) {
+    var params = paramValues[def.id];
+    if (dropHeld && dropHeld.def === def) {
+      Object.keys(dropHeld.back).forEach(function (k) { params[k] = dropHeld.back[k]; });
+      dropHeld = null;
+      cancelMotion(def);
+      markParamsDirty(def);
+    }
+    if (motion && motion.def === def) {
+      motion.keys.forEach(function (k) { params[k] = motion.to[k]; });
+      motion = null;
+      markParamsDirty(def);
+    }
+    storeArmed = false;
+    followNote = '';
+    flushParams();
+  }
+
+  // Follow the music: a slow energy follower on the kick bands (0-1), ranged
+  // against a floor and ceiling that chase it quickly towards the extremes and
+  // relax slowly back, so "loud" means loud for this track, not in absolute
+  // terms. Deliberately modest: it finds the big sections, not every fill.
+  var det = { level: 0, low: -1, high: -1, amount: 0 };
+  function stepDetector(signals, dt) {
+    var e = (signals[0] + signals[1]) / 200;
+    det.level += (e - det.level) * (1 - Math.exp(-dt / 1.2));
+    if (det.low < 0) { det.low = det.level; det.high = det.level; }
+    var fast = 1 - Math.exp(-dt / 1.5), slow = 1 - Math.exp(-dt / 45);
+    det.low += (det.level - det.low) * (det.level < det.low ? fast : slow);
+    det.high += (det.level - det.high) * (det.level > det.high ? fast : slow);
+    var span = det.high - det.low;
+    // A steady signal (the demo, a held drone) has no sections to find.
+    det.amount = span < 0.08 ? 0 : clamp01((det.level - det.low) / span);
+  }
+
+  function stepPerformer(signals) {
+    var now = performance.now();
+    var dt = lastStep ? Math.min(0.1, (now - lastStep) / 1000) : 0;
+    lastStep = now;
+    stepDetector(signals, dt);
+    stepMotion(now);
+    var st = current && perfState[current.id];
+    if (st && st.followOn && !motion && !dropHeld) {
+      st.fader += (det.amount - st.fader) * (1 - Math.exp(-dt / 0.8));
+      applyFader(current, st.fader, true);
+    }
+  }
+
+  // Runs on the monitor's ~15 Hz tick: repaint the controls that motion moved
+  // and persist params, without doing either per frame.
+  function perfUiTick(now) {
+    if (perfDirty) { perfDirty = false; syncControls(); syncPerfLive(); }
+    if (paramsDirtyDef && now - lastParamsSave > 1000) flushParams();
+  }
+
+  // Cheap, frequent sync of the parts of the block that change without a rebuild.
+  function syncPerfLive() {
+    if (!perfUi || perfUi.def !== current) return;
+    var def = perfUi.def, st = perfFor(def);
+    perfUi.slots.forEach(function (b, i) { b.classList.toggle('live', lastRecalled[def.id] === i); });
+    if (perfUi.fader) {
+      perfUi.fader.value = String(st.fader);
+      setRangeFill(perfUi.fader, st.fader, 0, 1);
+      perfUi.faderVal.textContent = Math.round(st.fader * 100) + '%';
+    }
+    if (perfUi.drop) perfUi.drop.setAttribute('aria-pressed', String(!!(dropHeld && dropHeld.def === def)));
+    perfUi.following.hidden = !st.followOn;
+    perfUi.followToggle.setAttribute('aria-pressed', String(st.followOn));
+    var help = helpText(st);
+    if (perfUi.help.textContent !== help) perfUi.help.textContent = help;
+  }
+
+  function slotSelect(id, label, value, st, onChange) {
+    var sel = el('select', { id: id, class: 'end', 'aria-label': label });
+    SLOT_NAMES.forEach(function (n, i) {
+      var snap = st.slots[i];
+      sel.appendChild(el('option', { value: String(i) }, n + (snap ? (snap.name ? ' · ' + snap.name : '') : ' · empty')));
+    });
+    sel.value = String(value);
+    sel.addEventListener('change', function () { onChange(parseInt(sel.value, 10)); });
+    return sel;
+  }
+
+  function toggleButton(id, label, pressed, onClick) {
+    var b = el('button', { type: 'button', class: 'opt', id: id, 'aria-pressed': String(pressed) }, label);
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
+  function renderPerf() {
+    if (!perfBox || !current) return;
+    var def = current, st = perfFor(def);
+    // Rebuilding would drop keyboard focus; put it back on the same control.
+    var focusId = perfBox.contains(document.activeElement) ? document.activeElement.id : null;
+    perfBox.textContent = '';
+    perfUi = { def: def, slots: [] };
+
+    // Snapshots: tap empty = store, tap filled = recall, Store / Shift = overwrite.
+    var srow = el('div', { class: 'row' });
+    srow.appendChild(rowHead('Snapshots', null, null, 'perf-snap-label').head);
+    var slots = el('div', { class: 'slots', role: 'group', 'aria-labelledby': 'perf-snap-label' });
+    SLOT_NAMES.forEach(function (name, i) {
+      var snap = st.slots[i];
+      var key = SLOT_KEYS[i].toUpperCase();
+      var cell = el('div', { class: 'slot' + (snap ? ' filled' : '') + (storeArmed ? ' armed' : '') });
+      var what = storeArmed || !snap ? 'Store the current look in ' + name : 'Glide to ' + name + (snap.name ? ' (' + snap.name + ')' : '');
+      var b = el('button', { type: 'button', class: 'slot-btn', id: 'perf-slot-' + i, 'aria-label': what, title: what + ' · ' + key });
+      b.appendChild(el('span', { class: 'slot-letter' }, name));
+      b.appendChild(el('span', { class: 'slot-sub' }, snap ? snap.name || 'stored' : 'empty'));
+      b.addEventListener('click', function (e) { slotTapped(def, i, e.shiftKey); });
+      cell.appendChild(b);
+      if (snap) {
+        var x = el('button', { type: 'button', class: 'slot-x', id: 'perf-slot-' + i + '-clear', 'aria-label': 'Clear ' + name, title: 'Clear ' + name }, '×');
+        x.addEventListener('click', function () { clearSlot(def, i); });
+        cell.appendChild(x);
+      }
+      slots.appendChild(cell);
+      perfUi.slots.push(b);
+    });
+    var store = el('button', {
+      type: 'button', class: 'slot-store', id: 'perf-store', 'aria-pressed': String(storeArmed),
+      title: 'Arm, then tap a slot to store the current look into it (or Shift+click, Shift+Q–R)'
+    }, 'Store');
+    store.addEventListener('click', function () { storeArmed = !storeArmed; renderPerf(); });
+    slots.appendChild(store);
+    srow.appendChild(slots);
+
+    var gline = el('div', { class: 'perf-line' });
+    gline.appendChild(el('span', { class: 'label', id: 'perf-glide-label' }, 'Glide'));
+    var gseg = el('div', { class: 'seg', role: 'group', 'aria-labelledby': 'perf-glide-label', id: 'perf-glide' });
+    GLIDES.forEach(function (g) {
+      var b = el('button', { type: 'button', id: 'perf-glide-' + g.id, 'aria-pressed': String(st.glide === g.id) }, g.label);
+      b.addEventListener('click', function () { st.glide = g.id; savePerf(def); renderPerf(); });
+      gseg.appendChild(b);
+    });
+    gline.appendChild(gseg);
+    srow.appendChild(gline);
+    perfBox.appendChild(srow);
+
+    // Morph fader between two chosen slots.
+    var ready = !!(st.slots[st.ends[0]] && st.slots[st.ends[1]]);
+    var mrow = el('div', { class: 'row' });
+    var mh = rowHead('Morph', null, 'perf-fader');
+    perfUi.following = el('span', { class: 'auto', id: 'perf-following', title: 'Follow the music is moving the fader; touch it or a slot to take over' }, 'Following');
+    mh.head.insertBefore(perfUi.following, mh.val);
+    perfUi.faderVal = mh.val;
+    mrow.appendChild(mh.head);
+    var mline = el('div', { class: 'morph' });
+    var setEnd = function (side) {
+      return function (v) {
+        var other = st.ends[1 - side];
+        if (v === other) st.ends[1 - side] = st.ends[side];   // picking the other end swaps them
+        st.ends[side] = v;
+        savePerf(def);
+        renderPerf();
+      };
+    };
+    mline.appendChild(slotSelect('perf-end-0', 'Fader left end', st.ends[0], st, setEnd(0)));
+    var fader = el('input', {
+      type: 'range', id: 'perf-fader', min: 0, max: 1, step: 0.001,
+      'aria-valuetext': SLOT_NAMES[st.ends[0]] + ' to ' + SLOT_NAMES[st.ends[1]]
+    });
+    fader.disabled = !ready;
+    fader.addEventListener('input', function () { faderMoved(def, parseFloat(fader.value)); });
+    fader.addEventListener('change', function () { savePerf(def); flushParams(); });
+    mline.appendChild(fader);
+    mline.appendChild(slotSelect('perf-end-1', 'Fader right end', st.ends[1], st, setEnd(1)));
+    mrow.appendChild(mline);
+    perfUi.fader = fader;
+    perfBox.appendChild(mrow);
+
+    // The optional Drop button.
+    if (st.dropOn) {
+      var drow = el('div', { class: 'row drop-row' });
+      var drop = el('button', { type: 'button', class: 'drop-btn', id: 'perf-drop', 'aria-pressed': 'false' });
+      drop.appendChild(el('span', null, 'Drop'));
+      drop.appendChild(el('kbd', null, 'hold Space'));
+      drop.disabled = !st.slots[st.dropSlot];
+      drop.addEventListener('pointerdown', function (e) {
+        if (e.button !== 0) return;
+        try { drop.setPointerCapture(e.pointerId); } catch (err) { /* capture unsupported */ }
+        pressDrop();
+      });
+      ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (t) { drop.addEventListener(t, releaseDrop); });
+      drop.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+      drop.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.repeat) { pressDrop(); e.preventDefault(); } });
+      drop.addEventListener('keyup', function (e) { if (e.key === 'Enter') { releaseDrop(); e.preventDefault(); } });
+      drow.appendChild(drop);
+      var dlabel = el('label', { class: 'drop-slot', for: 'perf-drop-slot' }, 'goes to');
+      drow.appendChild(dlabel);
+      drow.appendChild(slotSelect('perf-drop-slot', 'Drop snapshot', st.dropSlot, st, function (v) {
+        st.dropSlot = v; savePerf(def); renderPerf();
+      }));
+      perfUi.drop = drop;
+      perfBox.appendChild(drow);
+    }
+
+    perfUi.help = el('p', { class: 'helper perf-help', id: 'perf-help', role: 'status' });
+    perfBox.appendChild(perfUi.help);
+
+    var opts = el('div', { class: 'perf-opts', role: 'group', 'aria-label': 'Performer options' });
+    opts.appendChild(toggleButton('perf-opt-drop', 'Drop button', st.dropOn, function () {
+      st.dropOn = !st.dropOn;
+      if (!st.dropOn) releaseDrop();
+      savePerf(def);
+      renderPerf();
+    }));
+    perfUi.followToggle = toggleButton('perf-opt-follow', 'Follow the music', st.followOn, function () {
+      if (!st.followOn && !(st.slots[st.ends[0]] && st.slots[st.ends[1]])) {
+        showFollowNote('Follow the music needs looks in both fader ends.');
+        return;
+      }
+      followNote = '';
+      st.followOn = !st.followOn;
+      if (st.followOn) { holds[def.id] = {}; cancelMotion(def); lastRecalled[def.id] = null; }
+      savePerf(def);
+      syncPerfLive();
+    });
+    opts.appendChild(perfUi.followToggle);
+    perfBox.appendChild(opts);
+
+    syncPerfLive();
+    if (focusId && $(focusId)) $(focusId).focus();
   }
 
   // ------------------------------------------------------------ stage chrome
@@ -748,7 +1298,21 @@
   function onKey(e) {
     if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || isTyping(e.target)) return;
     var k = e.key;
-    if (k === 'h' || k === 'H') { togglePanel(); e.preventDefault(); }
+    var slot = SLOT_KEYS.indexOf(k.toLowerCase());
+    if (k === ' ' && dropEnabled()) {
+      // Swallowed even on repeat, so a focused button under the performer's
+      // thumb is never clicked by the hold.
+      if (!e.repeat) pressDrop();
+      e.preventDefault();
+    }
+    else if (slot >= 0 && current && (current.params || []).length) {
+      if (!e.repeat) {
+        if (e.shiftKey) storeSlot(current, slot);
+        else slotTapped(current, slot, false);
+      }
+      e.preventDefault();
+    }
+    else if (k === 'h' || k === 'H') { togglePanel(); e.preventDefault(); }
     else if (k === 'f' || k === 'F') { toggleFullscreen(); e.preventDefault(); }
     else if (k === 'v' || k === 'V') { toggleVersion(); e.preventDefault(); }
     else if (/^[1-9]$/.test(k)) {
@@ -808,6 +1372,12 @@
     renderSource();
     bindDrop();
     window.addEventListener('keydown', onKey);
+    window.addEventListener('keyup', function (e) {
+      if (e.key === ' ' && dropHeld) { releaseDrop(); e.preventDefault(); }
+    });
+    // A keyup lost to another window would otherwise leave the drop stuck on.
+    window.addEventListener('blur', releaseDrop);
+    window.addEventListener('pagehide', flushParams);
   }
 
   // ---------------------------------------------------------------- p5 host
@@ -865,6 +1435,9 @@
       monitorTick(signals, p);
       var def = current;
       if (!def) { p.background(0); return; }
+      // Performer motion runs before the scene draws, so glides, the fader and
+      // the drop land on this frame rather than the next.
+      stepPerformer(signals);
       // p5 keeps a style stack; if a viz throws between its own push and pop,
       // unwinding to the recorded depth stops that leaking frame after frame.
       var depth = p._styles ? p._styles.length : 0;

@@ -266,6 +266,79 @@
   .viz-list .vtag.live { background: var(--ink); color: var(--track); border-color: var(--ink); opacity: 1; }
   .viz-list button[aria-current="true"] .vtag.live { background: #001018; color: var(--active); border-color: #001018; }
 
+  /* Performer block: snapshots, glide, morph fader, the optional drop. */
+  .perf { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--rule); }
+  .slots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; gap: 2px; }
+  .slot { position: relative; min-width: 0; }
+  .slot-btn {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+    width: 100%; padding: 6px 7px; border: 1px dashed var(--fill); border-radius: 0;
+    background: transparent; color: var(--muted); text-align: left;
+  }
+  .slot-letter { font: 400 13px/1 var(--pixel); letter-spacing: 0.08em; }
+  .slot-sub { font-size: 11.5px; line-height: 1; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .slot-btn:hover { border-color: var(--active); color: var(--ink); }
+  .slot.filled .slot-btn { border: 1px solid var(--track); background: var(--track); color: var(--ink); }
+  .slot.filled .slot-btn:hover { background: var(--fill); border-color: var(--fill); }
+  .slot .slot-btn.live { background: var(--active); border-color: var(--active); color: #001018; }
+  .slot.armed .slot-btn { border-color: var(--ceiling); border-style: solid; }
+  .slot-x {
+    position: absolute; top: 0; right: 0;
+    width: 20px; height: 20px; padding: 0; border: 0; border-radius: 0;
+    background: transparent; color: inherit; font: 400 14px/1 var(--mono); opacity: 0.55;
+  }
+  .slot .slot-btn.live + .slot-x { color: #001018; }
+  .slot-x:hover, .slot-x:focus-visible { opacity: 1; background: rgba(0, 16, 24, 0.35); }
+  .slot-store {
+    padding: 0 9px; border: 0; border-radius: 0;
+    background: var(--track); color: var(--ink);
+    font: 400 10px var(--pixel); letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .slot-store:hover { background: var(--fill); }
+  .slot-store[aria-pressed="true"] { background: var(--ceiling); color: #fff; }
+  .perf-line { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  .perf-line .label { font-weight: 500; font-size: 13px; flex: none; }
+  .perf-line .seg { flex: 1 1 auto; min-width: 0; }
+  .perf-line .seg button { padding: 4px 4px; font-size: 12px; }
+  .morph { display: flex; align-items: center; gap: 4px; }
+  .morph input[type="range"] { flex: 1 1 auto; min-width: 0; }
+  .morph input[type="range"]:disabled { opacity: 0.4; cursor: default; }
+  select.end { width: auto; flex: none; padding: 0 4px; height: 18px; font: 400 11px var(--mono); }
+  .auto {
+    padding: 1px 4px; font: 400 9px var(--pixel); letter-spacing: 0.1em; text-transform: uppercase;
+    background: var(--active); color: #001018;
+  }
+  .auto[hidden] { display: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .auto { animation: auto-pulse 1.2s ease-in-out infinite alternate; }
+    @keyframes auto-pulse { from { opacity: 1; } to { opacity: 0.45; } }
+  }
+  .drop-row { display: flex; align-items: center; gap: 8px; }
+  .drop-btn {
+    flex: 1 1 auto; display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+    padding: 9px 12px; border: 1px solid var(--ceiling); border-radius: 0;
+    background: transparent; color: var(--ink);
+    font: 400 14px var(--pixel); letter-spacing: 0.14em; text-transform: uppercase;
+    touch-action: none; user-select: none; -webkit-user-select: none;
+  }
+  .drop-btn kbd { font: 400 11px var(--mono); letter-spacing: 0; text-transform: none; color: var(--muted); }
+  .drop-btn:hover { background: rgba(255, 42, 42, 0.12); }
+  .drop-btn[aria-pressed="true"] { background: var(--ceiling); color: #fff; }
+  .drop-btn[aria-pressed="true"] kbd { color: #fff; }
+  .drop-btn:disabled { opacity: 0.4; cursor: default; }
+  .drop-slot { color: var(--muted); font-size: 12.5px; flex: none; }
+  .perf-help { margin: 0 0 8px; min-height: 1.35em; }
+  .perf-opts { display: flex; flex-wrap: wrap; gap: 4px; }
+  .opt {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 8px 3px 6px; border: 0; border-radius: 0;
+    background: transparent; color: var(--muted); font-size: 12.5px;
+  }
+  .opt::before { content: ""; width: 9px; height: 9px; border: 1px solid currentColor; }
+  .opt:hover { color: var(--ink); }
+  .opt[aria-pressed="true"] { color: var(--ink); }
+  .opt[aria-pressed="true"]::before { background: var(--active); border-color: var(--active); }
+
   .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
   .empty { color: var(--muted); font-size: 13px; margin: 0; }
 
@@ -352,6 +425,9 @@
         <dt>H</dt><dd>Hide or show this panel</dd>
         <dt>F</dt><dd>Fullscreen the stage</dd>
         <dt>V</dt><dd>Switch between V1 and V2</dd>
+        <dt>Q W E R</dt><dd>Glide to snapshot A B C D (stores if empty)</dd>
+        <dt>⇧ Q–R</dt><dd>Store the current look in A–D</dd>
+        <dt>Space</dt><dd>Hold for the drop, when the Drop button is on</dd>
       </dl>
       <p>Ported from <a href="https://github.com/Raphomet/viz" target="_blank" rel="noopener">github.com/Raphomet/viz</a> (2016)</p>
     </footer>

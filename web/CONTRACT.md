@@ -74,6 +74,27 @@ under its own id. The chosen version is remembered per scene in `localStorage`
 registered is listed as its own entry. The harness hosts one def and ignores
 both fields.
 
+### Suggested snapshots (optional)
+
+A scene MAY suggest looks for the performer controls (see "Performer
+controls" below):
+
+```js
+presets: {
+  calm: { speed: 0.4, trail: 0.9 },     // goes into slot A
+  drop: { speed: 2.5, mode: 2 },        // goes into slot B; also the default Drop slot
+  shimmer: { hue: 3 }                   // any other names fill C, then D
+}
+```
+
+Keys are param keys; values use the param's own units (select/palette index,
+band 0–8, text string). Keys a preset leaves out take the param's default, so
+each suggestion is a complete look. Unknown keys are ignored and values are
+sanitized like stored params. Core copies the presets into a scene's slots only
+while all four slots are empty and the performer has not pressed "Clear
+snapshots"; after that the slots are the performer's. A scene without
+`presets` simply starts with empty slots. A V2 def carries its own `presets`.
+
 ### draw arguments
 
 - `p` — the p5 instance. **Every** Processing call becomes `p.xxx(...)`:
@@ -159,3 +180,48 @@ Rules for choosing params:
   in the Artifact frame it fails and says so).
 - Global controls: `expBase` 0–3 (default 1.75) and `signalScale` 0.5–8
   (default 4) exactly as in `../viz.pde`.
+
+## Performer controls
+
+Added 2026-09-28. The performer shapes a scene across all its params at once
+rather than along a single Intensity axis. Core owns all of this; a scene only
+declares params (and, optionally, `presets`). Everything is per def id, so a V1
+and its V2 each have their own snapshots and settings.
+
+- **Snapshots.** Four slots, A–D, at the top of Controls. Tapping an empty slot
+  stores the current value of every param in it; tapping a filled slot recalls
+  it. To overwrite a filled slot, arm **Store** and tap it, or Shift+click it.
+  The × on a filled slot clears it. "Clear snapshots" empties all four;
+  "Reset to defaults" leaves them alone.
+- **Glide.** Cut, 1 beat, 1 bar or 4 bars (default 1 bar). Core detects no
+  tempo, so a beat is 0.5 s under Demo (its 120 BPM) and 60/124 s otherwise. On
+  recall, `range` params travel with an ease-in-out; `select`, `palette`, `band`
+  and `text` params switch at the halfway point.
+- **Morph fader.** A horizontal fader between two chosen slots (default A ↔ B).
+  Moving it sets every param to the blend at that position, by the same rules:
+  ranges interpolate linearly along the fader, discrete params switch at the
+  middle. Recalling a slot that is one of the fader's ends parks the fader at
+  that end, so grabbing it next does not jump.
+- **Override rule.** A control touched by hand stays where the performer put
+  it: a running glide stops moving it, a held Drop will not pull it back on
+  release, and Follow the music skips it. The next hand on the fader, or the
+  next recall, releases every such hold and moves the whole look again.
+- **Drop button (option, off by default).** Momentary: while held (mouse, touch,
+  or Space held down) params glide to the drop slot at the chosen glide time; on
+  release they glide back to where they were (or to where a running glide was
+  heading). The drop slot is choosable: default D, or the slot holding the
+  scene's `drop` preset.
+- **Follow the music (option, off by default).** A slow energy follower on bands
+  0–1, ranged against a floor and ceiling that adapt to the track, drives the
+  fader between its two ends (left = calm, right = drop). It pauses while a
+  glide or drop runs. Any hand on the fader or a slot turns it off and the panel
+  says so; a "Following" tag shows while it is driving.
+- **Switching away** mid-glide or mid-drop finishes the glide (or returns from
+  the drop) instantly, so a scene is never left half-way.
+- **Keys.** Q W E R recall A–D (storing if empty); Shift+Q–R store; Space held is
+  the Drop, only while that option is on.
+- **Persistence.** Slots, glide, fader ends and position, drop slot and the two
+  option toggles live in `localStorage` under `viz.perform.<def id>` (guarded).
+  Stored snapshot values are sanitized against the current params on load, so a
+  scene may add or retune params without breaking existing snapshots; a param a
+  snapshot does not know keeps its current value on recall.
