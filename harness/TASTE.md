@@ -33,15 +33,23 @@ nothing that would read as a copy of a named work.
    the piece breathes with the track. Avoid literal meters: no bars, no
    spectrum strips, no shapes that simply scale with the kick. A good test:
    with the sound off it is still beautiful; with the sound on it is alive.
-   The drop should look different from the breakdown.
+   The drop should look different from the breakdown, and it should be the
+   most *structured and intense* section, not the most disordered. At 124 BPM
+   four-on-the-floor a kick lands every 0.48 s, so a per-kick event becomes a
+   constant disruption: drive rates, phases and pressures with the kick, and
+   save one-off events for rarer sounds.
 5. **Continuity.** No popping, strobing, or jitter unless it is deliberate and
    rare. Changes ease. Nothing resets visibly.
 6. **It holds for minutes.** The piece must not saturate to a white or black
    mess, freeze into stasis, or run out of particles after 30 seconds. Build in
    renewal (fade, respawn, re-seeding) so minute five is as good as minute one.
-7. **Composition at every aspect ratio.** It fills the stage in 16:9 and in a
+7. **Somewhere for the eye to go.** Neither an all-over wallpaper of equal
+   texture nor a single centred object. There should be large-scale form
+   (fronts, voids, clusters, a focal region that moves) and it should change
+   over minutes.
+8. **Composition at every aspect ratio.** It fills the stage in 16:9 and in a
    square; nothing important is cropped or huddled in a corner.
-8. **Craft.** Antialiased where it matters, no banding in gradients where it
+9. **Craft.** Antialiased where it matters, no banding in gradients where it
    shows, no visible seams, legible at projector resolution.
 
 ## Instant rejections
