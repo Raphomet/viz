@@ -88,12 +88,24 @@ of large areas (roughly 3 to 30 flashes a second) can also trigger seizures, so
 kick punches use glow, bloom, scale and colour, never hard full-screen
 black/white strobes.
 
+## Range, not a house style
+
+After batch 03 (2026-09-28) Raph said we were overusing rainbows, full
+prism colour and glow: "Not never, but not so much." Across batches the
+default drifted to one look: light on a dark ground, additive glow and bloom,
+hues sweeping the spectrum. That look is now the exception. Reach for
+daylight, flat colour, matte materials, paper, print, paint, clay, textile,
+limited palettes of two or three inks, strong graphic contrast, and real
+shadows instead of glow. A scene that does use glow or a spectrum should earn
+it.
+
 ## Things that fall flat
 
 - A centred shape pulsing to the kick with nothing else going on.
 - A spectrum analyser in disguise.
 - One effect alone (a lone particle fountain, a lone plasma).
-- Rainbow cycling as a substitute for a palette.
+- Rainbow cycling or prism colour as a substitute for a palette.
+- Glow and bloom as the default finish.
 - Reactions so subtle that you need the band strip to notice them.
 
 ## Controls
