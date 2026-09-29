@@ -672,7 +672,12 @@ void main() {
 
       // --- the silk exposures
       const pd = p.pixelDensity();
-      const unitDev = Math.min(p.width, p.height) * pd / 600;
+      // The exposure's size is capped at what a 1280x720 stage gets. At
+      // 3024x1890 it was 2000x650: the decay/smear/tone pass and the float
+      // upload of that grid held the app at ~20 fps on an M4 Pro, and the
+      // silk is soft light, so the upscale shows nothing. It also keeps the
+      // look identical at any size: points per exposure pixel do not change.
+      const unitDev = Math.min(1.2, Math.min(p.width, p.height) * pd / 600);
       const W = Math.max(64, Math.round(ctx.width * XSPAN * unitDev * CRES));
       const H = Math.max(32, Math.round((BAND1 - BAND0) * unitDev * CRES));
       if (W !== this.W || H !== this.H) this.allocate(W, H);
@@ -784,7 +789,10 @@ void main() {
 
       // --- GL
       const gl = this.gl, u = this.u;
-      const w = Math.round(p.width * pd * RES), h = Math.round(p.height * pd * RES);
+      // The GL layer is capped at ~1.3 MP (the full-screen shader evaluates
+      // the sky twice under the lake) and upscaled like the rest.
+      const glS = Math.min(RES, Math.sqrt(1.3e6 / (p.width * pd * p.height * pd)));
+      const w = Math.round(p.width * pd * glS), h = Math.round(p.height * pd * glS);
       if (this.glCanvas.width !== w || this.glCanvas.height !== h) { this.glCanvas.width = w; this.glCanvas.height = h; }
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, this.silkTex);

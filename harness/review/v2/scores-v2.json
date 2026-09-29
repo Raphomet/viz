@@ -1,0 +1,914 @@
+{
+ "Thresholds": {
+  "curator": [
+   7.0,
+   7.0,
+   "Same",
+   "The ochre tone block in the drop is a handsome print idea, but the clean dark-to-light inversion was the purer gesture, and the frame is just as dense."
+  ],
+  "designer": [
+   8.0,
+   8.0,
+   "Same",
+   "Pulling a sepia second plate on the drop is a genuine print move (a duotone), but it costs the purity of black-and-cream engraving. It is a wash."
+  ],
+  "director": [
+   9.0,
+   9.0,
+   "Same",
+   "The drop is now surely *the* door: steam at 9.5 s, then it's blown open at 10.2 s. The sepia chiaroscuro is kinder to a dark room than V1's cream flood, but the release is a touch less like walking into daylight. It's a wash. (The note told me V1's door/inversion sync, which I praised, was a coincidence. V2 makes it true, which is why this isn't lower.)"
+  ],
+  "floor": [
+   8.0,
+   9.0,
+   "Better",
+   "The one thing I docked it for is gone. The drop now inks sepia instead of flooding the room with cream, and the 96 s sheet puts a new ink on every drop (ochre, verdigris, red oxide, slate). That's exactly the per-drop rotation I asked for."
+  ],
+  "psychonaut": [
+   8.0,
+   9.0,
+   "Better",
+   "The 96 s sheet settles it. Every drop comes up in a different ink under the black key block (ochre, then teal, then rust, then blue), so the tunnel of doors never lands on the same chord twice. The iris shutter at 20 s is a portal I want to fall through."
+  ],
+  "purist": [
+   7.0,
+   8.0,
+   "Better",
+   "The drop now lays one flat tone block in a new ink each time (ochre, verdigris, red oxide, slate), and the breach happens on a different door each drop, so every drop is a new world. The engraving is intact."
+  ]
+ },
+ "Attractor": {
+  "curator": [
+   9.0,
+   8.0,
+   "Worse",
+   "The 3D sculpture is impressive, but the drop fills into grainy volume around a blown white knot. Countable threads became fog. The breakdown still exhales beautifully."
+  ],
+  "designer": [
+   7.0,
+   8.0,
+   "Better",
+   "The new forms are sculptural rather than a doodled figure-eight. The drop packs the filaments into a bright knot, and the breakdown strips it back to a few strokes."
+  ],
+  "director": [
+   7.0,
+   8.0,
+   "Better",
+   "It fills the frame now. The drop swells into one fat, hot-cored double lobe, and the breakdown unwinds to a single ribbon by 24 s. A surer diminuendo."
+  ],
+  "floor": [
+   6.0,
+   7.0,
+   "Better",
+   "It's bigger and fills the frame now. The drop swells into a fat glowing torus and the breakdown thins to a few strands, so you can read the song's shape from the bar. It's still an object floating in the middle."
+  ],
+  "psychonaut": [
+   8.0,
+   8.0,
+   "Same",
+   "The forms turn more sculpturally, and the blue haze in the breakdown hints at volume. It's still one lovely creature on flat black, and the drop's pinch-point core runs close to white."
+  ],
+  "purist": [
+   8.0,
+   9.0,
+   "Better",
+   "My \"quotation\" complaint is answered on screen. The orbit is embedded in depth and turned as a sculpture, and V1's single figure-eight has become a procession of different bodies. The light-age colour and the Lyapunov guard are kept."
+  ]
+ },
+ "Chladni": {
+  "curator": [
+   8.0,
+   9.0,
+   "Better",
+   "The violet sheen is gone: champagne sand on slate, in raking perspective, one material. The kick ring is confined and the drop's figures stay legible. The best V2 in the set."
+  ],
+  "designer": [
+   6.0,
+   7.0,
+   "Better",
+   "V1's purple glow is replaced by sand on slate under raking light. It is quieter and more material, and reads as an object."
+  ],
+  "director": [
+   8.0,
+   7.0,
+   "Worse",
+   "The tilted, flown-over plate adds depth, but the kick went from a bright spray you could point at to a faint ring. Slate and amber are tasteful but dim. The best hit in the piece got quieter."
+  ],
+  "floor": [
+   7.0,
+   7.0,
+   "Same",
+   "Slate is more honest than the violet, and the tilted flight over the plate adds travel. But the far half of the plate turns to grey mush at distance, and the kick rings in the drop (12, 14 s) are faint. It's a sideways move."
+  ],
+  "psychonaut": [
+   7.0,
+   7.0,
+   "Same",
+   "Tilting the plate into perspective is the depth I asked for, and new figures arrive from the distance. But draining the violet leaves slate-and-gold that reads murky on a projector. It gained a world and lost its glow of colour."
+  ],
+  "purist": [
+   8.0,
+   9.0,
+   "Better",
+   "The purple sheen is gone. On a low slate plate you can see individual grains still hunting for their nodal lines, which is the soul of the piece made legible. The kick is a small ring of spray, confined."
+  ]
+ },
+ "Chomper": {
+  "curator": [
+   7.0,
+   7.0,
+   "Same",
+   "The fold is untouched, which is right. The breakdown's dive into a pellet holding a nested maze erases the garden, which I asked for, but it is a second trick stacked on the first."
+  ],
+  "designer": [
+   7.0,
+   8.0,
+   "Better",
+   "The build tilts the maze into perspective, and the breakdown closes on a circular vignette into an orange board. The piece now has a last page."
+  ],
+  "director": [
+   9.0,
+   10.0,
+   "Better",
+   "The camera drops low over the maze at 8 s, a real anticipation beat before the fold. The breakdown now ends by diving into a portal pellet, a new world instead of a static garden."
+  ],
+  "floor": [
+   9.0,
+   10.0,
+   "Better",
+   "At 8 s the maze tilts up into 3D before the drop, so the room feels the fold coming. The breakdown now dives through a porthole into a new terracotta maze (24 s). The 96 s sheet shows blue mazes and a blue tunnel ride. The best scene got better without losing anything."
+  ],
+  "psychonaut": [
+   5.0,
+   6.0,
+   "Better",
+   "The maze now tilts before the drop and dives into a cookie-maze at 24 s. More moments where the world bends, though the calm is still a game board."
+  ],
+  "purist": [
+   8.0,
+   8.0,
+   "Same",
+   "The drop torus is essentially V1's. The build lift and the breakdown portal into a nested maze add recursion, but on screen they are increments."
+  ]
+ },
+ "Sumi": {
+  "curator": [
+   9.0,
+   8.0,
+   "Better on paper, worse as the default",
+   "On screen the default is moonlit silk: ink turns to silver light on a dark ground, the collection's old house style, and the karst pillars go soft grey. The paper render (`renders/v2/sumi/sheet.png`) is the best thing in this round: flat hard lantern, heavy-ink pillars rising out of mist, a drop that is a place. **The note changed my reading**: silk was Raph's choice and predates V2, so the redesign itself is an improvement. I would still ship paper."
+  ],
+  "designer": [
+   8.0,
+   6.0,
+   "Worse",
+   "V1 was the best-understood ink painting in the set: paper, mist, one red. V2 turns it into grey on charcoal, which throws away the white ground sumi-e is built on. The karst pillars on the drop are lovely, but in the wrong medium. (The note promises \"the paper, the mist\", which is not what renders.)"
+  ],
+  "director": [
+   9.0,
+   8.0,
+   "Worse",
+   "The karst gorge rising on the drop is exactly the \"drop as a place\" I asked for, and the lantern is now flat ink. But the default is moonlit silk, grey on navy, and the handscroll's paper was its whole charm. (The note says Raph chose night; the 96 s render on warm paper is a 9.)"
+  ],
+  "floor": [
+   6.0,
+   8.0,
+   "Better",
+   "The 24 s sheet is moonlit ink on charcoal with a red sun. Kick rings spread wide across the river, and karst pillars rise out of the water for the drop. It's a place change and dark-room safe. **Caveat:** the V2 96 s sheet renders on cream paper again. The note says moonlit is the default, so make sure that's what ships."
+  ],
+  "psychonaut": [
+   7.0,
+   7.5,
+   "Better",
+   "Moonlit silk stops the paper floodlight. The karst pillars that rise in the drop are a real change of place, and the rings spread wide and soft. I miss the warmth of the paper a little: grey-on-charcoal edges toward murk."
+  ],
+  "purist": [
+   6.0,
+   7.0,
+   "Better",
+   "The glowing lantern blob is now flat red paper. The drop is a gorge of karst pillars in the darkest ink, rising peak-first out of the mist, and a different stretch of cliffs each time."
+  ]
+ },
+ "Murmuration": {
+  "curator": [
+   7.0,
+   8.0,
+   "Better",
+   "The flock stays black. The sky burns orange for the drop and cools for the breakdown, which is the sun setting: earned colour, not painted birds."
+  ],
+  "designer": [
+   5.0,
+   8.0,
+   "Better",
+   "V1's rainbow birds and lens flare are gone. It is now one black silhouette with a line of action against a sky that deepens to ember on the drop. Restraint, finally."
+  ],
+  "director": [
+   9.0,
+   8.0,
+   "Worse",
+   "Keeping the flock black is right, and the shapes in the drop are bigger. But the clap's colour-bank was the most legible \"turn\" in the piece, and a band of darkness doesn't read in stills. The sky warming to orange is closer to a global change than a staged one."
+  ],
+  "floor": [
+   7.0,
+   8.0,
+   "Better",
+   "No more white-out and no rainbow flock. The drop is a deep orange sky with a bigger, denser black flock, and the silhouette finally carries the drop. The orange is still a lot of light on a big screen."
+  ],
+  "psychonaut": [
+   7.0,
+   8.0,
+   "Better",
+   "The flock is always black now, and the drop is the sky catching fire instead. At 96 s the drops alternate orange and crimson and the shapes are bolder (a comma, an arch, a funnel). The best image in the scene is now the whole scene."
+  ],
+  "purist": [
+   5.0,
+   7.0,
+   "Better",
+   "The flock is always black against a real dusk, the iridescence and ray whiteout are gone, the sky remembers the flock as faint smoke, and alternate drops split the flock into two sheets. It is still a ribbon rather than boids, and on screen it earns that."
+  ]
+ },
+ "Koi": {
+  "curator": [
+   8.0,
+   8.0,
+   "Same",
+   "Nearly indistinguishable at sheet scale. The drop's sun-shower spreads rain across the pond, which is slightly less confined than one wandering spot."
+  ],
+  "designer": [
+   7.0,
+   7.0,
+   "Same",
+   "Fish gathering at a raindrop is a nice idea, but it is near-identical on screen."
+  ],
+  "director": [
+   9.0,
+   9.0,
+   "Same",
+   "It's practically the same pond on screen. Fry still pour toward the rings, and the breakdown still empties. The note's glassy exhale is too subtle to see on the sheet."
+  ],
+  "floor": [
+   7.0,
+   7.0,
+   "Same",
+   "Koi now turn towards the rain rings and the fry school is bigger in the drop, but from the back it's the same bright pond. Lovely, unchanged in the room."
+  ],
+  "psychonaut": [
+   7.0,
+   7.0,
+   "Same",
+   "Practically the same pond: a few more rain rings and a slightly livelier fry swarm. Still the kindest scene in the set, and still no depth or travel."
+  ],
+  "purist": [
+   6.0,
+   6.0,
+   "Same",
+   "Better fins and pads, and a sun-shower on the drop, but at any distance it is the same pond. Craft polish, not a new idea."
+  ]
+ },
+ "Interference": {
+  "curator": [
+   9.0,
+   9.0,
+   "Same",
+   "Bolder, blacker fringes read better from the back of the room, and the drop's slow turn is a structural change. This is the fine-tuning of a finished work, and it was right to stop there."
+  ],
+  "designer": [
+   7.0,
+   7.0,
+   "Same",
+   "The deeper black voids make it read more like Riley, but the change is marginal."
+  ],
+  "director": [
+   7.0,
+   7.0,
+   "Same",
+   "Heavier carrier lines, and the same bubble-then-snap-clean arc. It's tidier for a projector, and it's the same film."
+  ],
+  "floor": [
+   5.0,
+   5.0,
+   "Same",
+   "It now sits on black with red threads in the drop, which helps the room. But the carrier on the sheet still looks like fine full-frame stripes to me, and that's the shimmer I flagged. The note says the lines are coarser; from the back I can't see the difference."
+  ],
+  "psychonaut": [
+   6.0,
+   6.5,
+   "Better",
+   "The coarser carrier and the organic black voids between fringes make it read as ink rather than static. The red threads now show. It still buzzes at the finest spacing, but less."
+  ],
+  "purist": [
+   9.0,
+   9.0,
+   "Same",
+   "A trade, not a gain. The heavier carrier gives true black troughs and bold fringes a projector can hold, and the drop turn swings the fringes across the lines, which is lovely. But V1's fine silver grain, the Molnár whisper, is gone."
+  ]
+ },
+ "Scanlines": {
+  "curator": [
+   6.0,
+   7.0,
+   "Better",
+   "Mono phosphor, and the dive into ridges is a real structural drop. Each section still arrives with its own palette (steel and rose, green and gold, violet), so it is still hue by section, only better dressed."
+  ],
+  "designer": [
+   6.0,
+   7.0,
+   "Better",
+   "One phosphor per section (blue, green, violet) gives the track chapters. It is cleaner than V1's mixed hues."
+  ],
+  "director": [
+   8.0,
+   9.0,
+   "Better",
+   "Three clean acts: a blue swell, then a green range with gold-lit crests, then violet dunes. The 10 s frame even catches the pink seam crossing the blue, which is a transition you can watch. The rainbow mesh is gone."
+  ],
+  "floor": [
+   8.0,
+   8.0,
+   "Same",
+   "The drop is better: a green alpine range with the kick lighting a gold ridge, instead of the V1 pink synthwave mesh. The breakdown is a handsome violet plain. But the rolling kick ring I loved now only really shows in the build (8, 10 s), and it gets lost among the drop's peaks."
+  ],
+  "psychonaut": [
+   8.0,
+   9.0,
+   "Better",
+   "Each section is its own world and phosphor: blue egg-crate, green mountains with gold kick-lit ridges, violet dunes, then pink-teal and amber on the 96 s sheet. It is the flight-over-a-changing-dream I'd leave on all night."
+  ],
+  "purist": [
+   7.0,
+   8.0,
+   "Better",
+   "The hidden image now changes at the section boundaries (egg-crate intro, alpine drop, violet dunes in the breakdown), so the raster's form narrates the song. The single-line raster is cleaner than V1's crosshatch."
+  ]
+ },
+ "Zen": {
+  "curator": [
+   8.0,
+   7.0,
+   "Worse",
+   "The intro is finer and the lower sun gives better relief. But the one rake with a job became a crew of four or five floating sticks in the drop, with visible seams where their bands meet. The character dissolved into a mechanism."
+  ],
+  "designer": [
+   7.0,
+   7.0,
+   "Same",
+   "Bigger drop ripples and more rakes, the same garden. It was fine and still is."
+  ],
+  "director": [
+   8.0,
+   9.0,
+   "Better",
+   "The drop brings a *crew* of rakes that re-comb the garden by hand, and the breakdown sends them off one by one until one rake is left. That's a staged exit, and the rings persist until swept."
+  ],
+  "floor": [
+   6.0,
+   7.0,
+   "Better",
+   "The sand is greyer and darker, so it's less of a floodlight. The pressed rings are deeper and stay until a rake passes, and in the drop several rakes work at once. It reads from further back."
+  ],
+  "psychonaut": [
+   5.0,
+   5.0,
+   "Same",
+   "The sun travels and there are more rakes, but three disembodied rake handles floating at 18–20 s read as clutter rather than hands at work. The garden is still nearly still."
+  ],
+  "purist": [
+   7.0,
+   7.0,
+   "Same",
+   "A crew of rakes re-raking the drop by hand is the right systemic idea. But the grooves went coarse and stripy, and the hard rectangular seams between raked patches read as tiling. Process gained, material lost."
+  ]
+ },
+ "Current": {
+  "curator": [
+   7.0,
+   8.0,
+   "Better",
+   "It reads as silk now, not wire. Coral dye enters on the kick and drains away in the breakdown: an accent that arrives and leaves, which is exactly how a second colour should behave."
+  ],
+  "designer": [
+   6.0,
+   7.0,
+   "Better",
+   "A coral second ink on the drop gives the silk an event. It is disciplined: two hues, not a spectrum."
+  ],
+  "director": [
+   7.0,
+   8.0,
+   "Better",
+   "Pink dye enters at 8 s (a build signal), threads the teal through the drop and washes out in the breakdown. At last a musical event that lives inside the medium."
+  ],
+  "floor": [
+   7.0,
+   8.0,
+   "Better",
+   "Coral dye dropped into the teal on the kick gives the drop a colour *event* inside the medium (12 s full frame). Now I can find the beat and the drop, and it still never clips."
+  ],
+  "psychonaut": [
+   7.0,
+   8.0,
+   "Better",
+   "The coral dye bleeding into the cyan silk on each kick gives direction and a second temperature. The drop swells with dye instead of scribbling. At 96 s the dye blooms in a different place every drop."
+  ],
+  "purist": [
+   8.0,
+   8.0,
+   "Same",
+   "The kick is now coral dye the flow stretches into filaments, an honest tracer, and the whole field travels as a river. That costs single-hue purity, and V1's drop signature (the whole field knotting into bright braids) is muted."
+  ]
+ },
+ "Physarum": {
+  "curator": [
+   6.0,
+   8.0,
+   "Better",
+   "The magenta invader is gone; teal lace with amber food nodes as the only accent. The veins are thicker and read at distance. It did what I asked, and it shows."
+  ],
+  "designer": [
+   6.0,
+   7.0,
+   "Better",
+   "The bloom fog is gone, leaving teal lace with amber only at the nodes. Less is more, as usual."
+  ],
+  "director": [
+   8.0,
+   7.0,
+   "Worse",
+   "Sharper, and the amber food flares are properly confined. But without the invader, the drop is the same organism being slightly busier. It lost the only antagonist in the collection."
+  ],
+  "floor": [
+   6.0,
+   7.0,
+   "Better",
+   "The tubes are thicker and read at distance, and the amber food nodes flare where the kick lands. In the drop the network turns dendritic, a change of state rather than a second colour."
+  ],
+  "psychonaut": [
+   7.0,
+   6.5,
+   "Worse",
+   "The single-ink lace is crisp, and the breakdown dendrites are lovely. But losing the magenta species lost the braid of two lives through each other that made the drop hypnotic. Sparser, thinner, a little clinical."
+  ],
+  "purist": [
+   8.0,
+   9.0,
+   "Better",
+   "No bloom, one ink, sharp veins. The drop is a genuine emergent state change: the lace contracts into transport trunks between food nodes (Tero's Tokyo rail network). The Agar palette is the organism's daylight truth."
+  ]
+ },
+ "Flyover": {
+  "curator": [
+   4.0,
+   7.0,
+   "Better",
+   "A full rethink: one dusk palette, a low sun, a river road, and a drop in which the valley walls rise into a canyon and swallow the sun. Structural, one hue, a lot of air. The best rescue of the bottom twelve."
+  ],
+  "designer": [
+   3.0,
+   8.0,
+   "Better",
+   "It went from a wireframe demo to engraved contour lines in a single rose hue, with a low sun and a canyon that closes in on the drop. It gets close to the Outrun cliché without falling in."
+  ],
+  "director": [
+   4.0,
+   8.0,
+   "Better",
+   "A river valley at sunset. The drop dives into a gorge whose walls rise around us, and the breakdown flies out over open country: entry, interior, exit. A bare wireframe became a journey."
+  ],
+  "floor": [
+   5.0,
+   8.0,
+   "Better",
+   "The biggest jump in the set. A dusk flight up a river valley toward a low sun, and the drop plunges into a canyon whose walls fill the frame, then opens out again for the breakdown. It's dark, it travels, and it keeps that language over 96 s."
+  ],
+  "psychonaut": [
+   3.0,
+   7.0,
+   "Better",
+   "A full rethink that works. You fly down a meandering river toward a low sun, the plain rises into canyon walls for the drop, and it opens again in the breakdown. Real travel and depth. It's one dusky rose all the way (the 96 s sheet only ever shows plain and canyon), so it stops short of an 8."
+  ],
+  "purist": [
+   5.0,
+   7.0,
+   "Better",
+   "The rows are still spectrum snapshots, but the mirrored profile is now a river canyon lit by a low sun, in one rust ink, and the drop raises sheer walls you fly between. There is no slow clock: every drop is the same canyon."
+  ]
+ },
+ "Planets": {
+  "curator": [
+   4.0,
+   6.0,
+   "Better",
+   "Inked cream paper, flown through, with a big ringed planet swinging forward in the breakdown. Charming, but the comet strokes and scatter crowd it."
+  ],
+  "designer": [
+   3.0,
+   8.0,
+   "Better",
+   "A hand-printed orrery on cream with flat inks, hairline orbits and a sunburst glyph. It reads as a 1960s science-annual plate brought to life."
+  ],
+  "director": [
+   5.0,
+   8.0,
+   "Better",
+   "A cream printed orrery, and we stand inside it. On the drop a ringed planet swings in toward the camera and then recedes. Big, daylight and staged. Nothing is tiny any more."
+  ],
+  "floor": [
+   3.0,
+   6.0,
+   "Better",
+   "It's properly designed now: big inked planets with ribbon trails, comets on the drop, and a ringed planet swinging into the foreground. But it's on cream paper, which trades one room problem (tiny) for another (a floodlight)."
+  ],
+  "psychonaut": [
+   3.0,
+   5.5,
+   "Better",
+   "The camera inside the orbits, flat print inks, comets in the drop and a ringed planet swinging past in the breakdown: now it has scale. But it's a bright cream field of thin lines, a diagram of space rather than space."
+  ],
+  "purist": [
+   5.0,
+   6.0,
+   "Better",
+   "A handsome orrery plate in flat inks on cream, with a near planet crossing the foreground. It is still a clockwork, now well printed."
+  ]
+ },
+ "Vorticism": {
+  "curator": [
+   3.0,
+   5.0,
+   "Better",
+   "The vortex now fills the sheet and actually turns, and HUSH to ROAR to HUSH is a real arc. It is still a shout, and the manifesto card is still clutter."
+  ],
+  "designer": [
+   6.0,
+   8.0,
+   "Better",
+   "The vortex now consumes the sheet, which was my round-one note exactly. HUSH turns to ROAR on the drop, and ochre is the drop's second ink. BLAST would recognise it."
+  ],
+  "director": [
+   5.0,
+   7.0,
+   "Better",
+   "The headline now acts: HUSH, then ROAR on the drop, then HUSH again. The vortex fills the sheet and ochre shards join it on the drop. It's still a flat pink wall, but the wall has a plot."
+  ],
+  "floor": [
+   5.0,
+   7.0,
+   "Better",
+   "The whole frame is the vortex now, and the word is the section: HUSH for the intro and breakdown, ROAR for the drop, with gold shards on the drop. Readable from the bar. The HAIL/SCORN card is still too small to read."
+  ],
+  "psychonaut": [
+   2.0,
+   4.5,
+   "Better",
+   "The shards now spiral into a square eye, a genuine tunnel. Then HUSH/ROAR and the HAIL/SCORN label take nearly half the frame and pull me back out to read."
+  ],
+  "purist": [
+   3.0,
+   5.0,
+   "Better",
+   "The whole frame is now a vortex of shards that recomposes as it turns, and ink plates are laid in the drop. It is still a poster: the headline banner eats a third of the frame and the HAIL/SCORN card never moves."
+  ]
+ },
+ "Low Poly": {
+  "curator": [
+   3.0,
+   5.0,
+   "Better",
+   "Polygon count as the arc (resolving on the drop, falling back to shards) is a genuine idea. The red eclipse corona is the one garish note."
+  ],
+  "designer": [
+   6.0,
+   6.0,
+   "Same",
+   "Making the polygon count the music is witty, but the indigo is murkier than V1's dusk and the moon's red ring is the only real event. A clever system that is visually no better."
+  ],
+  "director": [
+   4.0,
+   6.0,
+   "Better",
+   "Chapter labels (I sea asleep → IV falling back to shards), a faceted red corona round the moon on the drop, and a calf that arrives. The whale moves more but still mostly hovers, and V1's dusk palette is gone."
+  ],
+  "floor": [
+   4.0,
+   6.0,
+   "Better",
+   "It's a night poster now, and the polygon count rising to \"full resolution\" on the drop is a real idea. The red corona round the moon marks the drop. It's still slow, and the mesh change is subtle at distance."
+  ],
+  "psychonaut": [
+   5.0,
+   5.0,
+   "Same",
+   "The night palette and the rising polygon count (resolution as music) are clever. But the red spiked corona on the moon is harsh, the title and polygon counter are still on screen, and the sideways truck barely reads."
+  ],
+  "purist": [
+   2.0,
+   4.0,
+   "Better",
+   "It took the live-mesh idea: the mesh refines and coarsens with the song, and a polygon counter reads it out. The whale is still a drawn body and the look is still 2014."
+  ]
+ },
+ "Grunge": {
+  "curator": [
+   2.0,
+   5.0,
+   "Better",
+   "Edited: one word at a time, one speaker, black, cream and one red. The HUM breakdown is a real poster. The drop still litters CLAP and CRACK stickers everywhere."
+  ],
+  "designer": [
+   6.0,
+   7.0,
+   "Better",
+   "It is legible now, with ink-bleed FEEDBACK, a red STATIC in strips and a huge HUM. But it has become Swiss-punk and lost Carson's layered density."
+  ],
+  "director": [
+   4.0,
+   7.0,
+   "Better",
+   "One word per section (FEEDBACK, a torn red STATIC, HUM), and the speaker cone relocates for the breakdown. The hierarchy is fixed. It reads from the back."
+  ],
+  "floor": [
+   4.0,
+   6.0,
+   "Better",
+   "The words now read: one enormous FEEDBACK, then a red sliced STATIC in the drop, then HUM, with CLAP and CRACK stamped on the hits. That's the onomatopoeia transplant working. It's still a cream ground."
+  ],
+  "psychonaut": [
+   2.0,
+   2.5,
+   "Same",
+   "Cleaner and crisper, but it's still a wall of words on bright paper with SFX stamps. The torn STATIC strips are the only thing to stare into."
+  ],
+  "purist": [
+   4.0,
+   5.0,
+   "Better",
+   "There is finally a rule you can feel: the headline is sliced into strips the music shears, so legibility tracks the track. Otherwise it is still a layout template."
+  ]
+ },
+ "Jags": {
+  "curator": [
+   4.0,
+   6.0,
+   "Better",
+   "At full scale it is a Riley cataract, and the breakdown's cream river is lovely. But the hairline Agnes Martin quiet became a loud field, and the drop is packed; it now crowds Interference."
+  ],
+  "designer": [
+   3.0,
+   7.0,
+   "Better",
+   "A full-bleed striped field with a seam cut through it and three inks on the drop. It is now a Riley-grade textile rather than trim."
+  ],
+  "director": [
+   3.0,
+   7.0,
+   "Better",
+   "A hairline crease appears in the build, turns red, then spreads into a zigzag fault across the whole field. The breakdown relaxes back to waves. It's no longer an EQ. It's a story about a crack."
+  ],
+  "floor": [
+   2.0,
+   5.0,
+   "Better",
+   "A full-frame flame-stitch record of the track: flat rows from the calm sections, tall zigzags from the drop. The 14 s frame is bold and graphic. But it's a bright buff field of high-contrast stripes, which is shimmer risk on a projector."
+  ],
+  "psychonaut": [
+   2.0,
+   5.5,
+   "Better",
+   "Full-bleed waves that tighten into ziggurat zigzags with a diamond lattice in the drop, then relax into broad diagonal bands. It has a real arc, and flat daylight done right. Bright high-frequency stripes can vibrate at full size."
+  ],
+  "purist": [
+   4.0,
+   7.0,
+   "Better",
+   "Each row is cut from the music once and then travels outward, so the frame is a flame-stitch record of the last few seconds (Missoni, Anni Albers). The four inks and the angle turning over 96 s make it Raph's 2016 rule with density and memory."
+  ]
+ },
+ "Dot Matrix": {
+  "curator": [
+   2.0,
+   4.0,
+   "Better",
+   "Amber type receding into the dark is a fine material. Unreadable pseudo-words ask to be read and then refuse; to me that reads as noise, not mystery."
+  ],
+  "designer": [
+   2.0,
+   6.0,
+   "Better",
+   "An LED page rolling away in perspective is a real idea. The gibberish glyph soup is ugly setting, though: one real word (\"LOUDER\") proves it could have been all real words."
+  ],
+  "director": [
+   3.0,
+   5.0,
+   "Better",
+   "The tilted LED page rolling away is a nice camera, and LOUDER lands on the drop. But the pseudo-letters read as broken rather than mysterious, and once the effect is clear there's little arc."
+  ],
+  "floor": [
+   4.0,
+   6.0,
+   "Better",
+   "A dark LED page rolling away like a film crawl, with red LOUDER and new colours on the drop. It has travel and reads from anywhere. The pseudo-letters will make people squint, and I think that's part of the fun."
+  ],
+  "psychonaut": [
+   2.0,
+   3.5,
+   "Better",
+   "A Star Wars crawl of amber LED text gives depth, and the red LOUDER lands. But gibberish text is worse than words for this audience: the brain tries to read it, fails, and tries again."
+  ],
+  "purist": [
+   3.0,
+   5.0,
+   "Better",
+   "A teletype writes spectrum-chosen nonsense that scrolls away in perspective, with a red drop headline. It has a real rule and a real record, but mostly it shows unreadable amber gibberish and canned hype words."
+  ]
+ },
+ "Parametric Lines": {
+  "curator": [
+   2.0,
+   6.0,
+   "Better",
+   "Bone-white ruled surfaces on green-black, like a banknote plate, with one vermilion string for the kick. Restrained, at last visible, and it looks drawn."
+  ],
+  "designer": [
+   2.0,
+   6.0,
+   "Better",
+   "The ruled surface now fills the frame in cream on bottle green. The red ruling line is a good accent, but the whole reads as fussy mesh."
+  ],
+  "director": [
+   3.0,
+   7.0,
+   "Better",
+   "The string art is always alive now. The drop adds an amber layer plus one red string per kick, a truly confined hit, and the breakdown unthreads it to a single figure. The phrasing I asked for."
+  ],
+  "floor": [
+   2.0,
+   5.0,
+   "Better",
+   "It finally exists on screen: cream string-art filling the frame on dark green, an amber layer and a red kick chord on the drop. The lines are still hairlines at 10 m."
+  ],
+  "psychonaut": [
+   2.0,
+   5.5,
+   "Better",
+   "String-art nets that fill the frame and morph, cream on bottle green with an amber second plate in the drop. Genuinely elegant moiré between the nets, though boxed and flat."
+  ],
+  "purist": [
+   3.0,
+   7.0,
+   "Better",
+   "Two curves ruled by straight lines, whose curved envelopes emerge from nothing but straightness: pin-and-thread emergence at its purest. Both the night and paper inks are beautiful. It knots up a little at the drop's peak."
+  ]
+ },
+ "Rings": {
+  "curator": [
+   2.0,
+   6.0,
+   "Better",
+   "Dashed rings to every edge on cream, a printed tunnel with one red ring rolling out. It finally has a scale. The drop thickens into navy mass, heavier than it needs to be."
+  ],
+  "designer": [
+   2.0,
+   7.0,
+   "Better",
+   "A printed op-art tunnel on cream in black, blue and red that runs off every edge. This is the record-groove print I asked for."
+  ],
+  "director": [
+   2.0,
+   7.0,
+   "Better",
+   "A full-frame dotted tunnel on cream. A red ring appears at 8 s, and on the drop the rings roll outward and fatten. The breakdown thins them back. The coin became a stage."
+  ],
+  "floor": [
+   2.0,
+   5.0,
+   "Better",
+   "It went from a coin to a full-frame tunnel with vermilion kick rings rolling out to the corners (12–16 s). Legible, but it's a cream ground and the whole frame churns on the drop."
+  ],
+  "psychonaut": [
+   2.0,
+   6.0,
+   "Better",
+   "Now an actual tunnel: dashed rings stream outward, and in the drop they thicken into a navy-and-red segmented bore with a wandering vanishing point. Somewhere to fall into. The cream ground keeps it from a 7."
+  ],
+  "purist": [
+   3.0,
+   6.0,
+   "Better",
+   "The centred emblem is now a vanishing point: a tunnel of dashes on cream, extruded into bars with a blue misregistered shadow and one red ring in the drop. Fine print texture, though every drop is the same drop."
+  ]
+ },
+ "Arcs": {
+  "curator": [
+   3.0,
+   5.0,
+   "Better",
+   "A Whitney-style grid of arc clocks, cream on black, at last at scale. The drop fills with vermilion and ochre wedges. It lost the lone crescent: one gesture became a wallpaper of gestures."
+  ],
+  "designer": [
+   1.0,
+   7.0,
+   "Better",
+   "A Whitney/Müller-Brockmann grid of clocks in cream, ochre and vermilion. It is my Swiss Grid idea, and it now has composition."
+  ],
+  "director": [
+   2.0,
+   7.0,
+   "Better",
+   "A full grid of arc clocks. The first gold wedge at 8.5 s is a build signal, the drop is a red/gold card stunt, and the breakdown clears it cell by cell."
+  ],
+  "floor": [
+   2.0,
+   6.0,
+   "Better",
+   "A grid of arc clocks on black. The drop fills it with gold and red rings, pie wedges fire on the kick, and the breakdown thins out. It's legible, dark, and has a clear musical grammar."
+  ],
+  "psychonaut": [
+   1.0,
+   4.5,
+   "Better",
+   "A grid of arc-clocks that fills with vermilion and ochre in the drop. It's handsome wallpaper, busy in the drop, with no depth. Better than a spinner, not yet a trance."
+  ],
+  "purist": [
+   3.0,
+   7.0,
+   "Better",
+   "This is the phase grid I said was hiding behind the sliders. Cells of concentric sweeps carry a diagonal phase wave, and the drop fills cells with vermilion and ochre: Whitney's *Permutations* in two inks."
+  ]
+ },
+ "Twinkle Toph": {
+  "curator": [
+   1.0,
+   4.0,
+   "Better",
+   "The portrait now gathers out of a starfield on the drop and scatters again: a real arc, on a dark ground. But it is still a private face staring at the room."
+  ],
+  "designer": [
+   3.0,
+   5.0,
+   "Better",
+   "The Aladdin Sane constellation is a nice conceit, but the intro is empty navy and it lost the two-ink print quality V1 had."
+  ],
+  "director": [
+   1.0,
+   7.0,
+   "Better",
+   "Stars gather through the build, the Aladdin Sane portrait assembles on the drop with the bolt striking, and in the breakdown it dissolves back into sky. Assembly and dispersal, the arc it lacked."
+  ],
+  "floor": [
+   2.0,
+   6.0,
+   "Better",
+   "The best fix of an in-joke: stars on navy gather into the Aladdin Sane portrait on the drop and scatter again in the breakdown. Dark, and the build-to-drop is obvious. It's still a portrait of one bloke."
+  ],
+  "psychonaut": [
+   1.0,
+   5.5,
+   "Better",
+   "A starfield where the dots gather into the portrait only when the music earns it, then scatter again. I scored it 5 from the frames. The note that his eyes are closed took away my worry about being stared at, so I raised it to 5.5."
+  ],
+  "purist": [
+   4.0,
+   5.0,
+   "Better, with a loss",
+   "The face is now spun out of a starfield and falls apart again, which gives it an arc. But the candid daylight pointillism is gone, into glow dots on navy with a lightning bolt painted across the face like a costume."
+  ]
+ },
+ "Text": {
+  "curator": [
+   1.0,
+   4.0,
+   "Better",
+   "VIZ as a swarm of riso flecks on parchment that streams into MOVE, then TOGETHER. A murmuration of letters is a good idea. It is still a logo for most of its life."
+  ],
+  "designer": [
+   2.0,
+   7.0,
+   "Better",
+   "\"VIZ\" stippled as riso in two inks on buff, then MOVE, then TOGETHER. It is the house typographic scene at last."
+  ],
+  "director": [
+   2.0,
+   7.0,
+   "Better",
+   "The word is a stage-size riso stipple. On the drop it flocks into MOVE and then TOGETHER, and the breakdown settles it back to VIZ. The letters are actors now."
+  ],
+  "floor": [
+   2.0,
+   5.0,
+   "Better",
+   "Flocking dots spell VIZ, reform into MOVE and TOGETHER on the drop, then go back to VIZ. The word change lands. But it's a cream ground, and the rest of the time it's still the logo."
+  ],
+  "psychonaut": [
+   1.0,
+   3.5,
+   "Better",
+   "Letters swimming like shoals, from VIZ to MOVE to TOGETHER, is a real idea. It is still reading, on a bright field."
+  ],
+  "purist": [
+   3.0,
+   5.0,
+   "Better",
+   "The words fill the stage as thousands of flecks that flock from VIZ to MOVE to TOGETHER. Particle typography is 2009 Processing canon, well done, and it is still text as the subject."
+  ]
+ }
+}

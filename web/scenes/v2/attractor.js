@@ -100,7 +100,7 @@
     order: 702,
     gallery: {
       title: 'Attractor',
-      technique: 'Clifford / de Jong maps, ~195k points a frame, each given a depth from the orbit itself (delay embedding: the previous x) and projected through a slow yaw/pitch; splatted bilinearly into a decaying Float32 exposure (0.75x resolution), half-resolution slow/fast light-age buffers (blurred, bilinearly upsampled) and two fast-decaying full-resolution lamp buffers, log tone-mapped through a 2D colour LUT into ImageData, with a 1/8-resolution blurred halo; crossfades between vetted forms, guarded by a running Lyapunov estimate',
+      technique: 'Clifford / de Jong maps, ~195k points a frame, each given a depth from the orbit itself (delay embedding: the previous x) and projected through a slow yaw/pitch; splatted bilinearly into a decaying Float32 exposure (0.75x resolution, capped at 1.3 MP), half-resolution slow/fast light-age buffers (blurred, bilinearly upsampled) and two fast-decaying full-resolution lamp buffers, log tone-mapped in a WebGL2 shader through a 2D colour LUT, with a 1/8-resolution blurred halo; crossfades between vetted forms, guarded by a running Lyapunov estimate',
       brief: 'The V1 long exposure, with the music now visible in it. A kick fires a lamp on one stretch of the wire, which burns white for a fifth of a second and walks on round the form with each beat; a clap fires a second lamp opposite in the cool ink. The orbit is a 3D sculpture the bass slowly turns, and the section pushes or pulls the development: the drop fills the sheets between the threads, the breakdown thins back to single threads.',
       lineage: [
         'V1: Attractor (web/scenes/attractor.js), #2 of 72 in the six-judge panel; the curator called it exemplary for the long exposure of one orbit and the breakdown that thins to single threads. V2 keeps all of V1 and changes what the note (harness/v2/attractor.md) lists.',
@@ -276,6 +276,114 @@
       // full value so it reads as light rather than as shadow.
       const cs = pal.stops[0], m = Math.max(cs[0], cs[1], cs[2]);
       this.coolInk = cs.map((c) => c * 235 / m);
+    },
+
+    // The tone map runs on the GPU. On the CPU it was the whole frame budget:
+    // one log, a bilinear light-age lookup and a LUT read for every pixel,
+    // ~11 ms at 1.3 MP and ~35 ms at the uncapped 3.2 MP. The CPU still
+    // splats and decays (a multiply per pixel); the shader does the rest,
+    // with the same curve, dither, LUT and flash maths as the fallback loop.
+    initGL() {
+      const c = document.createElement('canvas');
+      const gl = c.getContext('webgl2', { premultipliedAlpha: false, antialias: false, alpha: false });
+      if (!gl) { this.glFailed = true; return; }
+      const compile = (type, src) => {
+        const sh = gl.createShader(type);
+        gl.shaderSource(sh, src);
+        gl.compileShader(sh);
+        if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
+        return sh;
+      };
+      const prog = gl.createProgram();
+      gl.attachShader(prog, compile(gl.VERTEX_SHADER, TONE_VS));
+      gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, TONE_FS));
+      gl.linkProgram(prog);
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { this.glFailed = true; return; }
+      gl.useProgram(prog);
+      const u = {};
+      for (const n of ['uAcc', 'uFlK', 'uFlC', 'uFr', 'uLut', 'uDith', 'uGain', 'uFg', 'uHot', 'uCool', 'uFlash', 'uH', 'uLo']) u[n] = gl.getUniformLocation(prog, n);
+      // Light age wants hardware bilinear filtering; 32-bit float textures
+      // filter only with this extension, half floats always do.
+      const f32 = !!gl.getExtension('OES_texture_float_linear');
+      const tex = (unit, name, filter) => {
+        const t = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE0 + unit);
+        gl.bindTexture(gl.TEXTURE_2D, t);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.uniform1i(u[name], unit);
+        return t;
+      };
+      this.glTex = {
+        acc: tex(0, 'uAcc', gl.NEAREST), flK: tex(1, 'uFlK', gl.NEAREST), flC: tex(2, 'uFlC', gl.NEAREST),
+        fr: tex(3, 'uFr', gl.LINEAR), lut: tex(4, 'uLut', gl.NEAREST), dith: tex(5, 'uDith', gl.NEAREST),
+      };
+      gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+      this.glFrFmt = f32 ? gl.R32F : gl.R16F;
+      this.glU = u; this.glCanvas = c; this.gl = gl;
+      this.glW = 0; this.glH = 0; this.glLut = null;
+    },
+
+    toneGL(W, H, gain, fg, hot, cool, lamps, slowDecay) {
+      const gl = this.gl, T = this.glTex, u = this.glU;
+      const put = (unit, t, fmt, w, h, srcFmt, type, data, fresh) => {
+        gl.activeTexture(gl.TEXTURE0 + unit);
+        if (fresh) gl.texImage2D(gl.TEXTURE_2D, 0, fmt, w, h, 0, srcFmt, type, data);
+        else gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, w, h, srcFmt, type, data);
+      };
+      const fresh = W !== this.glW || H !== this.glH;
+      if (fresh) {
+        this.glCanvas.width = W; this.glCanvas.height = H;
+        gl.viewport(0, 0, W, H);
+        gl.uniform1i(u.uH, H);
+        gl.uniform2f(u.uLo, this.Wl, this.Hl);
+        const d = new Uint8Array(W * H);
+        for (let i = 0; i < d.length; i++) d[i] = this.dither[i] + 8;
+        put(5, T.dith, gl.R8UI, W, H, gl.RED_INTEGER, gl.UNSIGNED_BYTE, d, true);
+        this.glW = W; this.glH = H; this.flashLive = 0;
+      }
+      if (this.glLut !== this.lut) {
+        put(4, T.lut, gl.RGBA8, TONE_N, FRESH_N, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(this.lut.buffer), true);
+        this.glLut = this.lut;
+      }
+      // Uploads copy the data at call time, so the buffers can be decayed
+      // straight after, below.
+      put(0, T.acc, gl.R32F, W, H, gl.RED, gl.FLOAT, this.acc, fresh);
+      put(3, T.fr, this.glFrFmt, this.Wl, this.Hl, gl.RED, gl.FLOAT, this.frF, fresh);
+      // Flash buffers are uploaded and decayed only while a lamp has burnt in
+      // the last ~40 frames (0.72^40 ~ 2e-6: nothing left to see); between
+      // hits they cost nothing.
+      if (lamps) this.flashLive = 40;
+      const flash = this.flashLive > 0;
+      if (flash || fresh) {
+        put(1, T.flK, gl.R32F, W, H, gl.RED, gl.FLOAT, this.flK, fresh);
+        put(2, T.flC, gl.R32F, W, H, gl.RED, gl.FLOAT, this.flC, fresh);
+      }
+      gl.uniform1f(u.uGain, gain);
+      gl.uniform1f(u.uFg, fg);
+      gl.uniform3f(u.uHot, hot[0], hot[1], hot[2]);
+      gl.uniform3f(u.uCool, cool[0], cool[1], cool[2]);
+      gl.uniform1i(u.uFlash, flash ? 1 : 0);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+      // Decay on the CPU, counting lit pixels as the fallback loop does (a
+      // threshold on the undithered curve; the dither averages out).
+      const acc = this.acc, flK = this.flK, flC = this.flC, n = W * H;
+      const litA = (Math.exp((LIT_T + 1) / (TONE_N - 1) * Math.log(1 + 48)) - 1) / gain;
+      let lit = 0;
+      for (let i = 0; i < n; i++) {
+        const a = acc[i];
+        if (a < 1e-4) { if (a !== 0) acc[i] = 0; continue; }
+        acc[i] = a * slowDecay;
+        if (a >= litA) lit++;
+      }
+      if (flash) {
+        if (--this.flashLive === 0) { flK.fill(0); flC.fill(0); }
+        else for (let i = 0; i < n; i++) { flK[i] *= FLASH_DECAY; flC[i] *= FLASH_DECAY; }
+      }
+      return lit;
     },
 
     // Blur the 1/8 buffer (two separable [1 2 1] passes each way) and tone
@@ -478,7 +586,6 @@
         wFast: 1 + 1.8 * e.high,   // hats heat the fresh light
         mnx: 1e9, mxx: -1e9, mny: 1e9, mxy: -1e9, lvlSum: 0, lvlN: 0,
       };
-      const __t0 = performance.now();
       const STEPS = 190;           // per walker per frame -> ~195k points
       for (const f of this.forms) {
         const steps = Math.round(STEPS * f.weight);
@@ -507,7 +614,6 @@
       // 2 s rather than V1's 3: in a 96 s run a collapsed orbit sat through a
       // drop as dim dotted spirals before the guard gave up on it.
       if (this.forms.length === 1 && this.forms[0].stuck > 2) this.pickForm(this.family);
-      const __t1 = performance.now();
       this.fireK *= 0.82; this.fireC *= 0.82;
       const { mnx, mxx, mny, mxy, lvlSum, lvlN } = fr;
 
@@ -583,7 +689,10 @@
       const hot = PALETTES[palIdx].stops[2], cool = this.coolInk;
       let lit = 0;
       const Hl = this.Hl, fRow = this.fRow;
-      for (let y = 0, i = 0; y < H; y++) {
+      if (!this.gl && !this.glFailed) this.initGL();
+      if (this.gl) {
+        lit = this.toneGL(W, H, gain, fg, hot, cool, fr.lamps, slowDecay);
+      } else for (let y = 0, i = 0; y < H; y++) {
         // Light age is upsampled bilinearly (the standard 2x weights, 3/4 own
         // cell and 1/4 its neighbour). Nearest-cell lookup stepped the colour
         // in visible 2x2 blocks along a fresh form's edge (720p, 18 s).
@@ -627,12 +736,10 @@
           px[i] = (255 << 24) | (b << 16) | (gg << 8) | r;
         }
       }
-      const __t2 = performance.now();
       this.litFrac = lit / (W * H);
       const stretchTarget = Math.min(3, Math.max(1, this.litFrac / LIT_FRAC));
       this.exposureStretch += (stretchTarget - this.exposureStretch) * 0.01;
-      this.c2d.putImageData(this.img, 0, 0);
-      const __t3 = performance.now();
+      if (!this.gl) this.c2d.putImageData(this.img, 0, 0);
 
       // --- composite: the exposure, then a soft additive halo.
       const dc = p.drawingContext;
@@ -640,18 +747,55 @@
       dc.globalCompositeOperation = 'source-over';
       dc.globalAlpha = 1;
       dc.imageSmoothingEnabled = true;
-      dc.drawImage(this.canvas, 0, 0, ctx.width, ctx.height);
+      dc.drawImage(this.gl ? this.glCanvas : this.canvas, 0, 0, ctx.width, ctx.height);
       this.drawHalo(slowDecay, gain);
       dc.globalCompositeOperation = 'lighter';
       dc.globalAlpha = 0.6;
       dc.drawImage(this.halo, 0, 0, ctx.width, ctx.height);
       dc.restore();
-      const __t4 = performance.now();
-      const P = window.__prof || (window.__prof = []); P.push([__t1-__t0, __t2-__t1, __t3-__t2, __t4-__t3, W, H]);
     },
   });
 
   function smooth(t) { return t * t * (3 - 2 * t); }
+
+  const TONE_VS = `#version 300 es
+  void main() {
+    vec2 p = vec2(gl_VertexID == 1 ? 3.0 : -1.0, gl_VertexID == 2 ? 3.0 : -1.0);
+    gl_Position = vec4(p, 0.0, 1.0);
+  }`;
+
+  // The fallback loop in draw(), per pixel. Buffer row 0 is the top of the
+  // picture, so the fragment's y is flipped.
+  const TONE_FS = `#version 300 es
+  precision highp float;
+  precision highp int;
+  uniform highp sampler2D uAcc, uFlK, uFlC, uFr, uLut;
+  uniform highp usampler2D uDith;
+  uniform float uGain, uFg;
+  uniform vec3 uHot, uCool;
+  uniform bool uFlash;
+  uniform int uH;
+  uniform vec2 uLo;
+  out vec4 o;
+  void main() {
+    ivec2 p = ivec2(int(gl_FragCoord.x), uH - 1 - int(gl_FragCoord.y));
+    float a = texelFetch(uAcc, p, 0).r;
+    if (a < 1e-4) { o = texelFetch(uLut, ivec2(0), 0); return; }
+    float d = float(texelFetch(uDith, p, 0).r) - 8.0;
+    float t = clamp(floor(log(1.0 + a * uGain) * ${(TONE_N - 1) / Math.log(1 + 48)} + d), 0.0, ${TONE_N - 1}.0);
+    // Hardware bilinear at half resolution gives the same 3/4 : 1/4 weights.
+    float fi = min(floor(texture(uFr, (vec2(p) + 0.5) * 0.5 / uLo).r), ${FRESH_N - 1}.0);
+    vec4 col = texelFetch(uLut, ivec2(int(t), int(fi)), 0);
+    if (uFlash) {
+      float k = texelFetch(uFlK, p, 0).r, c = texelFetch(uFlC, p, 0).r;
+      if (k + c >= 1e-3) {
+        float tq = t / ${TONE_N - 1}.0, lum = 0.1 + tq * tq;
+        float tk = 1.1 * lum * (1.0 - exp(-k * uFg)), tc = 1.1 * lum * (1.0 - exp(-c * uFg));
+        col.rgb = floor(min(col.rgb * 255.0 + uHot * tk + uCool * tc, 255.0)) / 255.0;
+      }
+    }
+    o = vec4(col.rgb, 1.0);
+  }`;
 
   // Separable [1 2 1] blur of a w x h field in place (t is scratch).
   function blur121(a, t, w, h) {

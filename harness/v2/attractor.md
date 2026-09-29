@@ -79,6 +79,8 @@ the palettes and light-age colour LUT, the halo, the auto-exposure.
    afterglow with dotted spirals (debug log: lyap back to +0.16 at 84 s,
    guard still 0.87).
 
+6. **Performance fix (2026-09-28):** full screen at DPR 2 (3024x1890) ran ~24 fps because the per-pixel CPU tone pass took ~35 ms on a 3.2 MP buffer; the buffer is now capped at 1.3 MP and the tone map (log curve, bilinear light age, LUT, flash) runs in a WebGL2 shader with the old loop as fallback, giving 60 fps / p95 16.8 ms with the 720p sheet unchanged (`harness/renders/v2/attractor-perf/sheet.png`, max 5-level pixel difference).
+
 Params added: **Kick flash** (0–2) and **Turn in space** (0–2).
 
 ## Before / after
