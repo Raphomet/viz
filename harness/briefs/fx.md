@@ -78,6 +78,16 @@ nothing above changed:
 - `hidden: true` keeps an effect out of the panel's Add list.
 - Params may carry `step` (1 for integers); read them as floats and
   `floor(p_x + 0.5)` where you need an integer.
+- `mesh: N` on a pass (added with `shatter`) makes it a triangle-mesh pass:
+  the runner copies the pass's input (`uSrc`) into its target, then draws `N`
+  triangles over it (`gl.drawArrays(TRIANGLES, 0, N * 3)`, no buffers) with
+  the pass's `vert` as the vertex shader. `vert` gets the same uniforms and
+  helpers as a fragment pass, derives its vertex from `gl_VertexID`, writes
+  `gl_Position` and `vUv`, and may declare its own `out` varyings (matched by
+  `in` in `frag`). Blending is on for the draw, `fragColor.a` being coverage
+  (edge antialiasing); triangles draw in index order, later over earlier, and
+  a triangle not wanted this frame is collapsed to a point. Passes without
+  `mesh` are unchanged.
 
 Adding an effect: write `web/fx/<id>.js`, add its `<script>` tag to
 `web/index.html` in the effects block (alphabetical, after the Finish's three),

@@ -102,10 +102,15 @@
     '  gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);\n' +
     '}\n';
 
-  function header(def) {
+  // stage 'vert' is the header for a mesh pass's vertex shader (see
+  // createRunner): the same uniforms and helpers, with vUv as an output.
+  function header(def, stage) {
     var h = '#version 300 es\n' +
       'precision highp float;\n' +
       'precision highp sampler2DArray;\n' +
+      // Uniforms shared by both stages must agree on precision, and ints
+      // default to mediump in a fragment shader but highp in a vertex one.
+      (stage === 'vert' ? 'precision mediump int;\n' : '') +
       'uniform sampler2D uSrc;\n' +
       'uniform sampler2D uScene;\n' +
       'uniform sampler2D uPrev;\n' +
@@ -123,8 +128,7 @@
       'uniform float uHat;\n' +
       'uniform float uBeat;\n' +
       'uniform float uBeatIndex;\n' +
-      'in vec2 vUv;\n' +
-      'out vec4 fragColor;\n';
+      (stage === 'vert' ? 'out vec2 vUv;\n' : 'in vec2 vUv;\n' + 'out vec4 fragColor;\n');
     def.params.forEach(function (s) { h += 'uniform float p_' + s.key + ';\n'; });
     // Helpers every effect may use.
     h += 'float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }\n' +
@@ -203,7 +207,7 @@
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, dummyArr);
     gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.RGBA8, 1, 1, 1);
 
-    function compile(fragSrc, label) {
+    function compile(fragSrc, label, vertSrc) {
       function sh(type, src) {
         var s = gl.createShader(type);
         gl.shaderSource(s, src);
@@ -216,7 +220,7 @@
         return s;
       }
       var p = gl.createProgram();
-      var v = sh(gl.VERTEX_SHADER, VERT), f = sh(gl.FRAGMENT_SHADER, fragSrc);
+      var v = sh(gl.VERTEX_SHADER, vertSrc || VERT), f = sh(gl.FRAGMENT_SHADER, fragSrc);
       gl.attachShader(p, v); gl.attachShader(p, f);
       gl.linkProgram(p);
       gl.deleteShader(v); gl.deleteShader(f);
@@ -239,7 +243,11 @@
     function programFor(def, i) {
       var key = def.id + '#' + i;
       if (!(key in programs)) {
-        try { programs[key] = compile(header(def) + def.passes[i].frag, 'fx ' + def.id + ' pass ' + i); }
+        var pass = def.passes[i];
+        try {
+          programs[key] = compile(header(def) + pass.frag, 'fx ' + def.id + ' pass ' + i,
+            pass.mesh ? header(def, 'vert') + pass.vert : null);
+        }
         catch (e) {
           programs[key] = null;
           if (!runner.broken[def.id]) { runner.broken[def.id] = String(e.message || e); console.error('viz fx: ' + e.message); }
@@ -380,6 +388,10 @@
           else if (isLastEffect) target = null;   // straight onto the canvas
           else { var nb = inputBuf === 0 ? 1 : 0; target = chainBufs[nb]; inputBuf = nb; }
 
+          var mesh = def.passes[i].mesh;
+          // A mesh pass draws its triangles over a copy of its input, so the
+          // copy goes down first, before this pass's textures are bound.
+          if (mesh) copy(lastOut, target ? target.fb : null, target ? target.w : W, target ? target.h : H);
           gl.useProgram(rec.prog);
           var u = rec.u;
           bind(0, gl.TEXTURE_2D, lastOut);
@@ -406,7 +418,14 @@
             var s = def.params[pi], loc = u['p_' + s.key];
             if (loc) gl.uniform1f(loc, s.key in params ? params[s.key] : s.default);
           }
-          draw(rec, target ? target.fb : null, tw, th);
+          if (mesh) {
+            // fragColor.a is coverage (edge antialiasing); alpha in the
+            // target stays 1 so later passes see an opaque frame.
+            gl.enable(gl.BLEND);
+            gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
+            gl.drawArrays(gl.TRIANGLES, 0, Math.round(mesh) * 3);
+            gl.disable(gl.BLEND);
+          } else draw(rec, target ? target.fb : null, tw, th);
           if (!target) onCanvas = true;
           else lastOut = target.tex;
         }
