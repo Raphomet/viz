@@ -130,3 +130,9 @@ anamorphic streaks.
 - Per-effect GPU timing: `fps.mjs` caps at 60, so it can't show headroom.
 - Kick onset history for effects (ripple drops on the beat grid, not actual kicks).
 - A budget: all eight space effects plus the Finish chained ran at ~48 fps.
+- Per-frame state and tempo for effects (`uBpm`, a small state slot): `stutter`
+  keeps its step counter in the output's alpha and reads it back from `uPrev`.
+- `render.mjs` should print (or fail on) shader compile errors: a failed effect
+  passes the frame through silently, which looks plausible in a sheet.
+- Datamosh and slit-scan stream must move pixels by whole pixels; fractional
+  moves blur a slow scene to mush.
