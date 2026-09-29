@@ -33,6 +33,7 @@ node harness/render.mjs web/scenes/foo.js --size 1920x1080 --seed 7 \
 | `--fx a,b` | none | effects rack, in order (`web/fx/<id>.js`, see `briefs/fx.md`) |
 | `--fxparams JSON` | defaults | `{"<effect id>": {"key": v}}`; `"finish": {...}` sets the Finish panel values (`strength`, `grade`, `bloom`, …) |
 | `--finish on\|off` | on | the Finish (lens, grade, grain) after the rack, as in the app; captures show the finished image |
+| `--gpu` | off | render on the real GPU in installed Chrome instead of SwiftShader (see "GPU mode") |
 
 `jolt.mjs` still measures the scene as drawn (no rack, no Finish), since the
 jolt is a property of the scene.
@@ -145,6 +146,30 @@ strong kick response. Aim new scenes at calm; if Raph's judgement of a new
 batch disagrees with the verdicts, retune the constant and add the scene to
 this table.
 
+## GPU mode
+
+`--gpu` (on `render.mjs` and `jolt.mjs`) runs the stage in installed Google
+Chrome with the GPU on through Metal (`channel: 'chrome'`,
+`--use-angle=metal`, as `fps.mjs` does) instead of headless Chromium on
+SwiftShader. Everything else is unchanged: the same simulated clock, frame
+stepping, seeding and captures. Use it for three.js scenes (see
+`web/CONTRACT.md`, "three.js scenes") and any heavy WebGL:
+
+| `web/scenes/rendered.js`, 1280×720, full 24 s | Stepping time | `renderTime` mean |
+|---|---|---|
+| SwiftShader (default) | 453 s | 321 ms |
+| `--gpu` (M4 Pro) | 11 s | 7.3 ms |
+
+Determinism: two `--gpu` runs of Rendered on the same machine gave
+byte-identical frames and sheet (2026-09-29). A GPU capture is not
+byte-identical to a SwiftShader one (Rendered: ~0.25 of 255 on average,
+no pixel off by more than 16 in 1,000; rounding in blur, MSAA and grain), nor guaranteed identical across GPUs or
+Chrome versions, so compare captures made the same way. On the GPU,
+`renderTime` is close to the app's real cost; SwiftShader timings are not.
+If Chrome cannot get the GPU it falls back to SwiftShader, and `--gpu` then
+fails rather than render slowly under a misleading label. Installed Chrome
+also asks for `/favicon.ico`, which the harness server answers empty.
+
 ## Determinism
 
 The same scene file, size, seed, params and density produce byte-identical
@@ -159,7 +184,8 @@ PNGs (verified by rendering `_selftest` twice and comparing every file):
 - `Math.random` is replaced by a seeded PRNG before the scene file loads (so
   randomness at load time is seeded too); `p.randomSeed` and `p.noiseSeed` get
   the same seed before the scene's `setup`.
-- WebGL runs on SwiftShader (CPU), which renders identically run to run.
+- WebGL runs on SwiftShader (CPU), which renders identically run to run
+  (`--gpu`: see "GPU mode").
 
 Not covered: `new Date()`, `crypto.getRandomValues`, and anything asynchronous
 (timers, image loads after `preload`) — keep scenes synchronous per frame.
@@ -174,7 +200,9 @@ signals; unwind p5's style stack to the depth before the draw; `pop`. If `draw`
 throws, the error is logged once and the frame is painted black, as in the app.
 It calls `preload(p)`, then `setup(p, ctx)` and `enter(p, ctx)` once, after
 the same `pixelDensity`/`createCanvas`/`smooth`/`background(0)` the app does.
-`actions` are ignored. The page has `<base href="../web/">`, so a scene's
+A `requires: 'three'` scene gets its kit handle (`ctx.three`) before p5
+starts, and the stage reports ready only once the promise its `enter` returns
+has resolved, as core does. `actions` are ignored. The page has `<base href="../web/">`, so a scene's
 relative asset URLs (`p.loadImage('assets/toph.jpg')`) resolve as they do in
 the app.
 
@@ -246,7 +274,7 @@ Measured on the laptop (Apple Silicon, headless Chromium 153, 1280×720, full
   costs roughly 10 ms a frame at 1280×720, far more than on a GPU, so
   `renderTime` for WebGL scenes overstates what the app will cost on real
   hardware. Compare WebGL scenes with each other, not with 2D ones; use a
-  smaller `--size` for faster iteration.
+  smaller `--size` or `--gpu` for faster iteration.
 - Timings from a busy machine are noisy; determinism of the pixels is not
   affected.
 - The harness hosts one scene at a time, so state leaking *between* visuals
@@ -270,3 +298,5 @@ has it), and scales it with `sips` to a 320×180 JPEG in
 grid (`G`) and list hover read; a scene without a thumbnail gets a typographic
 tile. Run it after adding scenes, then commit the new JPEGs and the manifest.
 Scene membership in the browser's collections lives in `web/collections.js`.
+
+Serve `web/` for real-GPU checks with `node harness/serve.mjs <port>` (not `python3 -m http.server`, which drops scripts under the page's parallel loads).
