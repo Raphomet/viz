@@ -144,3 +144,22 @@ ticks a counter; the build raises the sync ratio and brings in warnings; the
 drop turns the board to a full alert state (panels flip to red, a giant
 vertical title slams in); the breakdown is a calm "stand by" board. No
 full-screen strobing: alerts flash as panels, never the whole frame.
+
+## Four dimensions (`fourd`) · 2026-09-28
+"Would love something inspired by 4D shapes too."
+
+The six regular 4D polytopes (5-cell, tesseract, 16-cell, 24-cell, 120-cell,
+600-cell) and their relatives, made legible to a 3D viewer the ways
+mathematicians do it: rotation in 4D planes (XW, YW, ZW) projected into 3D, so
+cubes turn inside-out through each other; stereographic projection, where the
+cells become curved and nest like soap bubbles; 3D slices through the object
+as a hyperplane sweeps it, so the cross-section grows, changes shape and
+vanishes; the Clifford torus and the Hopf fibration's interlinked circles.
+Pick one strong reading (or a sequence of them) and make it mesmerising, not a
+textbook. It must be clearly distinct from Solids (white wireframe Platonic
+solids morphing), which is being built alongside: use the 4D-only phenomena
+(inside-out rotation, curved cells, slicing, linked fibres), and a look of its
+own. Music: the kick turns the object a notch in one 4D plane, the build adds a
+second rotation plane, the drop throws it into a double rotation (or sweeps the
+slice through the whole polytope), the breakdown settles back to a single
+slow turn.
