@@ -259,21 +259,157 @@
   .swatch[aria-pressed="true"] { outline: 2px solid var(--active); outline-offset: 2px; }
 
   .viz-list { display: flex; flex-direction: column; gap: 2px; }
-  .viz-list button {
+  /* The plain list, used only if browser.js is missing. */
+  .viz-list > button {
     display: flex; align-items: baseline; gap: 10px;
     width: 100%; padding: 7px 10px; border: 0; border-radius: 0;
     background: var(--track); color: var(--ink); text-align: left; font-size: 14px;
   }
-  .viz-list button:hover { background: var(--fill); }
-  .viz-list button[aria-current="true"] { background: var(--active); color: #001018; font-weight: 500; }
+  .viz-list > button:hover { background: var(--fill); }
+  .viz-list > button[aria-current="true"] { background: var(--active); color: #001018; font-weight: 500; }
   .viz-list kbd { font: 400 12px var(--mono); opacity: 0.8; }
-  .viz-list .vtag {
+  .vtag {
     margin-left: auto; padding: 1px 4px;
     font: 400 9px var(--pixel); letter-spacing: 0.1em; white-space: nowrap;
     border: 1px solid currentColor; opacity: 0.7;
   }
-  .viz-list .vtag.live { background: var(--ink); color: var(--track); border-color: var(--ink); opacity: 1; }
-  .viz-list button[aria-current="true"] .vtag.live { background: #001018; color: var(--active); border-color: #001018; }
+  .vtag.live { background: var(--ink); color: var(--track); border-color: var(--ink); opacity: 1; }
+  [aria-current="true"] > .vpick .vtag.live,
+  .viz-list > button[aria-current="true"] .vtag.live { background: #001018; color: var(--active); border-color: #001018; }
+
+  /* Scene browser (browser.js): find bar, collections, rows with a star. */
+  .vfind { display: flex; gap: 6px; margin-bottom: 8px; min-width: 0; }
+  .vfind-field { position: relative; flex: 1 1 auto; min-width: 0; }
+  input[type="search"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; padding: 5px 30px 5px 8px;
+    border: 1px solid var(--track); border-radius: 0;
+    background: #000; color: var(--ink); font-size: 13px;
+  }
+  input[type="search"]:hover { border-color: var(--fill); }
+  input[type="search"]:focus-visible { outline: 0; border-color: var(--active); }
+  input[type="search"]::placeholder { color: var(--muted); opacity: 1; }
+  input[type="search"]::-webkit-search-cancel-button { display: none; }
+  .vfind-key {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    padding: 0 5px; border: 1px solid var(--track);
+    font: 400 11px/16px var(--mono); color: var(--muted); pointer-events: none;
+  }
+  .vfind-field:focus-within .vfind-key, input:not(:placeholder-shown) + .vfind-key { display: none; }
+  .vgrid-open { display: flex; align-items: baseline; gap: 7px; flex: none; }
+  .vgrid-open kbd { font: 400 11px var(--mono); opacity: 0.7; }
+
+  .vcoll-head {
+    display: flex; align-items: center; gap: 8px;
+    width: 100%; padding: 7px 2px 6px; border: 0; border-radius: 0;
+    background: transparent; color: var(--muted); text-align: left;
+    font: 400 10px/1.2 var(--pixel); letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .vcoll-head:hover, .vcoll-head[aria-expanded="true"] { color: var(--ink); }
+  .vcaret {
+    flex: none; width: 0; height: 0;
+    border-left: 5px solid currentColor; border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+  }
+  .vcoll-head[aria-expanded="true"] .vcaret { transform: rotate(90deg); }
+  .vcoll-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vcoll-live { flex: none; width: 6px; height: 6px; background: var(--active); }
+  .vcoll-n { margin-left: auto; font: 400 11px var(--mono); letter-spacing: 0; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .vcoll.favs .vcoll-name::before { content: "\2605  "; }
+  .vcoll-body { display: flex; flex-direction: column; gap: 2px; margin: 1px 0 10px; }
+  .vcoll-body[hidden] { display: none; }
+  .vpart {
+    margin: 6px 0 2px 10px;
+    font: 400 9px/1 var(--pixel); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+  }
+  .vcount { margin: 0 0 6px; font: 400 11px var(--mono); color: var(--muted); }
+
+  .vrow { display: flex; min-width: 0; background: var(--track); color: var(--ink); }
+  .vrow:hover { background: var(--fill); }
+  .vrow[aria-current="true"] { background: var(--active); color: #001018; font-weight: 500; }
+  .vrow.hi { box-shadow: inset 0 0 0 1px var(--ink); }
+  .vpick {
+    flex: 1 1 auto; min-width: 0;
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 6px 4px 6px 10px; border: 0; border-radius: 0;
+    background: transparent; color: inherit; text-align: left; font-size: 13.5px; font-weight: inherit;
+  }
+  .vname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vnote { margin-left: auto; font-size: 11.5px; font-weight: 400; color: var(--muted); white-space: nowrap; }
+  .vrow[aria-current="true"] .vnote { color: rgba(0, 16, 24, 0.7); }
+  .vnote + .vtag { margin-left: 6px; }
+  .vstar {
+    flex: none; width: 30px; padding: 0; border: 0; border-radius: 0;
+    background: transparent; color: var(--muted); font: 400 13px/1 var(--sans); opacity: 0;
+  }
+  .vrow:hover .vstar, .vstar:focus-visible, .vstar[aria-pressed="true"] { opacity: 1; }
+  .vstar:hover { color: var(--ink); }
+  .vstar[aria-pressed="true"] { color: var(--ink); }
+  .vrow[aria-current="true"] .vstar { color: #001018; }
+  @media (hover: none) { .vstar { opacity: 0.55; } }
+
+  .vpeek {
+    position: fixed; z-index: 20; width: 320px; height: 180px;
+    background: #000; outline: 1px solid var(--fill);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7); pointer-events: none;
+  }
+  .vpeek[hidden] { display: none; }
+  .vpeek img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+  /* Thumbnail grid (G): every scene at a glance, grouped like the list. */
+  .vgrid {
+    position: fixed; inset: 0; z-index: 30;
+    display: flex; flex-direction: column;
+    background: rgb(2, 10, 14); color: var(--ink);
+    font: 400 14px/1.35 var(--sans);
+  }
+  .vgrid[hidden] { display: none; }
+  .vgrid-bar {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 20px; border-bottom: 1px solid var(--rule); background: var(--panel);
+  }
+  .vgrid-title { margin: 0; font: 400 13px/1 var(--pixel); letter-spacing: 0.16em; text-transform: uppercase; }
+  .vgrid-bar input[type="search"] { flex: 0 1 320px; min-width: 0; padding-right: 8px; }
+  .vgrid-hint { margin-left: auto; font: 400 11px var(--mono); color: var(--muted); white-space: nowrap; }
+  .vgrid-close { flex: none; padding: 2px 10px; font-size: 16px; line-height: 1.2; }
+  .vgrid-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0 20px 48px; overscroll-behavior: contain; }
+  .vgrid-head {
+    position: sticky; top: 0; z-index: 2;
+    display: flex; align-items: baseline; gap: 12px; margin: 0;
+    padding: 18px 0 9px; background: rgb(2, 10, 14);
+    font: 400 11px/1.2 var(--pixel); letter-spacing: 0.16em; text-transform: uppercase;
+  }
+  .vgrid-about { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 12.5px var(--sans); letter-spacing: 0; text-transform: none; color: var(--muted); }
+  .vgrid-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 14px 10px; }
+  .vgrid-tiles .vpart { grid-column: 1 / -1; margin: 4px 0 -4px; }
+  .vgrid-empty { margin: 24px 0; color: var(--muted); }
+  .vcell { position: relative; min-width: 0; }
+  .vtile { display: block; width: 100%; padding: 0; border: 0; border-radius: 0; background: transparent; color: inherit; text-align: left; }
+  .vthumb { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; background: var(--track); outline: 1px solid var(--rule); }
+  .vthumb img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
+  .vtype {
+    position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 8px 10px;
+    background: repeating-linear-gradient(0deg, transparent 0 17px, rgba(8, 162, 207, 0.08) 17px 18px), var(--track);
+  }
+  .vtype-name { font: 500 18px/1.05 var(--sans); color: var(--ink); overflow-wrap: anywhere; }
+  .vthumb.has-img .vtype { display: none; }
+  .vcap { display: flex; align-items: baseline; gap: 6px; padding: 5px 1px 0; font-size: 13px; min-width: 0; }
+  .vtile:hover .vthumb { outline-color: var(--fill); }
+  .vtile[aria-current="true"] .vthumb { outline: 2px solid var(--active); outline-offset: 2px; }
+  .vtile[aria-current="true"] .vcap { color: var(--active); font-weight: 500; }
+  .vtile.hi .vthumb { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .vtile:focus-visible { outline: 0; }
+  .vcell .vstar {
+    position: absolute; top: 4px; right: 4px; width: 26px; height: 26px;
+    background: rgba(0, 10, 14, 0.7); color: var(--ink);
+  }
+  .vcell:hover .vstar { opacity: 1; }
+  @media (max-width: 720px) {
+    .vgrid-bar { gap: 8px; padding: 10px 12px; }
+    .vgrid-bar input[type="search"] { flex: 1 1 auto; }
+    .vgrid-hint { display: none; }
+    .vgrid-body { padding: 0 12px 32px; }
+    .vgrid-tiles { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px 8px; }
+  }
 
   /* Performer block: snapshots, glide, morph fader, the optional drop. */
   .perf { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--rule); }
@@ -440,7 +576,10 @@
 
     <footer class="section foot">
       <dl>
-        <dt>1–9</dt><dd>Pick a visual</dd>
+        <dt>1–9</dt><dd>Pick a visual (your first nine favourites, once you star any)</dd>
+        <dt>/</dt><dd>Find a visual: type, ↑ ↓, Enter (⇧ Enter keeps looking), Esc</dd>
+        <dt>G</dt><dd>Browse every visual as thumbnails</dd>
+        <dt>[ ]</dt><dd>Previous or next visual</dd>
         <dt>H</dt><dd>Hide or show this panel</dd>
         <dt>F</dt><dd>Fullscreen the stage</dd>
         <dt>V</dt><dd>Switch between V1 and V2</dd>
@@ -510,6 +649,8 @@
 <script src="fx/wipe.js"></script>
 <script src="fx/zoomblur.js"></script>
 <script src="core.js"></script>
+<script src="collections.js"></script>
+<script src="browser.js"></script>
 <script src="motifs/eyes.js"></script>
 <script src="viz/text.js"></script>
 <script src="viz/arcs.js"></script>

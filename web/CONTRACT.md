@@ -257,3 +257,14 @@ or hard pixel edges, or when it already does its own lens work.
 
 The effects rack (`web/fx/*.js`, interface in `harness/briefs/fx.md`) runs
 before the Finish, in the order the performer sets in the Effects section.
+
+## Scene browser
+
+Added 2026-09-29. The Visual list groups scenes into collections by how they
+were made (`web/collections.js`: an id map, then `order` ranges; anything
+unmatched shows under New), with a filter (`/`), favourites (a star per scene,
+`localStorage` `viz.favourites`; keys 1–9 play the first nine once any exist)
+and a thumbnail grid (`G`, thumbnails from `harness/thumbs.mjs`). `web/browser.js`
+owns all of it; core lends it the registry through `VIZ.scenes`. A new scene
+needs nothing beyond an `order` in its batch's block; to file it elsewhere,
+add its id to `collections.js`.

@@ -253,3 +253,20 @@ Measured on the laptop (Apple Silicon, headless Chromium 153, 1280×720, full
   (the reason to set all drawing state every frame) is not tested here.
 - Fonts: the page loads no web fonts; `p.text` uses the browser default
   sans-serif unless the scene loads a font in `preload`.
+
+## Thumbnails for the scene browser
+
+```sh
+node harness/thumbs.mjs            # only scenes without a thumbnail yet
+node harness/thumbs.mjs --force    # all of them again
+node harness/thumbs.mjs --only rave,scenes/koi.js [--at 12] [--jobs 3] [--software]
+```
+
+Renders one frame (12 s, in the drop) of every scene `web/index.html` loads,
+V2s included, through `render.mjs` at 640×360 (with `--gpu` when render.mjs
+has it), and scales it with `sips` to a 320×180 JPEG in
+`web/assets/thumbs/<id>.jpg`, about 20 KB each. It rewrites
+`web/assets/thumbs/manifest.json` (`{ id: content stamp }`), which the app's
+grid (`G`) and list hover read; a scene without a thumbnail gets a typographic
+tile. Run it after adding scenes, then commit the new JPEGs and the manifest.
+Scene membership in the browser's collections lives in `web/collections.js`.

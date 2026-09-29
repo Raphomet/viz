@@ -503,7 +503,19 @@
     sync();
   }
 
+  // The scene browser (browser.js: collections, filter, favourites, grid)
+  // takes over the Visual list when it loads. Core keeps the registry and the
+  // version rules and lends them here; without browser.js the plain list below
+  // still works.
+  var sceneHost = window.VIZ.scenes = {
+    listed: listedDefs, versionsOf: versionsOf, chosenVersion: chosenVersion,
+    versionLabel: versionLabel, familyOf: familyOf, select: selectScene,
+    current: function () { return current; },
+    browser: null
+  };
+
   function buildVizList() {
+    if (sceneHost.browser) { sceneHost.browser.render(); return; }
     var list = $('viz-list');
     list.textContent = '';
     if (!registry.length) {
@@ -1318,6 +1330,8 @@
     else if (k === 'f' || k === 'F') { toggleFullscreen(); e.preventDefault(); }
     else if (k === 'v' || k === 'V') { toggleVersion(); e.preventDefault(); }
     else if (k === 'l' || k === 'L') { toggleFinish(); e.preventDefault(); }
+    // The browser's keys: / find, G grid, [ ] step, and 1-9 once favourites exist.
+    else if (sceneHost.browser && sceneHost.browser.onKey(e)) { e.preventDefault(); }
     else if (/^[1-9]$/.test(k)) {
       var def = listedDefs()[Number(k) - 1];
       if (def) { selectScene(def.id); e.preventDefault(); }
