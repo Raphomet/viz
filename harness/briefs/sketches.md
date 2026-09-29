@@ -101,3 +101,46 @@ ring's eyes; the snare beats the wings once; hats flicker sparks and lightning
 between the rings; bass swells the fire at the centre; the drop opens every
 eye at once and spreads all six wings, rings spinning faster, the light
 flooding out in rays (confined to the being, not a full-screen flash).
+
+## Solids (`solids`) · 2026-09-28
+"This is an old one I never managed to figure out how to code up. Imagine
+drawing a platonic solid shape in the center of the screen. It's just white
+lines, 3D, on a black background. In reaction to the music, it morphs into
+more complicated platonic solids (like with more sides). The morph is a little
+sproingy. I couldn't figure how to morph one 3D shape into another, but maybe
+you can."
+
+White wireframe edges only, in true 3D perspective, on black: the purity is the
+point, so no fills, no glow, no colour unless it earns its place. The hard part
+is the morph, and it should be *correct*, not a crossfade: the edges must stay
+a real polyhedron's edges all the way through. Good routes: the classical
+truncation/rectification family, where every in-between is itself a solid
+(tetrahedron → truncated → octahedron; cube ↔ cuboctahedron ↔ octahedron;
+dodecahedron ↔ icosidodecahedron ↔ icosahedron), duals growing out of each
+other, or vertices sliding along edges and splitting. "More sides" can continue
+past the five Platonic solids into Archimedean solids and geodesic subdivisions
+of the sphere, then come back down. The motion is springy: each step overshoots
+and settles like a sprung toy, the solid turning slowly all the while. Music:
+the kick nudges the spring, or advances the morph one step; the build climbs
+toward complexity; the drop reaches the most complex form (or several nested
+solids); the breakdown relaxes back to a tetrahedron.
+
+## Evangelion dashboard (`evadash`) · 2026-09-28
+"Evangelion UX inspired music dashboard."
+
+The music shown as a 1990s anime command-centre interface: the tactical-display
+grammar of Neon Genesis Evangelion, not its property. Original wording and marks
+only; no NERV/SEELE logos, organisation or character names, the show's
+catchphrases, or its specific screens. Evoke it: black ground; hot orange, red
+and amber with a cold green; heavy condensed serif/sans headings stacked
+vertically and horizontally in Japanese and English (invented, about the
+music: e.g. 低音, 同期率, SIGNAL, PATTERN, "ANALYSIS IN PROGRESS"); hexagon
+tiles, warning chevrons, blinking EMERGENCY panels, scrolling telemetry,
+waveform and spectrum readouts, an oscilloscope, a synchronisation ratio
+climbing toward 100%, countdowns and alert klaxon bars. It should read as a
+real live dashboard of the track: every panel is driven by an actual signal
+(bands, beat, energy, sections). Music: the kick blinks one status tile and
+ticks a counter; the build raises the sync ratio and brings in warnings; the
+drop turns the board to a full alert state (panels flip to red, a giant
+vertical title slams in); the breakdown is a calm "stand by" board. No
+full-screen strobing: alerts flash as panels, never the whole frame.
