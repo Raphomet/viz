@@ -284,3 +284,5 @@ WebGLRenderer; one compositing path into the p5 canvas; a render-scale policy
 (1080p-equivalent by default, adaptive later); `compileAsync` on enter to hide
 the ~130 ms shader compile; scenes opt out of or feed the shared Finish.
 Cost: ~296 KB compressed download; ~280 ms hitch on first switch.
+
+**GSAP licence (2026-09-29).** GSAP 3.14.2 is under GreenSock's no-charge licence, not MIT. Raph: keep it for now, "we're just exploring styles." Revisit before an open-source release.
