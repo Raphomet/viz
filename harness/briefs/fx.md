@@ -120,3 +120,13 @@ scanlines / CRT, VHS (tracking wobble, chroma bleed).
 **Lens** — RGB split / chromatic aberration, radial blur, zoom blur,
 directional (motion) blur, tilt-shift, bloom, halation, grain, vignette,
 anamorphic streaks.
+
+## Runner backlog (from the builders, 2026-09-28)
+
+- Effect-owned textures (a 2D canvas, noise, a LUT): `ascii` bakes its glyph
+  atlas into a shader constant array as a workaround; `dither` would use real
+  blue noise.
+- A shared frame-average-brightness uniform (ASCII's Auto style adds its own pass).
+- Per-effect GPU timing: `fps.mjs` caps at 60, so it can't show headroom.
+- Kick onset history for effects (ripple drops on the beat grid, not actual kicks).
+- A budget: all eight space effects plus the Finish chained ran at ~48 fps.
