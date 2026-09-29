@@ -57,4 +57,48 @@ spoke kick spawn, the food walk across the frame, the fixed virtual-size trail.
 
 ## What changed
 
-(completed after building)
+- **Finish.** One species, one ink. Bloom is gone: the sharp trail goes through
+  a steep ground → ink → pale-core ramp, so veins have a solid edge and the
+  busiest trunks turn pale mint. The deep stratum (defocused, half scale, slow
+  parallax) is the only blur left. Amber is used only for food and the kick.
+- **Kick.** The amber node lands as a hard disc and outline, with no halo, and a ring
+  runs ~200 px outward lighting *only the veins* amber. In the drop, once five
+  nodes exist, kicks hop between existing nodes instead of adding new ones.
+  Snare: a pale wavefront from every living node at once.
+- **Drop = roads.** While the drop detector is up, food barely ages, pours
+  more scent, reaches further, and the unfed trail decays faster: the lace
+  contracts into branching trunks and ganglia around the amber constellation.
+  When the drop ends a stronger respawn trickle reseeds the empty ground (the
+  first build left the breakdown as bare trunks on black), and a road-memory
+  channel keeps the drop's trunks as a faint sheath the agents lightly prefer.
+- **Drift** speed follows a 0.7 s-smoothed bass.
+- **Palettes:** Abyssal (default), **Agar** (yellow mould on a cream plate with rust
+  food, and no glow at all), Ember, Ice. The `Species` and `Glow` controls are
+  replaced by `Drop builds roads` (0 gives V1's lace-only behaviour without the
+  magenta) and `Vein weight` (for big rooms).
+- Jolt: **calm**. Drop kickArea 0.164, kickMean 0.027, ratio 1.17; build
+  kick 0.133, ratio 1.17. V1 was 0.237 / 0.044 / 1.33: a smaller share of the
+  frame moves, yet the kick is easier to see because it is a colour change on
+  the veins and not a bloom.
+
+## Before / after
+
+- V1 `harness/renders/b3/physarum-720/frame-14s.png` (teal + magenta, fogged)
+  vs V2 `harness/renders/v2/physarum-720/frame-16s.png` (one ink, trunks and
+  ganglia, the kick's amber running down two veins).
+- V2 sheet `harness/renders/v2/physarum/sheet.png`: lace in the intro and build →
+  contracting branching network with amber nodes in the drop → feathery regrowth
+  in the breakdown. Agar: `harness/renders/v2/physarum-agar/sheet.png`.
+- 96 s `harness/renders/v2/physarum-96/sheet.png`: every drop re-forms its
+  constellation and every quiet section regrows. There is no saturation or die-off.
+
+## What I'd still do
+
+- After the first loop, the quiet sections are fan-shaped branching growth
+  (the road ghost plus regrowth fronts) instead of the very fine cellular lace of
+  the first intro. I like it, and it is a history, but the first 4 s are never
+  quite seen again. A slow, section-length rise in respawn rate would bring
+  the fine lace back if Raph misses it.
+- The drop's contraction is a change of texture (loops → branching trunks), not
+  a dramatic emptying. I pulled back from the stronger version: it left the
+  frame mostly black and did not recover in the breakdown.
