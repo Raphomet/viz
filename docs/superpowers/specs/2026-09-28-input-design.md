@@ -161,3 +161,23 @@ Where the app lives. Live input needs it served outside the artifact:
 GitHub Pages from Raphomet/viz (public; recommended, and it makes the
 open-source plan real) or local only for now. Offline-after-load behaviour is
 built either way.
+
+## Parked (2026-09-28)
+
+Raph parked this spec to explore rendering first. Two things to pick up with it:
+
+**The differentiator it serves.** In Raph's words: viz is an instrument VJs
+play, not pre-scripted videos that change when the song changes. Everything
+ultimately runs on live code; music signals stay inputs the code reacts to
+("we can map FFT ranges onto variables"); the VJ has realtime control; it all
+runs in the browser. Pre-rendered material (Blender output, baked simulations,
+depth maps, splat captures) is only ever something live code plays.
+
+**Its second half: a modulation matrix.** Today each scene hard-codes which
+signal drives what. The instrument version lets the player route it, like a
+synth's mod matrix: any param of any scene can take a source (a frequency range,
+kick/snare/hat, beat or bar phase, tempo-synced LFOs, `build`, `drop`), with its
+own depth, curve, smoothing and range. Scenes ship default mappings so they work
+untouched; the VJ reroutes live and saves the result as a patch. This spec's
+`ctx.audio` signals are exactly what the matrix routes, which is why input comes
+first. Spec it as the next section of this document when we return.
