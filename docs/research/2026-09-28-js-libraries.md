@@ -263,3 +263,11 @@ first-beat seed. Neither replaces the live worklet in the input spec.
    version skew without a vendored bundle.)
 3. Is `getUserMedia({ video })` refused in the frame like the microphone?
 4. WebGPU availability inside the frame (it should be; confirm).
+
+## Correction after the type spike (2026-09-28)
+
+Use **clipper2-ts 2.0.1** (BSL-1.0), not clipper2-js: clipper2-js 1.2.4's
+offsetting is broken (miter offsets zig-zag, round joins grow spokes). Use
+**fontkit 2.0.4** (MIT), not opentype.js: opentype.js 2.0.0 misplaces
+variable-font outlines away from the default width (60 of 900 samples wrong).
+Both load as `+esm` bundles from jsDelivr (107 KB and 235 KB).
