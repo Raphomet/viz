@@ -84,8 +84,10 @@ export async function openStage(browser, port, o, log) {
   if (o.fxparams) qs.set('fxparams', o.fxparams);
   if (o.finish) qs.set('finish', o.finish);
   await page.goto(`http://127.0.0.1:${port}/harness/stage.html?${qs}`);
-  await page.waitForFunction(() => window.HARNESS && window.HARNESS.status !== 'loading', null, { timeout: 30000 })
-    .catch(() => { throw new Error('the stage did not become ready in 30 s (a preload that never finishes?)'); });
+  // 120 s, not 30: with a dozen agents rendering at once (load ~50) honest first
+  // frames took 16-21 s and the 30 s limit failed runs that weren't broken (2026-09-28).
+  await page.waitForFunction(() => window.HARNESS && window.HARNESS.status !== 'loading', null, { timeout: 120000 })
+    .catch(() => { throw new Error('the stage did not become ready in 120 s (a preload that never finishes?)'); });
   const status = await page.evaluate(() => ({ status: HARNESS.status, error: HARNESS.error, info: HARNESS.info }));
   if (status.status !== 'ready') throw new Error(status.error);
   return { page, info: status.info };
