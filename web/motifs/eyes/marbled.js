@@ -26,13 +26,13 @@
     if (state.en == null) state.en = lvl;
     state.en += (lvl - state.en) * (1 - Math.exp(-dt / 1.2));
     state.drop = clamp((state.en - 0.12) / 0.3);
-    // A kick onset clock: t of the last rising edge.
-    var k = a.kick || 0;
-    if (k > 0.55 && !(state.kHeld)) { state.kickT = t; state.kickN = (state.kickN || 0) + 1; }
-    state.kHeld = k > 0.4;
-    var s = a.snare || 0;
-    if (s > 0.55 && !(state.sHeld)) { state.snareT = t; state.snareN = (state.snareN || 0) + 1; }
-    state.sHeld = s > 0.4;
+    // Onset clocks (t of the last kick / snare, and a count). An onset is a
+    // jump in the envelope rather than a level, so a low Reaction setting,
+    // which scales the envelopes down, still registers every hit.
+    var k = a.kick || 0, s = a.snare || 0;
+    if (k > 0.15 && k > (state.kPrev || 0) + 0.12) { state.kickT = t; state.kickN = (state.kickN || 0) + 1; }
+    if (s > 0.15 && s > (state.sPrev || 0) + 0.12) { state.snareT = t; state.snareN = (state.snareN || 0) + 1; }
+    state.kPrev = k; state.sPrev = s;
     return dt;
   }
   // Opens the almond as a clip and paints the sclera. Returns the upper lid's
@@ -147,8 +147,13 @@
       if (inside || k === rings.length - 1) { rings[k].p = out; keep.push(rings[k]); }
       else if (!keep.length) state.ground = rings[k].c;   // it now floods the bath
     }
-    // too many rings: the outermost becomes the ground
-    while (keep.length > 46) state.ground = keep.shift().c;
+    // Too many rings: shed spatters first (small, and losing one changes
+    // nothing much), and only then let the outermost ring become the ground.
+    // Shedding outer rings early made the whole iris change colour on hats.
+    if (keep.length > 90) {
+      keep = keep.filter(function (rg, i) { return i === 0 || rg.p.length > 60 || i > keep.length - 30; });
+    }
+    while (keep.length > 90) state.ground = keep.shift().c;
     state.rings = keep;
   }
   function nextInk(state) {
@@ -206,7 +211,7 @@
       }
       // hats: a spatter of tiny drops
       var hat = a.hat || 0;
-      if (hat > 0.35 && Math.random() < hat * 0.35) {
+      if (hat > 0.35 && Math.random() < hat * 0.12) {
         var sa = Math.random() * TAU, sr = 0.4 + Math.random() * 0.55;
         dropInk(state, Math.cos(sa) * sr, Math.sin(sa) * sr, 0.015 + Math.random() * 0.025, Math.random() < 0.5 ? '#1c1b22' : '#b5443a');
         changed = true;

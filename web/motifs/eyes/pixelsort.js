@@ -23,13 +23,13 @@
     if (state.en == null) state.en = lvl;
     state.en += (lvl - state.en) * (1 - Math.exp(-dt / 1.2));
     state.drop = clamp((state.en - 0.12) / 0.3);
-    // A kick onset clock: t of the last rising edge.
-    var k = a.kick || 0;
-    if (k > 0.55 && !(state.kHeld)) { state.kickT = t; state.kickN = (state.kickN || 0) + 1; }
-    state.kHeld = k > 0.4;
-    var s = a.snare || 0;
-    if (s > 0.55 && !(state.sHeld)) { state.snareT = t; state.snareN = (state.snareN || 0) + 1; }
-    state.sHeld = s > 0.4;
+    // Onset clocks (t of the last kick / snare, and a count). An onset is a
+    // jump in the envelope rather than a level, so a low Reaction setting,
+    // which scales the envelopes down, still registers every hit.
+    var k = a.kick || 0, s = a.snare || 0;
+    if (k > 0.15 && k > (state.kPrev || 0) + 0.12) { state.kickT = t; state.kickN = (state.kickN || 0) + 1; }
+    if (s > 0.15 && s > (state.sPrev || 0) + 0.12) { state.snareT = t; state.snareN = (state.snareN || 0) + 1; }
+    state.kPrev = k; state.sPrev = s;
     return dt;
   }
   // Opens the almond as a clip and paints the sclera. Returns the upper lid's
