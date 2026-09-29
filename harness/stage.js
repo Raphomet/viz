@@ -244,6 +244,11 @@
 
   // ---------------------------------------------------------------- p5 host
   var p5inst = null;
+  // A requires: 'three' scene gets its kit handle before p5 starts (the
+  // harness waits for the download instead of racing it), and the stage is
+  // not ready until the promise its enter returns has resolved, as in core.
+  var three = null;
+  var entered = null;
   var readyResolve;
   var ready = new Promise(function (r) { readyResolve = r; });
 
@@ -267,8 +272,13 @@
       drawScale = Math.min(p.width, p.height) / VIRTUAL_SHORT_SIDE || 1;
       ctx.width = p.width / drawScale;
       ctx.height = p.height / drawScale;
+      if (three) { ctx.three = three; three.frame(p, ctx); }
       if (typeof def.setup === 'function') safeCall('setup', [p, ctx]);
-      if (typeof def.enter === 'function') safeCall('enter', [p, ctx]);
+      if (three) three.enter();
+      if (typeof def.enter === 'function') {
+        try { entered = def.enter(p, ctx); }
+        catch (e) { console.error('viz: ' + def.id + '.enter failed', e); }
+      }
     };
 
     p.draw = function () {
@@ -281,6 +291,7 @@
 
       var depth = p._styles ? p._styles.length : 0;
       var failed = false;
+      if (three) three.frame(p, ctx);
       p.push();
       p.scale(drawScale);
       var t0 = realNow();
@@ -439,9 +450,16 @@
     function afterScene() {
       if (!def) return fail(sceneUrl + ' loaded but never called VIZ.register');
       initParams();
+      if (def.requires === 'three') {
+        if (!window.VIZ_THREE) return fail('the scene requires three but three-kit.js did not load');
+        window.VIZ_THREE.prepare(def).then(function (handle) { three = handle; startP5(); },
+          function (e) { fail('three.js did not load: ' + (e && e.message || e)); });
+      } else startP5();
+    }
+    function startP5() {
       p5inst = new window.p5(sketch, document.getElementById('stage'));
       buildFxChain();
-      ready.then(function () {
+      ready.then(function () { return Promise.resolve(entered).catch(function (e) { console.error('viz: ' + def.id + '.enter failed', e); }); }).then(function () {
         H.info = {
           id: def.id,
           name: def.name || def.id,

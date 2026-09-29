@@ -27,6 +27,9 @@ export function serve() {
     let urlPath;
     try { urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname); }
     catch { res.writeHead(400).end(); return; }
+    // Installed Chrome (--gpu) asks for a favicon the headless shell never
+    // did; a 404 there would fail every GPU run as a console error.
+    if (urlPath === '/favicon.ico') { res.writeHead(204).end(); return; }
     const file = path.join(REPO_ROOT, urlPath);
     // Never serve outside the repo, whatever the URL says.
     if (file !== REPO_ROOT && !file.startsWith(REPO_ROOT + path.sep)) { res.writeHead(403).end(); return; }
@@ -50,12 +53,23 @@ export function serve() {
 const CHROMIUM_ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist',
   '--enable-webgl', '--disable-background-timer-throttling', '--disable-renderer-backgrounding'];
 
+// --gpu: installed Google Chrome on the real GPU through Metal, as fps.mjs
+// runs it. A three.js scene through the kit's lens chain took ~0.3-0.85 s a
+// frame on SwiftShader (2026-09-29), too slow to iterate on; on the GPU it is
+// milliseconds. Frame stepping and seeding are unchanged, so captures are
+// still reproducible on the same machine (see README, "GPU mode").
+const GPU_ARGS = ['--enable-gpu', '--ignore-gpu-blocklist', '--use-angle=metal',
+  '--disable-background-timer-throttling', '--disable-renderer-backgrounding'];
+
 // `missing` is called (and should exit) when Playwright is not installed, so
 // each tool can print its own usage line.
-export async function launch(missing) {
+export async function launch(missing, { gpu = false } = {}) {
   let chromium;
   try { ({ chromium } = await import('playwright')); }
   catch { missing('Playwright is not installed; run `npm install` inside harness/'); }
+  if (gpu) {
+    return { browser: await chromium.launch({ headless: true, channel: 'chrome', args: GPU_ARGS }), via: 'installed Google Chrome, GPU (Metal)' };
+  }
   try {
     return { browser: await chromium.launch({ headless: true, args: CHROMIUM_ARGS }), via: 'playwright chromium' };
   } catch (e) {

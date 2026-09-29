@@ -89,7 +89,7 @@
     initParams(def);
     // A registration after start-up (not expected, but harmless) still shows up.
     if (p5ready) {
-      if (typeof def.setup === 'function') safeCall(def, 'setup', [p5inst, ctx]);
+      if (typeof def.setup === 'function' && !needsThree(def)) safeCall(def, 'setup', [p5inst, ctx]);
       buildVizList();
       if (!current) selectViz(def.id);
       // A late version of the live scene needs the Version control to appear.
@@ -150,6 +150,79 @@
   function safeCall(def, method, args) {
     try { def[method].apply(def, args); }
     catch (e) { console.error('viz: ' + def.id + '.' + method + ' failed', e); }
+  }
+
+  // --------------------------------------------------------- three.js scenes
+  // A def with requires: 'three' runs on the shared kit (web/three-kit.js,
+  // CONTRACT.md "three.js scenes"). three is a ~300 KB download the performer
+  // may never need, so nothing waits for it at start-up: a three.js scene's
+  // setup and enter run only once the kit is in, with ctx.three set, and the
+  // stage shows a small loading line instead of the scene until the promise
+  // enter returns (the async shader compile) resolves, so the first live
+  // frame never carries a compile hitch.
+  var KIT = window.VIZ_THREE || null;
+  var threeState = {};   // def id -> { status: idle|loading|ready|error, handle, setupDone, entered, token, error }
+
+  function needsThree(def) { return !!def && def.requires === 'three'; }
+  function threeFor(def) { return threeState[def.id] || (threeState[def.id] = { status: 'idle', token: 0 }); }
+
+  function enterThree(def) {
+    var st = threeFor(def);
+    var token = ++st.token;
+    st.status = 'loading';
+    st.entered = false;
+    if (!KIT) { st.status = 'error'; st.error = 'three-kit.js did not load, so this scene cannot run.'; return; }
+    // A switch away (or away and back) while the kit loads makes this call stale.
+    var live = function () { return current === def && st.token === token; };
+    KIT.prepare(def).then(function (handle) {
+      if (!live()) return;
+      st.handle = handle;
+      ctx.three = handle;
+      handle.frame(p5inst, ctx);
+      if (!st.setupDone) {
+        st.setupDone = true;
+        if (typeof def.setup === 'function') safeCall(def, 'setup', [p5inst, ctx]);
+      }
+      handle.enter();
+      st.entered = true;
+      var result = null;
+      if (typeof def.enter === 'function') {
+        try { result = def.enter(p5inst, ctx); }
+        catch (e) { console.error('viz: ' + def.id + '.enter failed', e); }
+      }
+      return Promise.resolve(result)
+        .catch(function (e) { console.error('viz: ' + def.id + '.enter failed', e); })
+        .then(function () { if (live()) st.status = 'ready'; });
+    }).catch(function (e) {
+      if (st.token !== token) return;
+      st.status = 'error';
+      st.error = 'three.js did not load. Check the connection, then pick the scene again.';
+      console.error('viz: three.js for ' + def.id + ' did not load', e);
+    });
+  }
+
+  function leaveThree(def) {
+    var st = threeFor(def);
+    st.token++;
+    if (st.entered) {
+      if (typeof def.leave === 'function') safeCall(def, 'leave', [p5inst]);
+      if (st.handle) st.handle.leave();   // frees the scene's render targets
+    }
+    st.entered = false;
+    st.status = 'idle';
+  }
+
+  function drawThreeWaiting(p, st) {
+    p.push();
+    p.resetMatrix();
+    p.background(0);
+    var g = p.drawingContext;
+    g.font = '400 12px "IBM Plex Mono", ui-monospace, Menlo, monospace';
+    g.fillStyle = st.status === 'error' ? '#FF6A6A' : '#7FA7B8';
+    g.textAlign = 'left';
+    g.textBaseline = 'bottom';
+    g.fillText(st.status === 'error' ? st.error : 'Loading three.js\u2026', 16, p.height - 14);
+    p.pop();
   }
 
   // ------------------------------------------------------------------ audio
@@ -735,10 +808,16 @@
     if (!def) return;
     if (def !== current) {
       if (current) leavePerf(current);
-      if (current && p5ready && typeof current.leave === 'function') safeCall(current, 'leave', [p5inst]);
+      if (current && p5ready) {
+        if (needsThree(current)) leaveThree(current);
+        else if (typeof current.leave === 'function') safeCall(current, 'leave', [p5inst]);
+      }
       current = def;
       if (fxRunner) fxRunner.reset();   // no trail of the last scene over the new one
-      if (p5ready && typeof def.enter === 'function') safeCall(def, 'enter', [p5inst, ctx]);
+      if (p5ready) {
+        if (needsThree(def)) enterThree(def);
+        else if (typeof def.enter === 'function') safeCall(def, 'enter', [p5inst, ctx]);
+      }
       writeStore('viz.selected', def.id);
       if (versionsOf(familyOf(def)).length > 1) writeStore('viz.version.' + familyOf(def), def.id);
     }
@@ -1662,8 +1741,12 @@
       updateScale(p);
       p5ready = true;
       registry.forEach(function (def) {
-        if (typeof def.setup === 'function') safeCall(def, 'setup', [p, ctx]);
+        if (typeof def.setup === 'function' && !needsThree(def)) safeCall(def, 'setup', [p, ctx]);
       });
+      // Fetch three in the background once the app is up, so the first switch
+      // to a three.js scene rarely waits on the network.
+      var threeDefs = registry.filter(needsThree);
+      if (KIT && threeDefs.length) setTimeout(function () { KIT.prefetch(threeDefs); }, 3000);
       var remembered = byId(readStore('viz.selected'));
       var first = remembered ? familyOf(remembered) : (listedDefs()[0] || {}).id;
       if (first) {
@@ -1692,6 +1775,12 @@
       // Performer motion runs before the scene draws, so glides, the fader and
       // the drop land on this frame rather than the next.
       stepPerformer(signals);
+      if (needsThree(def)) {
+        var st = threeFor(def);
+        if (st.status !== 'ready') { drawThreeWaiting(p, st); renderFx(p, signals); return; }
+        ctx.three = st.handle;
+        st.handle.frame(p, ctx);
+      } else ctx.three = null;
       // p5 keeps a style stack; if a viz throws between its own push and pop,
       // unwinding to the recorded depth stops that leaking frame after frame.
       var depth = p._styles ? p._styles.length : 0;

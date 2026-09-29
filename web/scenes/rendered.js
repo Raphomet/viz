@@ -1,4 +1,4 @@
-// Rendered (spike): can three.js give viz the finish of a pro C4D / After
+// Rendered: can three.js give viz the finish of a pro C4D / After
 // Effects VJ loop — physically lit materials, reflections on dark gloss,
 // depth of field, motion blur, bloom only on emitters, a filmic grade — live,
 // music-reactive and at 60 fps?
@@ -20,20 +20,10 @@
 //           on down the hall, the grade warms, the bloom opens
 //
 // How it is made:
-//   three.js 0.186.1 and its own addons, loaded with dynamic import() from
-//   jsDelivr's +esm endpoint. Every addon URL is under the same
-//   three@0.186.1 package, and jsDelivr rewrites their bare 'three' import to
-//   exactly /npm/three@0.186.1/+esm, the URL the core is loaded from, so the
-//   page holds one copy of three (checked 2026-09-28; mixing packages would
-//   not, see docs/research/2026-09-28-js-libraries.md). No import map needed.
-//
-//   The lifecycle: preload() starts the import but does not wait for it in the
-//   app (the rest of viz must not stall on a 750 KB module the performer may
-//   never pick); draw() keeps the music state advancing and paints black
-//   until the library is in, then builds the scene on the first ready frame.
-//   Under the render harness preload() does hold p5's preload counter, because
-//   the harness steps frames synchronously and would otherwise capture the
-//   loading frames.
+//   On the shared three.js kit (web/three-kit.js; CONTRACT.md, "three.js
+//   scenes"), which loads three 0.186.1 and owns the renderer, the render
+//   scale (about 1080p's pixel count, scaled up), the lens chain and the
+//   compositing into the p5 canvas. This file is the kit's reference scene.
 //
 //   Render path per frame:
 //     1. mirror pass: the scene from the camera reflected in the floor plane,
@@ -41,27 +31,15 @@
 //        reflection blurs like wet stone rather than a mirror)
 //     2. main pass: MeshPhysicalMaterial (clearcoat, metalness), RectAreaLights
 //        on the nearest strips, image-based light from a PMREM of a generated
-//        dark room with orange and violet panels, exponential fog; into a
-//        4x MSAA half-float target with a depth texture
-//     3. lens: camera motion blur by depth reprojection against last frame's
-//        view-projection, and signed circle of confusion into alpha
-//     4. depth of field: scatter-as-gather disc blur, far samples clipped so
-//        the background never bleeds onto a sharp foreground
-//     5. UnrealBloomPass with a threshold above 1, so only the HDR emitters
-//        bloom, never the lit concrete
-//     6. grade: split tone (violet shadows, orange highlights), edge
-//        aberration, vignette, grain, in linear light
-//     7. OutputPass: AgX tone mapping and sRGB
-//   The result is drawn into the p5 canvas (as every WebGL scene here is), so
-//   the harness captures it. `?rendered=overlay` in the page URL instead
-//   stacks the three.js canvas over the stage, to measure the copy's cost.
+//        dark room with orange and violet panels, exponential fog; into the
+//        kit lens's 4x MSAA half-float target
+//     3. the kit lens: camera motion blur by depth reprojection (the hall's
+//        travel folded in), depth of field, bloom thresholded above 1 so only
+//        the HDR emitters bloom, a split-tone grade (violet shadows, orange
+//        highlights), aberration, vignette, grain, AgX and sRGB
 
 (function () {
   'use strict';
-
-  const THREE_VER = '0.186.1';
-  const CDN = 'https://cdn.jsdelivr.net/npm/three@' + THREE_VER;
-  const ADDON = (p) => CDN + '/examples/jsm/' + p + '/+esm';
 
   const TAU = Math.PI * 2;
   const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
@@ -77,19 +55,8 @@
   const BEHIND = 2;
   const HALL_W = 4.3;     // fin face distance from the centre line
   const HALL_H = 7.2;
-  const MSAA = 4;
-  const RENDER_PIXELS = 2.3e6;
   const MIRROR_SCALE = 0.5;
-  // Spike-only quality knobs for measuring what costs what, from the page
-  // URL: ?rq=scale:0.75,msaa:0,mirror:0.5,dof:24,mb:8,rects:0
-  const QUALITY = (() => {
-    const q = { scale: 0, msaa: MSAA, mirror: MIRROR_SCALE, dof: 36, mb: 12, rects: 8 };
-    try {
-      const m = /[?&]rq=([^&]*)/.exec(location.search);
-      if (m) decodeURIComponent(m[1]).split(',').forEach((kv) => { const [k, v] = kv.split(':'); if (k in q && isFinite(+v)) q[k] = +v; });
-    } catch (e) { /* defaults */ }
-    return q;
-  })();
+  const RECTS = 8;
 
   // Two inks in linear light, pre-multiplied to HDR by the strip intensity.
   const SODIUM = [1.0, 0.42, 0.12];
@@ -101,131 +68,6 @@
     drop: { speed: 1.9, bank: 0.8, focus: 0.75, shutter: 0.85, bloom: 0.6, warmth: 0.8, gates: 1 },
   };
   const DRIVE = ['speed', 'bank', 'focus', 'shutter', 'bloom', 'warmth', 'gates'];
-
-  // ------------------------------------------------------------ the library
-  let lib = null;
-  let libError = null;
-  let libPromise = null;
-  function loadLib() {
-    if (libPromise) return libPromise;
-    const urls = [
-      CDN + '/+esm',
-      ADDON('postprocessing/EffectComposer.js'),
-      ADDON('postprocessing/ShaderPass.js'),
-      ADDON('postprocessing/UnrealBloomPass.js'),
-      ADDON('postprocessing/OutputPass.js'),
-      ADDON('lights/RectAreaLightUniformsLib.js'),
-    ];
-    const t0 = (window.HARNESS ? null : performance.now());
-    libPromise = Promise.all(urls.map((u) => import(u))).then((m) => {
-      lib = {
-        THREE: m[0], EffectComposer: m[1].EffectComposer, ShaderPass: m[2].ShaderPass,
-        UnrealBloomPass: m[3].UnrealBloomPass, OutputPass: m[4].OutputPass,
-      };
-      m[5].RectAreaLightUniformsLib.init();
-      if (t0 !== null) lib.loadMs = performance.now() - t0;
-      return lib;
-    }, (e) => {
-      libError = e;
-      console.error('rendered: three.js did not load', e);
-    });
-    return libPromise;
-  }
-
-  // ---------------------------------------------------------------- shaders
-  const FS_VERT = `
-    varying vec2 vUv;
-    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
-
-  // Camera motion blur by reprojection, plus signed CoC (px) into alpha.
-  const LENS_FRAG = `
-    uniform sampler2D tColor;
-    uniform sampler2D tDepth;
-    uniform mat4 invViewProj;
-    uniform mat4 prevViewProj;
-    uniform vec2 resolution;
-    uniform float cameraNear, cameraFar, shutter, maxVel, focusDist, cocScale, maxCoc, farScale;
-    varying vec2 vUv;
-    float ign(vec2 p) { return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }
-    void main() {
-      float d = texture2D(tDepth, vUv).x;
-      vec4 clip = vec4(vUv * 2.0 - 1.0, d * 2.0 - 1.0, 1.0);
-      vec4 world = invViewProj * clip; world /= world.w;
-      vec4 prev = prevViewProj * world;
-      vec2 prevUv = prev.xy / prev.w * 0.5 + 0.5;
-      vec2 vel = (vUv - prevUv) * shutter;
-      float vl = length(vel * resolution);
-      float vmax = maxVel * resolution.y;
-      if (vl > vmax) vel *= vmax / vl;
-      vec3 col = vec3(0.0);
-      const int N = MB_N;
-      float j = ign(gl_FragCoord.xy);
-      for (int i = 0; i < N; i++) {
-        float t = (float(i) + j) / float(N) - 0.5;
-        col += texture2D(tColor, vUv + vel * t).rgb;
-      }
-      col /= float(N);
-      float z = (cameraNear * cameraFar) / (cameraFar - d * (cameraFar - cameraNear));
-      float coc = cocScale * (1.0 - focusDist / z);
-      // Background blurs less than foreground, as a long lens focused near does.
-      coc = clamp(coc > 0.0 ? coc * farScale : coc, -maxCoc, maxCoc);
-      gl_FragColor = vec4(col, coc);
-    }`;
-
-  const DOF_FRAG = `
-    uniform sampler2D tDiffuse;
-    uniform vec2 resolution;
-    uniform float maxCoc;
-    varying vec2 vUv;
-    float ign(vec2 p) { return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }
-    void main() {
-      vec4 c0 = texture2D(tDiffuse, vUv);
-      float r0 = abs(c0.a);
-      vec3 acc = c0.rgb; float wsum = 1.0;
-      const int N = DOF_N;
-      float rot = ign(gl_FragCoord.xy) * 6.2831853;
-      for (int i = 0; i < N; i++) {
-        float t = (float(i) + 0.5) / float(N);
-        float rr = sqrt(t) * maxCoc;
-        float a = float(i) * 2.39996323 + rot;
-        vec4 s = texture2D(tDiffuse, vUv + vec2(cos(a), sin(a)) * rr / resolution);
-        float sr = abs(s.a);
-        // A sample farther than this pixel may not spread over it by more
-        // than this pixel's own blur: sharp foreground keeps its edge.
-        if (s.a > c0.a) sr = min(sr, r0);
-        float w = clamp(sr - rr + 1.0, 0.0, 1.0);
-        acc += s.rgb * w; wsum += w;
-      }
-      gl_FragColor = vec4(acc / wsum, 1.0);
-    }`;
-
-  const GRADE_FRAG = `
-    uniform sampler2D tDiffuse;
-    uniform vec2 resolution;
-    uniform float warmth, split, vignette, grain, aberration, seed;
-    varying vec2 vUv;
-    float h12(vec2 p) { vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
-    void main() {
-      vec2 dc = vUv - 0.5;
-      vec2 off = dc * aberration;
-      vec3 c;
-      c.r = texture2D(tDiffuse, vUv - off).r;
-      c.g = texture2D(tDiffuse, vUv).g;
-      c.b = texture2D(tDiffuse, vUv + off).b;
-      float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-      float tone = smoothstep(0.0, 1.0, l / (l + 0.35));
-      vec3 shadowT = vec3(0.78, 0.70, 1.18);
-      vec3 highT = mix(vec3(1.0, 0.93, 0.88), vec3(1.18, 0.90, 0.68), warmth);
-      vec3 tint = mix(mix(vec3(1.0), shadowT, split), mix(vec3(1.0), highT, split), tone);
-      c *= tint;
-      c += vec3(0.0035, 0.0015, 0.007) * split;
-      float asp = resolution.x / resolution.y;
-      float v = length(dc * vec2(asp, 1.0));
-      c *= mix(1.0, smoothstep(1.25, 0.25, v), vignette);
-      float n = h12(gl_FragCoord.xy + seed * 917.0) - 0.5;
-      c *= 1.0 + n * grain;
-      gl_FragColor = vec4(max(c, 0.0), 1.0);
-    }`;
 
   // ----------------------------------------------------- procedural textures
   function floorTexture(T) {
@@ -290,50 +132,31 @@
 
   // A dark room with a few panels in the two inks, baked to a PMREM once, so
   // chrome and clearcoat reflect a world that matches the hall.
-  function makeEnvironment(T, renderer) {
-    const env = new T.Scene();
-    const room = new T.Mesh(new T.BoxGeometry(20, 10, 40), new T.MeshBasicMaterial({ color: 0x050409, side: T.BackSide }));
-    env.add(room);
-    const panel = (w, h, pos, rgb, k, rotY) => {
-      const m = new T.Mesh(new T.PlaneGeometry(w, h), new T.MeshBasicMaterial({ color: new T.Color(rgb[0] * k, rgb[1] * k, rgb[2] * k), side: T.DoubleSide }));
-      m.position.set(pos[0], pos[1], pos[2]);
-      if (rotY) m.rotation.y = rotY;
-      env.add(m);
-    };
-    panel(0.4, 30, [-3, 4.9, 0], WHITE, 6, 0);
-    env.children[env.children.length - 1].rotation.x = Math.PI / 2;
-    panel(0.4, 30, [3, 4.9, 0], WHITE, 6, 0);
-    env.children[env.children.length - 1].rotation.x = Math.PI / 2;
+  function environmentSpec() {
+    const panels = [
+      { size: [0.4, 30], position: [-3, 4.9, 0], rotation: [Math.PI / 2, 0, 0], color: WHITE, intensity: 6 },
+      { size: [0.4, 30], position: [3, 4.9, 0], rotation: [Math.PI / 2, 0, 0], color: WHITE, intensity: 6 },
+    ];
     for (let i = -3; i <= 3; i++) {
-      panel(0.3, 6, [-9.9, 3, i * 5], i % 2 ? SODIUM : VIOLET, 5, Math.PI / 2);
-      panel(0.3, 6, [9.9, 3, i * 5 + 2.5], i % 2 ? VIOLET : SODIUM, 5, -Math.PI / 2);
+      panels.push({ size: [0.3, 6], position: [-9.9, 3, i * 5], rotation: [0, Math.PI / 2, 0], color: i % 2 ? SODIUM : VIOLET, intensity: 5 });
+      panels.push({ size: [0.3, 6], position: [9.9, 3, i * 5 + 2.5], rotation: [0, -Math.PI / 2, 0], color: i % 2 ? VIOLET : SODIUM, intensity: 5 });
     }
-    panel(8, 3, [0, 2, -19.9], SODIUM, 1.2, 0);
-    const pm = new T.PMREMGenerator(renderer);
-    const rt = pm.fromScene(env, 0.02);
-    pm.dispose();
-    return rt.texture;
+    panels.push({ size: [8, 3], position: [0, 2, -19.9], color: SODIUM, intensity: 1.2 });
+    return { background: 0x050409, room: [20, 10, 40], panels };
   }
 
   // ------------------------------------------------------------ scene build
-  function build(self, w, h) {
-    const T = lib.THREE;
-    const canvas = document.createElement('canvas');
-    const renderer = new T.WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: 'high-performance', stencil: false });
-    renderer.setPixelRatio(1);
-    renderer.setSize(w, h, false);
-    renderer.toneMapping = T.AgXToneMapping;
-    renderer.toneMappingExposure = 1.0;
-    renderer.outputColorSpace = T.SRGBColorSpace;
+  function build(kit) {
+    const T = kit.THREE;
 
     const scene = new T.Scene();
     scene.background = new T.Color(0.004, 0.003, 0.008);
     scene.fog = new T.FogExp2(new T.Color(0.012, 0.008, 0.02), 0.028);
-    scene.environment = makeEnvironment(T, renderer);
+    scene.environment = kit.environment(environmentSpec(), 0.02);
     scene.environmentIntensity = 0.55;
 
-    const camera = new T.PerspectiveCamera(52, w / h, 0.1, 140);
-    const mirrorCam = new T.PerspectiveCamera(52, w / h, 0.1, 140);
+    const camera = new T.PerspectiveCamera(52, kit.aspect, 0.1, 140);
+    const mirrorCam = new T.PerspectiveCamera(52, kit.aspect, 0.1, 140);
     const hall = new T.Group();
     scene.add(hall);
 
@@ -345,10 +168,11 @@
     const emit = new T.MeshBasicMaterial({ color: 0xffffff, fog: true, toneMapped: false });
 
     // Floor: polished black stone with a planar reflection injected into a
-    // physical material (so it is still lit by the rect lights).
+    // physical material (so it is still lit by the rect lights). The mirror
+    // target is a kit target: it follows the render size and is freed on leave.
     const floorRough = floorTexture(T);
     floorRough.repeat.set(5, (SLOTS * P) / 2);
-    const mirrorRT = new T.WebGLRenderTarget(Math.max(1, Math.round(w * (QUALITY.mirror || 0.05))), Math.max(1, Math.round(h * (QUALITY.mirror || 0.05))), {
+    const mirrorRT = kit.target(MIRROR_SCALE, {
       type: T.HalfFloatType, minFilter: T.LinearMipmapLinearFilter, magFilter: T.LinearFilter, generateMipmaps: true, depthBuffer: true,
     });
     const reflUniforms = {
@@ -468,7 +292,7 @@
 
     // Real lights on the strips nearest the camera, which move with the slots.
     const rects = [];
-    for (let i = 0; i < QUALITY.rects; i++) {
+    for (let i = 0; i < RECTS; i++) {
       const r = new T.RectAreaLight(0xffffff, 0, 0.35, 5.2);
       scene.add(r);
       rects.push(r);
@@ -486,84 +310,58 @@
     scene.add(hemi);
 
     // Dust in the air near the lens: the foreground layer, glinting on hats.
+    // Placed by hash rather than Math.random, so the motes do not move when
+    // three's own use of Math.random (object UUIDs) changes.
     const DUST = 320;
     const dPos = new Float32Array(DUST * 3);
     for (let i = 0; i < DUST; i++) {
-      dPos[i * 3] = (Math.random() * 2 - 1) * HALL_W;
-      dPos[i * 3 + 1] = 0.2 + Math.random() * (HALL_H - 0.5);
-      dPos[i * 3 + 2] = -Math.random() * 30 + 3;
+      dPos[i * 3] = (hash(i * 3.17 + 0.5) * 2 - 1) * HALL_W;
+      dPos[i * 3 + 1] = 0.2 + hash(i * 5.31 + 1.7) * (HALL_H - 0.5);
+      dPos[i * 3 + 2] = -hash(i * 7.73 + 2.9) * 30 + 3;
     }
     const dGeo = new T.BufferGeometry();
     dGeo.setAttribute('position', new T.BufferAttribute(dPos, 3));
     const dustMat = new T.PointsMaterial({ color: new T.Color(1.2, 0.8, 0.6), size: 0.022, sizeAttenuation: true, transparent: true, opacity: 0.6, depthWrite: false, blending: T.AdditiveBlending, fog: true });
+    // A mote that drifts within a hand's width of the lens would otherwise
+    // grow into a flat square a tenth of the frame wide (seen on the GPU,
+    // 2026-09-29); past a few pixels a mote is out of focus anyway.
+    const dustMax = { value: 4 };
+    dustMat.onBeforeCompile = (sh) => {
+      sh.uniforms.dustMax = dustMax;
+      sh.vertexShader = 'uniform float dustMax;\n' + sh.vertexShader.replace(
+        '#include <fog_vertex>', '#include <fog_vertex>\n  gl_PointSize = min(gl_PointSize, dustMax);');
+    };
     const dust = new T.Points(dGeo, dustMat);
     dust.frustumCulled = false;
     scene.add(dust);
 
-    // Render targets and the post chain.
-    const sceneRT = new T.WebGLRenderTarget(w, h, { type: T.HalfFloatType, samples: QUALITY.msaa, depthBuffer: true });
-    sceneRT.depthTexture = new T.DepthTexture(w, h);
-    sceneRT.depthTexture.type = T.FloatType;
-
-    const composer = new lib.EffectComposer(renderer, new T.WebGLRenderTarget(w, h, { type: T.HalfFloatType, depthBuffer: false }));
-    composer.setPixelRatio(1);
-    composer.setSize(w, h);
-    const lens = new lib.ShaderPass(new T.ShaderMaterial({
-      uniforms: {
-        tColor: { value: null }, tDepth: { value: null },
-        invViewProj: { value: new T.Matrix4() }, prevViewProj: { value: new T.Matrix4() },
-        resolution: { value: new T.Vector2(w, h) },
-        cameraNear: { value: camera.near }, cameraFar: { value: camera.far },
-        shutter: { value: 0.5 }, maxVel: { value: 0.04 },
-        focusDist: { value: 6 }, cocScale: { value: 8 }, maxCoc: { value: 16 }, farScale: { value: 0.45 },
-      },
-      defines: { MB_N: Math.max(1, QUALITY.mb | 0) }, vertexShader: FS_VERT, fragmentShader: LENS_FRAG, depthTest: false, depthWrite: false,
-    }), 'none');
-    const dof = new lib.ShaderPass(new T.ShaderMaterial({
-      uniforms: { tDiffuse: { value: null }, resolution: { value: new T.Vector2(w, h) }, maxCoc: { value: 16 } },
-      defines: { DOF_N: Math.max(1, QUALITY.dof | 0) }, vertexShader: FS_VERT, fragmentShader: DOF_FRAG, depthTest: false, depthWrite: false,
-    }));
-    const bloom = new lib.UnrealBloomPass(new T.Vector2(w, h), 0.6, 0.55, 1.6);
-    const grade = new lib.ShaderPass(new T.ShaderMaterial({
-      uniforms: {
-        tDiffuse: { value: null }, resolution: { value: new T.Vector2(w, h) },
-        warmth: { value: 0.5 }, split: { value: 1 }, vignette: { value: 0.55 }, grain: { value: 0.07 }, aberration: { value: 0.004 }, seed: { value: 0 },
-      },
-      vertexShader: FS_VERT, fragmentShader: GRADE_FRAG, depthTest: false, depthWrite: false,
-    }));
-    const output = new lib.OutputPass();
-    composer.addPass(lens);
-    composer.addPass(dof);
-    composer.addPass(bloom);
-    composer.addPass(grade);
-    composer.addPass(output);
+    // The kit's lens chain, graded for this hall: violet shadows, highlights
+    // from pale to sodium with the warmth param, a faint violet lift.
+    const lens = kit.lens({ msaa: 4, motionBlurSamples: 12, dofSamples: 36 });
+    lens.grade.split.value = 1;
+    lens.grade.shadowTint.value.set(0.78, 0.70, 1.18);
+    lens.grade.lift.value.set(0.0035, 0.0015, 0.007);
+    lens.grade.vignette.value = 0.55;
+    lens.grade.grain.value = 0.07;
+    lens.grade.aberration.value = 0.004;
+    lens.maxVelocity = 0.05;
+    lens.farBlur = 0.45;
+    lens.bloom.threshold = 2.0;
 
     return {
-      T, canvas, renderer, scene, camera, mirrorCam, hall, floor, floorMat, reflUniforms, mirrorRT, sceneRT,
+      T, scene, camera, mirrorCam, hall, floor, floorMat, reflUniforms, mirrorRT,
       fins, beams, wallStrips, ceilStrips, gates, forms, rects, ceilRects, dust, dustMat,
-      composer, lens, dof, bloom, grade, w, h,
-      prevVP: null, tmpM: new T.Matrix4(), tmpM2: new T.Matrix4(), col: new T.Color(),
-      overlay: false,
+      dustMax, lens, col: new T.Color(), fwd: new T.Vector3(), up: new T.Vector3(),
     };
-  }
-
-  function resize(R, w, h) {
-    R.w = w; R.h = h;
-    R.renderer.setSize(w, h, false);
-    R.camera.aspect = w / h; R.camera.updateProjectionMatrix();
-    R.mirrorCam.aspect = w / h;
-    R.sceneRT.setSize(w, h);
-    R.mirrorRT.setSize(Math.max(1, Math.round(w * (QUALITY.mirror || 0.05))), Math.max(1, Math.round(h * (QUALITY.mirror || 0.05))));
-    R.composer.setSize(w, h);
-    for (const pass of [R.lens, R.dof, R.grade]) pass.uniforms.resolution.value.set(w, h);
-    R.prevVP = null;
   }
 
   // ------------------------------------------------------------------ scene
   VIZ.register({
     id: 'rendered',
-    name: 'Rendered (spike)',
+    name: 'Rendered',
     order: 990,
+    requires: 'three',
+    three: { addons: ['RectAreaLightUniformsLib'] },
 
     params: [
       { key: 'speed', label: 'Flight speed', type: 'range', min: 0, max: 3, default: 0.8, step: 0.01 },
@@ -578,31 +376,26 @@
     ],
     presets: PRESETS,
     // The shared Finish (web/fx.js) would put a second motion blur, bloom and
-    // grade on top of this scene's own lens chain, which is the point of it.
+    // grade on top of the kit's lens chain, which already is the finish.
     finish: false,
 
     gallery: {
-      title: 'Rendered (spike)',
-      technique: 'three.js 0.186.1 loaded at runtime from jsDelivr (+esm, one core shared by every addon): MeshPhysicalMaterial concrete, chrome and clearcoat lacquer under RectAreaLights and a PMREM of a generated room; a half-resolution planar mirror pass injected into the floor\'s physical material with roughness-driven mip blur and streaks; 4x MSAA half-float HDR; camera motion blur by depth reprojection; scatter-as-gather depth of field; UnrealBloomPass thresholded above 1 so only emitters bloom; split-tone grade, aberration, grain; AgX tone mapping. Composited into the p5 canvas.',
+      title: 'Rendered',
+      technique: 'three.js 0.186.1 on the shared kit (web/three-kit.js): MeshPhysicalMaterial concrete, chrome and clearcoat lacquer under RectAreaLights and a PMREM of a generated room; a half-resolution planar mirror pass injected into the floor\'s physical material with roughness-driven mip blur and streaks; the kit lens: 4x MSAA half-float HDR, camera motion blur by depth reprojection, scatter-as-gather depth of field, UnrealBloomPass thresholded above 1 so only emitters bloom, split-tone grade, aberration, grain, AgX tone mapping. Rendered at about 1080p\'s pixel count and composited into the p5 canvas.',
       brief: 'A banked flight down an endless brutalist colonnade at night: board-formed concrete fins, a black stone floor that mirrors the light, sodium and violet strips as the only sources, chrome and lacquer forms on plinths. The finish is the point: lit, filmic, shallow focus, no neon wash. The kick sends a pulse of light running away down the ceiling strips; claps turn every form a quarter turn; hats glint the dust near the lens; bass swells the speed. On the drop the gates of light switch on down the hall, the flight speeds and banks harder and the grade warms.',
-      lineage: 'A feasibility spike (2026-09-28) against the finish of professional Cinema 4D / After Effects VJ loops (a neon-city fly-through with DOF, motion blur, emissive-only bloom and a split-tone grade); original subject after Tadao Ando\'s concrete and the long lit halls of architectural visualisation.',
+      lineage: 'A feasibility spike (2026-09-28) against the finish of professional Cinema 4D / After Effects VJ loops (a neon-city fly-through with DOF, motion blur, emissive-only bloom and a split-tone grade), then the reference scene of the three.js kit (2026-09-29); original subject after Tadao Ando\'s concrete and the long lit halls of architectural visualisation.',
     },
 
-    preload(p) {
-      // In the app, start fetching early but never hold the page for it.
-      // Under the harness, hold p5's preload so captured frames are rendered.
-      const hold = !!window.HARNESS && typeof p._incrementPreload === 'function';
-      if (hold) p._incrementPreload();
-      loadLib().then(() => { if (hold) p._decrementPreload(); });
+    setup(p, ctx) {
+      this.R = build(ctx.three);
     },
 
-    setup() {},
-
-    enter() {
-      loadLib();
+    enter(p, ctx) {
       this.lastMs = null;
       this.dist = 0;
+      this.prevDist = null;
       this.t = 0;
+      this.focus = null;
       this.env = { kick: 0, prevK: 0, snare: 0, prevS: 0, b4: 0, b8: 0, hat: 0, prevH: 0, bass: 0, low: 0, dropOn: false, auto: 0 };
       this.since = { kick: 9, snare: 9, hat: 9 };
       this.pulses = [];
@@ -610,17 +403,9 @@
       this.turnPos = 0;      // eased
       this.glints = 0;
       this.smSpeed = 0.8;
-      if (this.R) this.R.prevVP = null;
-    },
-
-    leave() {
-      // Give the GPU back most of the memory (the MSAA HDR targets at
-      // 3024x1890 are ~300 MB) but keep the compiled programs.
-      if (this.R) {
-        resize(this.R, 2, 2);
-        if (this.R.overlay && this.R.canvas.parentNode) this.R.canvas.parentNode.removeChild(this.R.canvas);
-        this.R.overlay = false;
-      }
+      // Core holds the loading state until this resolves, so the ~130 ms of
+      // shader compiles never land on a live frame.
+      return this.R.lens.compile(this.R.scene, this.R.camera);
     },
 
     listen(s, dt, push) {
@@ -658,7 +443,9 @@
     },
 
     draw(p, signals, params, ctx) {
-      if (!this.env) this.enter();
+      const kit = ctx.three;
+      const R = this.R;
+      const T = R.T;
       const ms = p.millis();
       const dt = this.lastMs === null ? 1 / 60 : Math.min(0.1, Math.max(0, (ms - this.lastMs) / 1000));
       this.lastMs = ms;
@@ -669,9 +456,8 @@
       const follow = Math.round(params.follow) === 1;
       e.auto = ease(e.auto, follow && e.dropOn ? 1 : 0, e.dropOn ? 1.2 : 0.45, dt);
       const Pm = {};
-      for (const k of DRIVE) Pm[k] = params[k] + (PRESETS.drop[k] - params[k]) * (follow ? e.auto : 0);
+      for (const key of DRIVE) Pm[key] = params[key] + (PRESETS.drop[key] - params[key]) * (follow ? e.auto : 0);
 
-      // Music state advances whether or not three.js is in yet.
       this.t += dt;
       const target = Pm.speed * (0.55 + 0.9 * e.bass * push) * 5.5;
       this.smSpeed = ease(this.smSpeed, target, 1.5, dt);
@@ -679,34 +465,6 @@
       for (const q of this.pulses) q.age += dt;
       this.pulses = this.pulses.filter((q) => q.age < 2.2);
       this.turnPos = ease(this.turnPos, this.turns, 5, dt);
-
-      const g = p.drawingContext;
-      if (!lib) {
-        p.background(0);
-        if (libError) {
-          p.push(); p.fill(170, 60, 60); p.noStroke(); p.textAlign(p.CENTER, p.CENTER); p.textSize(16);
-          p.text('three.js did not load (see console)', ctx.width / 2, ctx.height / 2);
-          p.pop();
-        }
-        return;
-      }
-
-      // Render at about 1080p's pixel count and let the composite scale up:
-      // measured 2026-09-28 on the M4 Pro, the full chain holds 60 fps at
-      // 0.63 of 3024x1890 (2.3 MP) and manages 16 fps at full size. After
-      // depth of field, motion blur and grain the upscale does not show.
-      const dw = p.width * p.pixelDensity(), dh = p.height * p.pixelDensity();
-      const scale = QUALITY.scale > 0 ? QUALITY.scale : Math.min(1, Math.sqrt(RENDER_PIXELS / (dw * dh)));
-      const w = Math.max(2, Math.round(dw * scale));
-      const h = Math.max(2, Math.round(dh * scale));
-      if (!this.R) {
-        const t0 = performance.now();
-        this.R = build(this, w, h);
-        this.buildMs = performance.now() - t0;   // spike: reported by the probe
-      }
-      const R = this.R;
-      if (R.w !== w || R.h !== h) resize(R, w, h);
-      const T = R.T;
 
       // -------------------------------------------------- slots and content
       const k = Math.floor(this.dist / P);
@@ -798,6 +556,7 @@
       R.dust.geometry.attributes.position.needsUpdate = true;
       R.dustMat.opacity = clamp01(0.22 + 1.1 * this.glints);
       R.dustMat.size = 0.02 + 0.02 * this.glints;
+      R.dustMax.value = (3 + 3 * this.glints) * kit.height / 720;
 
       // ------------------------------------------------------------ camera
       const t = this.t, bank = Pm.bank;
@@ -821,83 +580,38 @@
       this.focus = this.focus == null ? focus : ease(this.focus, focus, 2, dt);
 
       // ------------------------------------------------------------ render
-      const renderer = R.renderer;
-      const prof = window.__renderedProf;   // spike: per-section CPU timing when set
-      const tA = performance.now();
       // Mirror camera: reflect position, target and up through y = 0.
+      kit.fitCamera(cam);
       const mc = R.mirrorCam;
       mc.projectionMatrix.copy(cam.projectionMatrix);
       mc.projectionMatrixInverse.copy(cam.projectionMatrixInverse);
-      const fwd = new T.Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
-      const up = new T.Vector3(0, 1, 0).applyQuaternion(cam.quaternion);
+      const fwd = R.fwd.set(0, 0, -1).applyQuaternion(cam.quaternion);
+      const up = R.up.set(0, 1, 0).applyQuaternion(cam.quaternion);
       mc.position.set(cam.position.x, -cam.position.y, cam.position.z);
       mc.up.set(up.x, -up.y, up.z);
       mc.lookAt(cam.position.x + fwd.x, -(cam.position.y + fwd.y), cam.position.z + fwd.z);
       mc.updateMatrixWorld();
       R.reflUniforms.reflMatrix.value.set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1)
         .multiply(mc.projectionMatrix).multiply(mc.matrixWorldInverse);
-      if (QUALITY.mirror > 0) {
-        R.floor.visible = false; R.dust.visible = false;
-        renderer.setRenderTarget(R.mirrorRT);
-        renderer.render(R.scene, mc);
-        R.floor.visible = true; R.dust.visible = true;
-      }
-      R.reflUniforms.reflStrength.value = QUALITY.mirror > 0 ? 1 : 0;
+      const renderer = kit.renderer;
+      R.floor.visible = false; R.dust.visible = false;
+      renderer.setRenderTarget(R.mirrorRT);
+      renderer.render(R.scene, mc);
+      R.floor.visible = true; R.dust.visible = true;
 
-      const tB = performance.now();
-      renderer.setRenderTarget(R.sceneRT);
-      renderer.clear();
-      renderer.render(R.scene, cam);
-
-      // Lens uniforms: this frame's inverse VP; last frame's VP with the
-      // hall's travel folded in (the world moves, not the camera).
-      const vp = R.tmpM.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
-      const L = R.lens.uniforms;
-      L.tColor.value = R.sceneRT.texture;
-      L.tDepth.value = R.sceneRT.depthTexture;
-      L.invViewProj.value.copy(vp).invert();
+      // The lens: the hall's travel is folded into last frame's camera (the
+      // world moves, not the camera), so the fins streak as they pass.
+      const L = R.lens;
       const moved = this.prevDist == null ? 0 : this.dist - this.prevDist;
-      if (R.prevVP) L.prevViewProj.value.copy(R.prevVP).multiply(R.tmpM2.makeTranslation(0, 0, -moved));
-      else L.prevViewProj.value.copy(vp);
-      R.prevVP = (R.prevVP || new T.Matrix4()).copy(vp);
       this.prevDist = this.dist;
-      const shortSide = Math.min(w, h);
-      L.shutter.value = Pm.shutter * 1.4;
-      L.maxVel.value = 0.05;
-      L.focusDist.value = this.focus;
-      const maxCoc = shortSide * 0.014 * (0.3 + Pm.focus);
-      L.cocScale.value = maxCoc * 0.9;
-      L.maxCoc.value = maxCoc;
-      R.dof.uniforms.maxCoc.value = maxCoc;
-      R.dof.enabled = Pm.focus > 0.02;
-
-      R.bloom.strength = 0.06 + 0.34 * Pm.bloom;
-      R.bloom.radius = 0.2 + 0.25 * Pm.bloom;
-      R.bloom.threshold = 2.0;
-      const G = R.grade.uniforms;
-      G.warmth.value = warm;
-      G.seed.value = (p.frameCount % 97);
-      renderer.toneMappingExposure = 1.0;
-
-      const tC = performance.now();
-      R.composer.render(dt);
-      if (this.firstFrameMs == null) { R.renderer.getContext().finish(); this.firstFrameMs = performance.now() - tC; window.__renderedStart = { loadMs: lib.loadMs, buildMs: this.buildMs, firstFrameMs: this.firstFrameMs + (tC - tA) }; }
-      const tD = performance.now();
-
-      // --------------------------------------------------------- composite
-      if (!R.overlay && /[?&]rendered=overlay\b/.test(location.search)) {
-        const stage = document.getElementById('stage');
-        if (stage) {
-          R.canvas.style.cssText = 'position:absolute;left:0;top:0;width:' + p.width + 'px;height:' + p.height + 'px;pointer-events:none;';
-          stage.appendChild(R.canvas);
-          R.overlay = true;
-        }
-      }
-      if (!R.overlay) g.drawImage(R.canvas, 0, 0, ctx.width, ctx.height);
-      if (prof) {
-        const tE = performance.now();
-        prof.push({ mirror: tB - tA, main: tC - tB, post: tD - tC, blit: tE - tD, calls: renderer.info.render.calls, programs: renderer.info.programs.length });
-      }
+      L.shutter = Pm.shutter * 1.4;
+      L.focus = this.focus;
+      L.blur = Pm.focus > 0.02 ? 0.014 * (0.3 + Pm.focus) : 0;
+      L.bloom.strength = 0.06 + 0.34 * Pm.bloom;
+      L.bloom.radius = 0.2 + 0.25 * Pm.bloom;
+      L.grade.highlightTint.value.set(lerp(1.0, 1.18, warm), lerp(0.93, 0.90, warm), lerp(0.88, 0.68, warm));
+      L.render(R.scene, cam, { worldMove: [0, 0, moved] });
+      kit.composite();
     },
   });
 })();

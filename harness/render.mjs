@@ -5,7 +5,7 @@
 //   node harness/render.mjs web/scenes/foo.js [--out harness/renders/foo]
 //     [--size 1280x720] [--seed 1] [--params '{"k":v}'] [--seconds 24]
 //     [--frames 2,4,6,...] [--density 1] [--fx kaleido,slice]
-//     [--fxparams '{"kaleido":{"segments":8}}'] [--finish on|off]
+//     [--fxparams '{"kaleido":{"segments":8}}'] [--finish on|off] [--gpu]
 
 import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -16,17 +16,18 @@ function usage(msg) {
   if (msg) console.error('render: ' + msg);
   console.error('usage: node harness/render.mjs <scene.js> [--out dir] [--size WxH] [--seed N] ' +
     "[--params '{\"k\":v}'] [--seconds 24] [--frames 2,4,...] [--density 1] " +
-    "[--fx id1,id2] [--fxparams '{\"id\":{\"k\":v}}'] [--finish on|off]");
+    "[--fx id1,id2] [--fxparams '{\"id\":{\"k\":v}}'] [--finish on|off] [--gpu]");
   process.exit(2);
 }
 
 function parseArgs(argv) {
   const opts = { size: '1280x720', seed: '1', params: null, seconds: null, frames: null, out: null, density: '1',
-    fx: null, fxparams: null, finish: 'on' };
+    fx: null, fxparams: null, finish: 'on', gpu: false };
   let scene = null;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '-h' || a === '--help') usage();
+    if (a === '--gpu') { opts.gpu = true; continue; }
     if (a.startsWith('--')) {
       const eq = a.indexOf('=');
       const key = eq > 0 ? a.slice(2, eq) : a.slice(2);
@@ -76,7 +77,7 @@ function parseArgs(argv) {
   return {
     scenePath, sceneUrl: '/' + rel.split(path.sep).join('/'), width, height, seed: String(opts.seed),
     params: opts.params, density: Number(opts.density) || 1, times, lastT, out,
-    fx: opts.fx, fxparams: opts.fxparams, finish: opts.finish
+    fx: opts.fx, fxparams: opts.fxparams, finish: opts.finish, gpu: opts.gpu
   };
 }
 
@@ -101,7 +102,7 @@ async function main() {
 
   const server = await serve();
   const port = server.address().port;
-  const { browser, via } = await launch(usage);
+  const { browser, via } = await launch(usage, { gpu: o.gpu });
   const console_ = [];
   const exceptions = [];
   const failedRequests = [];
@@ -110,11 +111,14 @@ async function main() {
   try {
     const { page, info } = await openStage(browser, port, o,
       { console: console_, exceptions, failedRequests });
+    // Chrome falls back to SwiftShader when it cannot get the GPU; a --gpu
+    // run that silently rendered in software would mislead on speed.
+    if (o.gpu && /swiftshader/i.test(info.gl.renderer || '')) throw new Error('--gpu asked for the GPU but Chrome gave SwiftShader (' + info.gl.renderer + ')');
 
     const lastFrame = Math.round(o.lastT * FPS);
     const header = `${info.name} (${info.id}) · ${o.width}x${o.height} · seed ${o.seed}` +
       (o.params ? ' · params ' + o.params : '') +
-      (o.fx ? ' · fx ' + o.fx : '') + ' · finish ' + o.finish + ' · track 124 BPM';
+      (o.fx ? ' · fx ' + o.fx : '') + ' · finish ' + o.finish + (o.gpu ? ' · GPU' : '') + ' · track 124 BPM';
     await page.evaluate(([n, h]) => HARNESS.initSheet(n, h), [o.times.length, header]);
 
     const frames = [];

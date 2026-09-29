@@ -268,3 +268,129 @@ and a thumbnail grid (`G`, thumbnails from `harness/thumbs.mjs`). `web/browser.j
 owns all of it; core lends it the registry through `VIZ.scenes`. A new scene
 needs nothing beyond an `order` in its batch's block; to file it elsewhere,
 add its id to `collections.js`.
+
+## three.js scenes
+
+Added 2026-09-29, from the Rendered spike. A scene that wants physically lit
+3D, reflections and a filmic lens is written against three.js through the
+shared kit, `web/three-kit.js` (`window.VIZ_THREE`). Copy
+`web/scenes/_three-skeleton.js` (about 60 lines, renders as is);
+`web/scenes/rendered.js` is the full reference.
+
+### Declaring it
+
+```js
+VIZ.register({
+  id: 'foo', name: 'Foo', order: 1000,
+  requires: 'three',                         // run on the kit
+  three: { addons: ['RoundedBoxGeometry'],   // optional: extra addons by name
+           pixelBudget: 2.3e6 },             // optional: this scene's render budget
+  finish: false,                             // see "Finish" below
+  setup(p, ctx) {},                          // once, with ctx.three ready
+  enter(p, ctx) { return lens.compile(scene, camera); },   // may return a promise
+  draw(p, signals, params, ctx) {},          // render, then ctx.three.composite()
+  leave(p) {}
+});
+```
+
+### Lifecycle
+
+- Nothing three.js loads at page start-up. Core starts the download (~300 KB
+  compressed: three 0.186.1 plus the lens addons) in the background three
+  seconds after the app is up, and immediately when a three.js scene is
+  picked.
+- `setup` is **not** called at start-up for a three.js scene: it runs the
+  first time the scene is picked, once the kit has loaded, with `ctx.three`
+  set. Build the scene, materials, textures and lens there.
+- `enter` runs after `setup` each time the scene is picked. If it returns a
+  promise, core shows a small "Loading three.js…" line instead of the scene
+  until it resolves. Return `lens.compile(scene, camera)` (or
+  `ctx.three.compile(scene, camera)` without a lens): the shader programs
+  compile asynchronously, so the first live frame does not hitch (~130 ms for
+  Rendered). If the download fails, the stage says so and picking the scene
+  again retries.
+- `draw` is called only once `enter` has settled. Render, then call
+  `ctx.three.composite()` to put the frame on the stage. You may draw p5 on top
+  afterwards (a caption, a HUD).
+- `leave` runs as usual; the kit then frees every render target it made for the
+  scene (its lens and `ctx.three.target`s; ~300 MB at 3024×1890 without the
+  budget) but keeps compiled programs, geometry and textures, so the next
+  `enter` is quick. Targets reallocate on the next render.
+- The render harness waits the same way: the stage loads the kit before p5
+  starts and is not ready until `enter`'s promise resolves. No `preload` hacks.
+
+### `ctx.three`
+
+One handle per scene, the same object every call.
+
+| Member | What it is |
+|---|---|
+| `THREE` | the three module (0.186.1); `addons` the loaded addons by name |
+| `renderer` | the one shared `WebGLRenderer` (its own canvas, pixel ratio 1) |
+| `width`, `height`, `aspect`, `scale` | the render size in pixels, and its fraction of the device-pixel canvas |
+| `lens(opts)` | the standard lens chain (below) |
+| `environment(spec, sigma)` | a PMREM texture for `scene.environment`: `'room'` (three's RoomEnvironment), a `function (THREE, envScene)` that fills an empty scene with emitters, or `{ background, room: [w,h,d], panels: [{ size, position, rotation, color, intensity }] }` (a dark box with glowing panels, Rendered's kind) |
+| `target(scale, options)` | a `WebGLRenderTarget` at `scale` × the render size that follows resizes and is freed on leave (a mirror pass, a feedback buffer) |
+| `fitCamera(camera)` | keep a perspective camera's aspect on the render size (the lens does it for you) |
+| `render(scene, camera)` | render straight to the kit canvas with AgX and sRGB, no lens |
+| `compile(scene, camera)` | async compile for `render` |
+| `shaderPass(frag, uniforms, defines)` | a fullscreen `ShaderPass` (`vUv` in, `tDiffuse` the input) for `lens.insertPass` |
+| `composite()` | draw the kit canvas over the whole stage; call inside `draw` |
+
+**Render scale.** The kit renders at the pixel budget, 2.3 MP (1080p's count),
+and the composite scales it up to the canvas: the spike measured 16 fps at
+native 3024×1890 against 60 at the budget, and after depth of field, motion
+blur and grain the upscale does not show. A scene may set its own
+`three.pixelBudget`. `VIZ_THREE.setRenderScale(s)` forces a fraction of the
+canvas for every three.js scene (`null` returns to the budget) and
+`VIZ_THREE.setPixelBudget(px)` changes the default budget; a panel control or
+a scene may call either. Never size the renderer yourself.
+
+**The lens** (`const lens = ctx.three.lens({ msaa: 4, motionBlur: true, dof: true, bloom: true, grade: true, motionBlurSamples: 12, dofSamples: 36 })`,
+every option optional). `lens.render(scene, camera, { worldMove })` renders
+into a 4× MSAA half-float HDR target, then: camera motion blur by depth
+reprojection → depth of field → `UnrealBloomPass` → grade → `OutputPass` (AgX
+tone mapping, sRGB). Set per frame, in plain units:
+
+- `lens.focus` metres to the sharp plane; `lens.blur` the largest blur radius
+  as a fraction of the short side (0 = sharp; Rendered uses 0.004–0.018);
+  `lens.farBlur` background blur relative to foreground (0.45).
+- `lens.shutter` fraction of a frame the shutter is open (Rendered: up to 1.4);
+  `lens.maxVelocity` longest streak as a fraction of the height. Motion blur
+  is **camera** motion only. A scene that scrolls the world past a still
+  camera passes `worldMove: [dx, dy, dz]` (how far the world moved this
+  frame) so the world streaks too; objects moving on their own do not blur.
+  Call `lens.cut()` on a camera jump.
+- `lens.bloom.strength / .radius / .threshold`: bloom is only for HDR
+  emitters. Keep `threshold` above 1 (Rendered: 2) and make emitters brighter
+  than 1 (`MeshBasicMaterial` with `toneMapped: false` and a colour over 1).
+  Lit surfaces should never bloom.
+- `lens.exposure` (1); `lens.grade.*.value`: `split` (0 = no tint),
+  `shadowTint` and `highlightTint` (Vector3 multipliers), `lift`, `vignette`,
+  `grain`, `aberration`.
+- `lens.insertPass(pass)` adds a pass of your own before the grade, in HDR.
+
+### Rules for three.js scenes
+
+- **Finish: `finish: false`.** The lens chain is the finish; the shared Finish
+  would add a second motion blur, bloom, tone curve and grain. Opt in (`finish:
+  { … }`) only for a scene that renders with `ctx.three.render` and no lens.
+- **Shared renderer.** Every three.js scene uses the same `WebGLRenderer`. The
+  kit resets tone mapping (AgX), exposure, output colour space (sRGB), shadow
+  maps (off), `autoClear` and clear colour on every `enter`; anything else you
+  change on the renderer (shadow maps on, a clear colour), set it each frame
+  or in `enter`. Never create a `WebGLRenderer` or call `setSize` /
+  `setPixelRatio`.
+- **One copy of three.** Import nothing yourself: ask for addons through
+  `three.addons` (names in `VIZ_THREE.addonPaths`, or a path under
+  `examples/jsm` such as `'postprocessing/HalftonePass.js'`). Every addon
+  there resolves to the same three URL; a module from another package would
+  load a second three and its objects would fail three's type checks.
+- **Determinism.** Randomness through `Math.random` or a hash, never
+  `crypto`; time through `p.millis()`. Three uses `Math.random` for object ids,
+  so placements that must not shift when object counts change should use a
+  hash (Rendered's dust does).
+- **Cost.** Budget ~8 ms a frame on the M4 Pro at the pixel budget (Rendered
+  takes ~7 ms in `harness/render.mjs --gpu` at 1280×720, and holds 60 fps at
+  3024×1890 in the app). Iterate with `--gpu` (harness/README.md, "GPU mode"),
+  and check speed with `harness/fps.mjs`.

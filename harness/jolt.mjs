@@ -6,7 +6,7 @@
 // good on a contact sheet. See README.md, "Jolt meter".
 //
 //   node harness/jolt.mjs web/scenes/foo.js [--size 640x360] [--seed 1]
-//     [--params '{"k":v}'] [--out harness/renders/jolt/foo]
+//     [--params '{"k":v}'] [--out harness/renders/jolt/foo] [--gpu]
 
 import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -51,16 +51,17 @@ const PRE_LEAD = 0.035, POST_SPAN = 0.165, DRIFT_SPAN = 0.15;
 
 function usage(msg) {
   if (msg) console.error('jolt: ' + msg);
-  console.error("usage: node harness/jolt.mjs <scene.js> [--size WxH] [--seed N] [--params '{\"k\":v}'] [--out dir]");
+  console.error("usage: node harness/jolt.mjs <scene.js> [--size WxH] [--seed N] [--params '{\"k\":v}'] [--out dir] [--gpu]");
   process.exit(2);
 }
 
 function parseArgs(argv) {
   const opts = { size: '640x360', seed: '1', params: null, out: null };
-  let scene = null;
+  let scene = null, gpu = false;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '-h' || a === '--help') usage();
+    if (a === '--gpu') { gpu = true; continue; }
     if (a.startsWith('--')) {
       const eq = a.indexOf('=');
       const key = eq > 0 ? a.slice(2, eq) : a.slice(2);
@@ -84,7 +85,7 @@ function parseArgs(argv) {
   const id = path.basename(scenePath).replace(/\.m?js$/, '');
   return {
     scenePath, sceneUrl: '/' + rel.split(path.sep).join('/'), width: +m[1], height: +m[2],
-    seed: String(opts.seed), params: opts.params, density: 1,
+    seed: String(opts.seed), params: opts.params, density: 1, gpu,
     out: path.resolve(opts.out ?? path.join(HARNESS_DIR, 'renders', 'jolt', id))
   };
 }
@@ -216,7 +217,7 @@ async function main() {
   const o = parseArgs(process.argv.slice(2));
   await fs.mkdir(o.out, { recursive: true });
   const server = await serve();
-  const { browser } = await launch(usage);
+  const { browser } = await launch(usage, { gpu: o.gpu });
   const log = { console: [], exceptions: [], failedRequests: [] };
   let result;
   try {
