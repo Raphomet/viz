@@ -194,6 +194,15 @@
   .val { margin-left: auto; font: 400 12px var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
   .helper { margin: 0 0 4px; color: var(--muted); font-size: 12.5px; }
 
+  /* Effects rack */
+  .fx-add { display: flex; gap: 6px; margin-bottom: 10px; min-width: 0; }
+  .fx-add select { flex: 1 1 auto; min-width: 0; }
+  .fx-entry { border: 1px solid var(--rule); padding: 8px 8px 0; margin-bottom: 8px; }
+  .fx-entry.missing { opacity: 0.6; padding-bottom: 8px; }
+  .fx-entry-head { display: flex; align-items: center; gap: 2px; margin-bottom: 8px; min-width: 0; }
+  .fx-name { flex: 1 1 auto; min-width: 0; font-weight: 500; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fx-mini { min-width: 26px; padding: 0 6px; }
+
   /* controlP5-style flat bar: no pill, no knob, just track filled to the value. */
   input[type="range"] {
     -webkit-appearance: none;
@@ -409,6 +418,16 @@
       <p class="helper">Raise treble boost until every bar can reach the red line; use gain for overall loudness.</p>
     </section>
 
+    <section class="section" aria-labelledby="h-finish">
+      <h2 id="h-finish">Finish</h2>
+      <div id="finish-controls"></div>
+    </section>
+
+    <section class="section" aria-labelledby="h-fx">
+      <h2 id="h-fx">Effects</h2>
+      <div id="fx-rack"></div>
+    </section>
+
     <section class="section" aria-labelledby="h-visual">
       <h2 id="h-visual">Visual</h2>
       <div class="viz-list" id="viz-list"></div>
@@ -425,6 +444,7 @@
         <dt>H</dt><dd>Hide or show this panel</dd>
         <dt>F</dt><dd>Fullscreen the stage</dd>
         <dt>V</dt><dd>Switch between V1 and V2</dd>
+        <dt>L</dt><dd>Finish on or off (compare with and without)</dd>
         <dt>Q W E R</dt><dd>Glide to snapshot A B C D (stores if empty)</dd>
         <dt>⇧ Q–R</dt><dd>Store the current look in A–D</dd>
         <dt>Space</dt><dd>Hold for the drop, when the Drop button is on</dd>
@@ -437,7 +457,16 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.13/p5.min.js"></script>
 <script src="palettes.js"></script>
 <script src="fonts.js"></script>
+<script src="fx.js"></script>
+<!-- Effects (web/fx/*.js). The Finish's three come first; the rest alphabetical. -->
+<script src="fx/motionblur.js"></script>
+<script src="fx/bloom.js"></script>
+<script src="fx/film.js"></script>
+<script src="fx/feedback.js"></script>
+<script src="fx/kaleido.js"></script>
+<script src="fx/slice.js"></script>
 <script src="core.js"></script>
+<script src="motifs/eyes.js"></script>
 <script src="viz/text.js"></script>
 <script src="viz/arcs.js"></script>
 <script src="viz/rings.js"></script>
@@ -510,6 +539,7 @@
 <script src="scenes/ophanim.js"></script>
 <script src="scenes/chomper.js"></script>
 <script src="scenes/stamps.js"></script>
+<script src="scenes/eyes.js"></script>
 <script src="scenes/fourd.js"></script>
 <script src="scenes/solids.js"></script>
 <script src="scenes/evadash.js"></script>

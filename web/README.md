@@ -41,9 +41,13 @@ boost until every bar can reach the line, then set overall loudness with gain.
 | 1–6 | Pick a visual |
 | H | Hide or show the panel |
 | F | Fullscreen the stage (for the projector) |
+| L | Finish on or off, to compare the scene with and without it |
 
-Settings for each visual, the selected visual and the two signal sliders are
-remembered in the browser.
+The Finish (lens, light and grade over every scene) and the Effects rack are
+in the panel; see `CONTRACT.md` and `../harness/briefs/fx.md`.
+
+Settings for each visual, the selected visual, the two signal sliders, the
+Finish and the effects rack are remembered in the browser.
 
 ## What changed from the original
 

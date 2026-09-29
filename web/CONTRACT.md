@@ -225,3 +225,35 @@ and its V2 each have their own snapshots and settings.
   Stored snapshot values are sanitized against the current params on load, so a
   scene may add or retune params without breaking existing snapshots; a param a
   snapshot does not know keeps its current value on recall.
+
+## Finish
+
+Added 2026-09-28. Every scene is drawn through a shared post-process, the
+Finish, so it reads as light through a lens rather than crisp vector maths:
+motion blur (a short exponential shutter that lets go where a whole region
+changes at once, so kicks stay crisp), soft focus, bloom above a threshold with
+warm halation, a filmic tone curve (AgX on an inverse-mapped input: greys come
+out where they went in, highlights roll off, very bright colour goes towards
+white), a grade preset (Neutral, Film, Print, Night, Bleach), vignette,
+optional chromatic aberration and animated grain. It runs in WebGL2 on a canvas
+stacked over the p5 canvas (`web/fx.js`, `web/fx/motionblur.js`, `bloom.js`,
+`film.js`); scenes draw exactly as before and need not know it exists.
+
+The performer sets it globally (the Finish section; `L` toggles it for an A/B;
+stored in `localStorage` under `viz.finish`). A scene may adjust it with an
+optional `finish` field in its def:
+
+```js
+finish: false                         // opt out: this scene is shown as drawn
+finish: { bloom: 0, grain: 0.5 }      // scale stages: 1 = as set, 0 = off
+finish: { strength: 0.5, grade: 'neutral' }
+```
+
+Numeric keys scale the performer's setting for that stage: `strength` (all of
+it), `motionBlur`, `bloom`, `softness`, `halation`, `tone`, `grade` (the grade
+amount), `grain`, `vignette`, `aberration`. A string `grade` names the preset
+used for this scene. Opt out when the scene's look depends on exact flat colour
+or hard pixel edges, or when it already does its own lens work.
+
+The effects rack (`web/fx/*.js`, interface in `harness/briefs/fx.md`) runs
+before the Finish, in the order the performer sets in the Effects section.

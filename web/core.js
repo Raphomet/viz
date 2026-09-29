@@ -725,12 +725,14 @@
       if (current) leavePerf(current);
       if (current && p5ready && typeof current.leave === 'function') safeCall(current, 'leave', [p5inst]);
       current = def;
+      if (fxRunner) fxRunner.reset();   // no trail of the last scene over the new one
       if (p5ready && typeof def.enter === 'function') safeCall(def, 'enter', [p5inst, ctx]);
       writeStore('viz.selected', def.id);
       if (versionsOf(familyOf(def)).length > 1) writeStore('viz.version.' + familyOf(def), def.id);
     }
     buildVizList();
     buildControls();
+    syncFinishPanel();
   }
 
   // ------------------------------------------------------ performer controls
@@ -1315,6 +1317,7 @@
     else if (k === 'h' || k === 'H') { togglePanel(); e.preventDefault(); }
     else if (k === 'f' || k === 'F') { toggleFullscreen(); e.preventDefault(); }
     else if (k === 'v' || k === 'V') { toggleVersion(); e.preventDefault(); }
+    else if (k === 'l' || k === 'L') { toggleFinish(); e.preventDefault(); }
     else if (/^[1-9]$/.test(k)) {
       var def = listedDefs()[Number(k) - 1];
       if (def) { selectScene(def.id); e.preventDefault(); }
@@ -1369,6 +1372,8 @@
     });
     bindGlobalSlider('g-expbase', function () { return expBase; }, function (v) { expBase = v; }, 0, 3);
     bindGlobalSlider('g-gain', function () { return signalScale; }, function (v) { signalScale = v; }, 0.5, 8);
+    buildFinishPanel();
+    buildRackPanel();
     renderSource();
     bindDrop();
     window.addEventListener('keydown', onKey);
@@ -1379,6 +1384,241 @@
     window.addEventListener('blur', releaseDrop);
     window.addEventListener('pagehide', flushParams);
   }
+
+
+  // -------------------------------------------------------- effects + finish
+  // The rack (ordered effects, web/fx/*.js) and the Finish (motion blur, bloom,
+  // film) run after the scene on a WebGL2 canvas stacked over the p5 canvas;
+  // see web/fx.js. With nothing to run, or no WebGL2, the p5 canvas shows as
+  // before. L flips the Finish so the performer can compare it instantly.
+  var FX = window.VIZ_FX || null;
+  var fxRunner = null, fxDetector = null, fxShown = false;
+  var finishSettings = FX ? FX.sanitizeFinish(readStore('viz.finish')) : null;
+  var rackOn = true;
+  var rack = [];   // [{ id, params }] in order; sanitized once every effect has registered
+  var FINISH_SLIDERS = [
+    { key: 'strength', label: 'Strength' },
+    { key: 'motionBlur', label: 'Motion blur' },
+    { key: 'bloom', label: 'Bloom' },
+    { key: 'softness', label: 'Soft focus' },
+    { key: 'grain', label: 'Grain' },
+    { key: 'vignette', label: 'Vignette' },
+    { key: 'aberration', label: 'Aberration' }
+  ];
+
+  (function restoreRack() {
+    if (!FX) return;
+    var saved = readStore('viz.fx.rack');
+    if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+      rackOn = saved.on !== false;
+      saved = saved.effects;
+    }
+    rack = (Array.isArray(saved) ? saved : []).filter(function (e) { return e && typeof e.id === 'string'; })
+      .map(function (e) { return { id: e.id, params: e.params || {} }; });
+  })();
+
+  function saveFinish() { writeStore('viz.finish', finishSettings); }
+  function saveRack() {
+    writeStore('viz.fx.rack', { on: rackOn, effects: rack.map(function (e) { return { id: e.id, params: e.params }; }) });
+  }
+
+  // Beat phase for effects. Core detects no tempo (see the performer
+  // controls): Demo's grid is exact, anything else assumes 124 BPM.
+  function beatClock() {
+    var len = 60 / (source === 'demo' ? DEMO_BPM : ASSUMED_BPM);
+    var pos = performance.now() / 1000 / len;
+    return { beat: pos - Math.floor(pos), beatIndex: Math.floor(pos) };
+  }
+
+  function fxChain() {
+    var chain = [];
+    if (rackOn) rack.forEach(function (e) {
+      var def = FX.get(e.id);
+      if (def) chain.push({ key: 'rack:' + e.id, def: def, params: e.params });
+    });
+    return chain.concat(FX.finishChain(finishSettings, current ? current.finish : undefined));
+  }
+
+  function showFx(on, p) {
+    if (on !== fxShown) {
+      fxShown = on;
+      fxRunner.canvas.style.display = on ? 'block' : 'none';
+      // Hidden rather than removed: it is still the rack's source every frame.
+      p.drawingContext.canvas.style.visibility = on ? 'hidden' : '';
+      if (!on) fxRunner.reset();
+    }
+    if (on) {
+      var st = fxRunner.canvas.style, c = p.drawingContext.canvas;
+      if (st.width !== c.style.width) st.width = c.style.width;
+      if (st.height !== c.style.height) st.height = c.style.height;
+    }
+  }
+
+  function renderFx(p, signals) {
+    if (!FX) return;
+    if (!fxRunner) {
+      fxRunner = FX.createRunner();
+      fxDetector = FX.createDetector();
+      var c = fxRunner.canvas;
+      c.style.cssText = 'position:absolute;left:0;top:0;display:none;pointer-events:none';
+      // First in the stage, so the drop hint and stage note still paint over it.
+      $('stage').insertBefore(c, $('stage').firstChild);
+      c.addEventListener('webglcontextlost', function () { if (p5inst) showFx(false, p5inst); });
+    }
+    var det = fxDetector.update(signals, (p.deltaTime || 16.7) / 1000);
+    var chain = fxRunner.available ? fxChain() : [];
+    var ok = false;
+    if (chain.length) {
+      var clock = beatClock();
+      ok = fxRunner.render(p.drawingContext.canvas, chain, {
+        time: p.millis() / 1000, dt: (p.deltaTime || 16.7) / 1000, bands: det.bands,
+        kick: det.kick, snare: det.snare, hat: det.hat, beat: clock.beat, beatIndex: clock.beatIndex
+      });
+    }
+    showFx(ok, p);
+  }
+
+  function toggleFinish() {
+    if (!finishSettings) return;
+    finishSettings.on = !finishSettings.on;
+    saveFinish();
+    syncFinishPanel();
+  }
+
+  var finishSyncs = [];
+  function syncFinishPanel() { finishSyncs.forEach(function (f) { f(); }); }
+
+  function sliderRow(id, label, value, min, max, step, onInput) {
+    var row = el('div', { class: 'row' });
+    var head = el('div', { class: 'row-head' });
+    head.appendChild(el('label', { for: id }, label));
+    var out = el('output', { class: 'val', id: id + '-val', for: id });
+    head.appendChild(out);
+    var input = el('input', { type: 'range', id: id, min: String(min), max: String(max), step: String(step) });
+    var dec = decimalsFor(step);
+    var sync = function () {
+      var v = value();
+      input.value = String(v);
+      setRangeFill(input, v, min, max);
+      out.textContent = Number(v).toFixed(dec);
+    };
+    input.addEventListener('input', function () { onInput(parseFloat(input.value)); sync(); });
+    row.appendChild(head); row.appendChild(input);
+    sync();
+    return { row: row, sync: sync };
+  }
+
+  function segRow(id, label, names, value, onPick) {
+    var row = el('div', { class: 'row' });
+    var head = el('div', { class: 'row-head' });
+    head.appendChild(el('span', { class: 'label', id: id + '-label' }, label));
+    row.appendChild(head);
+    var seg = el('div', { class: 'seg', role: 'group', 'aria-labelledby': id + '-label', id: id });
+    var btns = names.map(function (n, i) {
+      var b = el('button', { type: 'button', id: id + '-' + i }, n);
+      b.addEventListener('click', function () { onPick(i); });
+      seg.appendChild(b);
+      return b;
+    });
+    row.appendChild(seg);
+    var sync = function () { btns.forEach(function (b, i) { b.setAttribute('aria-pressed', String(value() === i)); }); };
+    sync();
+    return { row: row, sync: sync };
+  }
+
+  function buildFinishPanel() {
+    var box = $('finish-controls');
+    if (!box) return;
+    if (!FX) { box.appendChild(el('p', { class: 'helper' }, 'fx.js did not load.')); return; }
+    var onRow = segRow('finish-on', 'Finish', ['On', 'Off'], function () { return finishSettings.on ? 0 : 1; },
+      function (i) { finishSettings.on = i === 0; saveFinish(); syncFinishPanel(); });
+    onRow.row.querySelector('.row-head').appendChild(el('span', { class: 'tag' }, 'L'));
+    box.appendChild(onRow.row);
+    var note = el('p', { class: 'helper', id: 'finish-note' });
+    box.appendChild(note);
+    var gradeRow = segRow('finish-grade', 'Grade', FX.GRADE_NAMES, function () { return finishSettings.grade; },
+      function (i) { finishSettings.grade = i; saveFinish(); syncFinishPanel(); });
+    box.appendChild(gradeRow.row);
+    finishSyncs = [onRow.sync, gradeRow.sync];
+    FINISH_SLIDERS.forEach(function (f) {
+      var r = sliderRow('finish-' + f.key, f.label, function () { return finishSettings[f.key]; }, 0, 1, 0.01,
+        function (v) { finishSettings[f.key] = v; saveFinish(); });
+      box.appendChild(r.row);
+      finishSyncs.push(r.sync);
+    });
+    finishSyncs.push(function () {
+      var sf = current ? current.finish : undefined;
+      note.textContent = !finishSettings.on ? 'Off: the scene as drawn.'
+        : sf === false ? 'This scene opts out of the Finish.'
+        : sf && typeof sf === 'object' ? 'This scene sets its own Finish amounts.'
+        : 'Lens, light and grade over every scene.';
+    });
+    syncFinishPanel();
+  }
+
+  function buildRackPanel() {
+    var box = $('fx-rack');
+    if (!box) return;
+    box.textContent = '';
+    if (!FX) return;
+    var onRow = segRow('fx-on', 'Rack', ['On', 'Bypass'], function () { return rackOn ? 0 : 1; },
+      function (i) { rackOn = i === 0; saveRack(); buildRackPanel(); });
+    box.appendChild(onRow.row);
+
+    var add = el('div', { class: 'fx-add' });
+    var sel = el('select', { id: 'fx-pick', 'aria-label': 'Effect to add' });
+    var groups = {};
+    FX.list().forEach(function (def) {
+      if (rack.some(function (e) { return e.id === def.id; })) return;
+      var g = def.group || 'other';
+      if (!groups[g]) { groups[g] = el('optgroup', { label: g.charAt(0).toUpperCase() + g.slice(1) }); sel.appendChild(groups[g]); }
+      groups[g].appendChild(el('option', { value: def.id }, def.name || def.id));
+    });
+    var addBtn = el('button', { type: 'button', class: 'btn', id: 'fx-add' }, 'Add');
+    addBtn.disabled = !sel.options.length;
+    addBtn.addEventListener('click', function () {
+      var def = FX.get(sel.value);
+      if (!def) return;
+      rack.push({ id: def.id, params: FX.paramDefaults(def) });
+      saveRack();
+      buildRackPanel();
+    });
+    add.appendChild(sel); add.appendChild(addBtn);
+    box.appendChild(add);
+
+    if (!rack.length) box.appendChild(el('p', { class: 'helper' }, 'Effects run on the scene in this order, before the Finish.'));
+    rack.forEach(function (entry, idx) {
+      var def = FX.get(entry.id);
+      var item = el('div', { class: 'fx-entry' + (def ? '' : ' missing'), id: 'fx-entry-' + entry.id });
+      var head = el('div', { class: 'fx-entry-head' });
+      head.appendChild(el('span', { class: 'fx-name' }, def ? def.name || def.id : entry.id + ' (not loaded)'));
+      var mk = function (label, title, fn, disabled) {
+        var b = el('button', { type: 'button', class: 'btn fx-mini', title: title, 'aria-label': title }, label);
+        b.disabled = !!disabled;
+        b.addEventListener('click', function () { fn(); saveRack(); buildRackPanel(); });
+        head.appendChild(b);
+      };
+      var name = def ? def.name || def.id : entry.id;
+      mk('↑', 'Move ' + name + ' up', function () { rack.splice(idx - 1, 0, rack.splice(idx, 1)[0]); }, idx === 0);
+      mk('↓', 'Move ' + name + ' down', function () { rack.splice(idx + 1, 0, rack.splice(idx, 1)[0]); }, idx === rack.length - 1);
+      mk('×', 'Remove ' + name, function () { rack.splice(idx, 1); if (fxRunner) fxRunner.reset('rack:' + entry.id); });
+      item.appendChild(head);
+      if (def) {
+        entry.params = FX.sanitizeParams(def, entry.params);
+        def.params.forEach(function (spec) {
+          var step = spec.step || niceStep(spec.max - spec.min);
+          var r = sliderRow('fx-' + def.id + '-' + spec.key, spec.label || spec.key, function () { return entry.params[spec.key]; },
+            spec.min, spec.max, step, function (v) { entry.params[spec.key] = v; saveRack(); });
+          item.appendChild(r.row);
+        });
+        if (fxRunner && fxRunner.broken[def.id]) item.appendChild(el('p', { class: 'note warn' }, 'This effect failed to compile; it is skipped.'));
+      }
+      box.appendChild(item);
+    });
+  }
+
+  // An effect file that loads after start-up still shows in the Add list.
+  if (FX) FX.onRegister = function () { if (document.readyState === 'complete') buildRackPanel(); };
 
   // ---------------------------------------------------------------- p5 host
   function updateScale(p) {
@@ -1461,6 +1701,7 @@
         p.background(0);
         p.pop();
       }
+      renderFx(p, signals);
     };
   }
 

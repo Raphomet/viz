@@ -80,6 +80,9 @@ export async function openStage(browser, port, o, log) {
 
   const qs = new URLSearchParams({ scene: o.sceneUrl, w: o.width, h: o.height, seed: o.seed, density: o.density });
   if (o.params) qs.set('params', o.params);
+  if (o.fx) qs.set('fx', o.fx);
+  if (o.fxparams) qs.set('fxparams', o.fxparams);
+  if (o.finish) qs.set('finish', o.finish);
   await page.goto(`http://127.0.0.1:${port}/harness/stage.html?${qs}`);
   await page.waitForFunction(() => window.HARNESS && window.HARNESS.status !== 'loading', null, { timeout: 30000 })
     .catch(() => { throw new Error('the stage did not become ready in 30 s (a preload that never finishes?)'); });

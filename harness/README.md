@@ -30,6 +30,12 @@ node harness/render.mjs web/scenes/foo.js --size 1920x1080 --seed 7 \
 | `--seconds S` | 24 | how much track to step; without `--frames`, the 12 tiles are spread evenly up to S |
 | `--frames a,b,…` | `2,4,…,24` | times in seconds to capture (rounded to the nearest frame) |
 | `--density D` | 1 | p5 `pixelDensity` |
+| `--fx a,b` | none | effects rack, in order (`web/fx/<id>.js`, see `briefs/fx.md`) |
+| `--fxparams JSON` | defaults | `{"<effect id>": {"key": v}}`; `"finish": {...}` sets the Finish panel values (`strength`, `grade`, `bloom`, …) |
+| `--finish on\|off` | on | the Finish (lens, grade, grain) after the rack, as in the app; captures show the finished image |
+
+`jolt.mjs` still measures the scene as drawn (no rack, no Finish), since the
+jolt is a property of the scene.
 
 It needs network access for p5.js (loaded from the same cdnjs URL as
 `web/index.html`). The exit code is non-zero if the page logged an error, threw,

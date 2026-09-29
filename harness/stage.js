@@ -9,6 +9,10 @@
 //   density=1                    p5 pixelDensity (default 1; see README)
 //   seed=1                       seeds p.randomSeed, p.noiseSeed and Math.random
 //   params={"k":v}               JSON overrides of the scene's param defaults
+//   fx=kaleido,slice             effects rack, in order (web/fx/<id>.js)
+//   fxparams={"id":{"k":v}}      effect param overrides
+//   finish=on|off                the Finish after the rack (default off here;
+//                                render.mjs passes on, as the app defaults to it)
 //
 // The per-frame wrapper below mirrors core.js's p.draw line for line (push,
 // scale to a 600-unit short side, draw, unwind the style stack, black on
@@ -28,6 +32,8 @@
   var height = Math.max(16, parseInt(q.get('h'), 10) || 720);
   var density = Math.max(0.25, parseFloat(q.get('density')) || 1);
   var seedArg = q.get('seed') == null ? '1' : q.get('seed');
+  var fxIds = (q.get('fx') || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+  var finishOn = q.get('finish') === 'on';
 
   // Keep the real clock for measurement before anything is overridden.
   var realNow = performance.now.bind(performance);
@@ -162,6 +168,80 @@
     return out;
   }
 
+  // -------------------------------------------------------------- fx rack
+  // The rack and the Finish run after the scene exactly as in core.js. Only
+  // the frames a capture can see need them: an effect with no memory runs on
+  // the captured frame alone, one with a `settle` count on that many frames
+  // before it, and one with open-ended memory (uPrev, history) on every frame.
+  var fxRunner = null, fxChain = [], fxSettle = 0, fxTarget = 0, fxEveryFrame = false, fxDrawn = false;
+  var detector = null;
+  var BEAT_S = 60 / 124, DROP_S = 10;   // track.js's grid: a downbeat at 10.0 s
+
+  function fxMemory(d) {
+    if (typeof d.settle === 'number') return d.settle;
+    var remembers = d.history > 0 || d.passes.some(function (ps) { return /\buPrev\b/.test(ps.frag); });
+    return remembers ? Infinity : 0;
+  }
+
+  function buildFxChain() {
+    if (!window.VIZ_FX) return;
+    var overrides = {};
+    var raw = q.get('fxparams');
+    if (raw) {
+      try { overrides = JSON.parse(raw) || {}; }
+      catch (e) { H.warnings.push('fxparams is not valid JSON; using defaults'); }
+    }
+    fxIds.forEach(function (id) {
+      var d = VIZ_FX.get(id);
+      if (!d) { H.warnings.push('fx ' + id + ' did not register; skipped'); return; }
+      fxChain.push({ key: 'rack:' + id, def: d, params: VIZ_FX.sanitizeParams(d, overrides[id]) });
+    });
+    if (finishOn) {
+      VIZ_FX.finishChain(VIZ_FX.sanitizeFinish(overrides.finish), def.finish).forEach(function (inst) {
+        // --fxparams '{"film":{...}}' overrides a finish stage's param directly.
+        var o = overrides[inst.def.id];
+        if (o) Object.keys(o).forEach(function (k) { if (isFinite(Number(o[k]))) inst.params[k] = Number(o[k]); });
+        fxChain.push(inst);
+      });
+    }
+    if (!fxChain.length) return;
+    fxRunner = VIZ_FX.createRunner({ preserve: true });
+    if (!fxRunner.available) { fail('the fx rack needs WebGL2, which is unavailable'); return; }
+    fxChain.forEach(function (inst) { fxSettle = Math.max(fxSettle, fxMemory(inst.def)); });
+    detector = VIZ_FX.createDetector();
+    document.getElementById('stage').appendChild(fxRunner.canvas);
+    fxRunner.canvas.style.width = width + 'px';
+    fxRunner.canvas.style.height = height + 'px';
+  }
+
+  function runFx(p, frame) {
+    var t = simMs / 1000;
+    var det = detector.update(signals, 1 / FPS);
+    if (!fxEveryFrame && frame < fxTarget - fxSettle) return;
+    var pos = (t - DROP_S) / BEAT_S;
+    fxRunner.render(p.drawingContext.canvas, fxChain, {
+      time: t, dt: 1 / FPS, bands: det.bands, kick: det.kick, snare: det.snare, hat: det.hat,
+      beat: pos - Math.floor(pos), beatIndex: Math.floor(pos)
+    });
+    fxDrawn = true;
+  }
+
+  function loadFxScripts(done) {
+    var ids = fxIds.slice();
+    if (finishOn) ids = ids.concat(window.VIZ_FX ? VIZ_FX.FINISH_IDS : []);
+    ids = ids.filter(function (id, i) { return ids.indexOf(id) === i; });
+    var left = ids.length;
+    if (!left) return done();
+    ids.forEach(function (id) {
+      var s = document.createElement('script');
+      s.src = 'fx/' + id + '.js';
+      s.onload = s.onerror = function () {
+        if (!--left) done();
+      };
+      document.body.appendChild(s);
+    });
+  }
+
   // ---------------------------------------------------------------- p5 host
   var p5inst = null;
   var readyResolve;
@@ -230,6 +310,7 @@
       // finish now, so renderMs is the real cost of the frame.
       p.drawingContext.getImageData(0, 0, 1, 1);
       var t2 = realNow();
+      if (fxRunner) runFx(p, frame);
       H.drawMs.push(t1 - t0);
       H.renderMs.push(t2 - t0);
       H.frame = frame;
@@ -240,6 +321,7 @@
   // Step until frame `target` has been drawn. Every intermediate frame is drawn
   // because scenes accumulate state and some never clear the canvas.
   H.stepTo = function (target) {
+    fxTarget = target;
     while (H.frame < target) {
       var t0 = realNow();
       p5inst.redraw();
@@ -248,7 +330,8 @@
     return H.frame;
   };
 
-  H.canvas = function () { return p5inst.drawingContext.canvas; };
+  // The finished image when a rack or the Finish is on, else the scene.
+  H.canvas = function () { return fxRunner && fxDrawn ? fxRunner.canvas : p5inst.drawingContext.canvas; };
 
   // ---------------------------------------------------------- contact sheet
   var sheet = null;
@@ -336,6 +419,7 @@
 
   // For a person watching in a real browser: run the track in real time.
   H.play = function () {
+    fxEveryFrame = true;
     var start = realNow(), startFrame = H.frame;
     (function tick() {
       H.stepTo(startFrame + Math.floor((realNow() - start) / FRAME_MS));
@@ -351,10 +435,12 @@
     var s = document.createElement('script');
     s.src = sceneUrl;
     s.onerror = function () { fail('could not load scene ' + sceneUrl); };
-    s.onload = function () {
+    s.onload = function () { loadFxScripts(afterScene); };
+    function afterScene() {
       if (!def) return fail(sceneUrl + ' loaded but never called VIZ.register');
       initParams();
       p5inst = new window.p5(sketch, document.getElementById('stage'));
+      buildFxChain();
       ready.then(function () {
         H.info = {
           id: def.id,
@@ -367,11 +453,12 @@
           density: density,
           seed: seedArg,
           virtual: { width: ctx.width, height: ctx.height },
-          gl: probeWebGL()
+          gl: probeWebGL(),
+          fx: fxChain.map(function (inst) { return { id: inst.def.id, key: inst.key, params: inst.params }; })
         };
-        H.status = 'ready';
+        if (H.status === 'loading') H.status = 'ready';
       });
-    };
+    }
     document.body.appendChild(s);
   }
 

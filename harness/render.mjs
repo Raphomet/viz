@@ -4,7 +4,8 @@
 //
 //   node harness/render.mjs web/scenes/foo.js [--out harness/renders/foo]
 //     [--size 1280x720] [--seed 1] [--params '{"k":v}'] [--seconds 24]
-//     [--frames 2,4,6,...] [--density 1]
+//     [--frames 2,4,6,...] [--density 1] [--fx kaleido,slice]
+//     [--fxparams '{"kaleido":{"segments":8}}'] [--finish on|off]
 
 import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -14,12 +15,14 @@ import { HARNESS_DIR, REPO_ROOT, FPS, serve, launch, openStage, pngBuffer, sha }
 function usage(msg) {
   if (msg) console.error('render: ' + msg);
   console.error('usage: node harness/render.mjs <scene.js> [--out dir] [--size WxH] [--seed N] ' +
-    "[--params '{\"k\":v}'] [--seconds 24] [--frames 2,4,...] [--density 1]");
+    "[--params '{\"k\":v}'] [--seconds 24] [--frames 2,4,...] [--density 1] " +
+    "[--fx id1,id2] [--fxparams '{\"id\":{\"k\":v}}'] [--finish on|off]");
   process.exit(2);
 }
 
 function parseArgs(argv) {
-  const opts = { size: '1280x720', seed: '1', params: null, seconds: null, frames: null, out: null, density: '1' };
+  const opts = { size: '1280x720', seed: '1', params: null, seconds: null, frames: null, out: null, density: '1',
+    fx: null, fxparams: null, finish: 'on' };
   let scene = null;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -48,6 +51,11 @@ function parseArgs(argv) {
   if (opts.params) {
     try { JSON.parse(opts.params); } catch { usage('--params is not valid JSON'); }
   }
+  if (opts.fxparams) {
+    try { JSON.parse(opts.fxparams); } catch { usage('--fxparams is not valid JSON'); }
+  }
+  if (!/^(on|off)$/.test(opts.finish)) usage('--finish must be on or off');
+  if (opts.fx && !/^[a-z0-9_-]+(,[a-z0-9_-]+)*$/i.test(opts.fx)) usage('--fx takes effect ids separated by commas');
 
   const seconds = opts.seconds == null ? null : Number(opts.seconds);
   if (seconds != null && !(seconds > 0)) usage('--seconds must be positive');
@@ -67,7 +75,8 @@ function parseArgs(argv) {
   const out = path.resolve(opts.out ?? path.join(HARNESS_DIR, 'renders', id));
   return {
     scenePath, sceneUrl: '/' + rel.split(path.sep).join('/'), width, height, seed: String(opts.seed),
-    params: opts.params, density: Number(opts.density) || 1, times, lastT, out
+    params: opts.params, density: Number(opts.density) || 1, times, lastT, out,
+    fx: opts.fx, fxparams: opts.fxparams, finish: opts.finish
   };
 }
 
@@ -104,7 +113,8 @@ async function main() {
 
     const lastFrame = Math.round(o.lastT * FPS);
     const header = `${info.name} (${info.id}) · ${o.width}x${o.height} · seed ${o.seed}` +
-      (o.params ? ' · params ' + o.params : '') + ' · track 124 BPM';
+      (o.params ? ' · params ' + o.params : '') +
+      (o.fx ? ' · fx ' + o.fx : '') + ' · finish ' + o.finish + ' · track 124 BPM';
     await page.evaluate(([n, h]) => HARNESS.initSheet(n, h), [o.times.length, header]);
 
     const frames = [];
@@ -132,7 +142,7 @@ async function main() {
       scene: path.relative(REPO_ROOT, o.scenePath),
       id: info.id, name: info.name, gallery: info.gallery,
       size: { width: o.width, height: o.height, density: o.density, virtual: info.virtual },
-      seed: o.seed, params: info.params,
+      seed: o.seed, params: info.params, fx: info.fx, finish: o.finish,
       framesStepped: lastFrame, seconds: lastFrame / FPS,
       browser: via, webgl: info.gl,
       // renderTime is the honest per-frame cost (draw + forced flush); drawTime is draw()'s JavaScript alone.
