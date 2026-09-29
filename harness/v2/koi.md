@@ -102,6 +102,7 @@ presets, the params.
 - The kohaku patches still read as round spots at 720p; the lobes are too
   timid. A real pattern texture per fish (noise-thresholded) would finish the
   purist's point.
-- The rain field adds a 9-cell loop to each of the five height samples. It
-  should be measured with `fps.mjs` at full screen, and the rain should get an
-  analytic gradient if it costs frames.
+- Performance (fixed): the rain inside height() ran five times per pixel and
+  measured 49 fps (p95 33 ms) on the M4 Pro at 3024x1890. It now returns its
+  slope and Laplacian analytically in one pass: 60.1 fps, p95 16.7 ms, with
+  the look unchanged (`v2/koi-720/frame-14s.png`).
