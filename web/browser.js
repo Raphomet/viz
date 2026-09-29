@@ -21,8 +21,18 @@
   var coreRegister = window.VIZ.register;
   window.VIZ.register = function (def) {
     if (def && typeof def.id === 'string' && !(def.id in orderAt)) orderAt[def.id] = def.order;
-    return coreRegister(def);
+    var r = coreRegister(def);
+    // A late registration (an original after its V2, a slow script) refiles
+    // on the next frame; core itself only rebuilds once p5 is running.
+    if (rendered) scheduleRender();
+    return r;
   };
+  var rendered = false, renderQueued = false;
+  function scheduleRender() {
+    if (renderQueued) return;
+    renderQueued = true;
+    (window.requestAnimationFrame || setTimeout)(function () { renderQueued = false; renderAll(); });
+  }
   function orderOf(def) { return def.id in orderAt ? orderAt[def.id] : def.order; }
 
   var FAV_KEY = 'viz.favourites';
@@ -71,7 +81,12 @@
   function isFav(id) { return favs.indexOf(id) >= 0; }
   function favDefs() { return favs.map(byFamily).filter(Boolean); }
   function liveFamily() { var c = host.current(); return c ? host.familyOf(c) : null; }
-  function collectionOf(def) { return C.of(def, orderOf(def)); }
+  // Filed at render time by family: a def that is someone's V2 files where
+  // its original does, whichever of the two registered first.
+  function collectionOf(def) {
+    var fam = def.versionOf && def.versionOf !== def.id ? def.versionOf : null;
+    return C.of(def, orderOf(def), fam && fam in orderAt ? orderAt[fam] : undefined);
+  }
   function partOf(def, cid) { return C.partOf(def, cid, orderOf(def)); }
   function collectionInfo(id) { return C.list.filter(function (c) { return c.id === id; })[0] || { id: id, name: id }; }
 
@@ -139,7 +154,7 @@
   var hayCache = {};
   function hay(def) {
     var versions = host.versionsOf(def.id);
-    var key = def.id + ':' + versions.length;
+    var key = versions.map(function (v) { return v.id; }).join(',');
     if (hayCache[key]) return hayCache[key];
     var cid = collectionOf(def), info = collectionInfo(cid), part = partOf(def, cid);
     var text = [];
@@ -631,6 +646,7 @@
   }
 
   function renderAll() {
+    rendered = true;
     renderList();
     if (gridOpen()) renderGrid(true);
   }

@@ -31,14 +31,28 @@ await page.addInitScript(([finish, fx]) => {
 }, [finish, fx]);
 // 110+ scene scripts load in order; at 2.5 s the last ones were often not yet
 // registered and read as "not found" (2026-09-28).
+// A script the server dropped shows up later as a scene "not found" (Python's
+// http.server resets connections under the page's ~180 parallel requests).
+const failedScripts = [];
+page.on('requestfailed', r => { if (/\.js(\?|$)/.test(r.url())) failedScripts.push(r.url().split('/').slice(-2).join('/')); });
 await page.goto(url); await page.waitForTimeout(9000);
+if (failedScripts.length) console.log('warning: ' + failedScripts.length + ' script(s) failed to load, so their scenes are missing: ' + failedScripts.join(' '));
 const gpu = await page.evaluate(() => { const g = document.createElement('canvas').getContext('webgl2'); const e = g.getExtension('WEBGL_debug_renderer_info'); return e ? g.getParameter(e.UNMASKED_RENDERER_WEBGL) : g.getParameter(g.RENDERER); });
 console.log('renderer:', gpu);
 await page.keyboard.press('h'); // hide panel so the stage fills 1280x720
 for (const n of names) {
   const r = await page.evaluate(async (n) => {
-    const el = [...document.querySelectorAll('button, [role=button], li, div')].find(e => e.textContent.trim().replace(/\s*V\d$/, '').endsWith(n) && e.children.length <= 3 && e.closest('#visual-list, [id*=visual], nav, ul, section'));
-    if (!el) return 'not found'; el.click();
+    // Pick through core's scene API by exact name (the list folds into
+    // collections, 2026-09-29, so rows can be hidden); older builds without
+    // VIZ.scenes fall back to clicking a list button by its label.
+    const api = window.VIZ && window.VIZ.scenes;
+    const def = api && api.listed().find(d => (d.name || d.id) === n);
+    if (def) api.select(def.id);
+    else {
+      const el = [...document.querySelectorAll('#viz-list button, #viz-list [role=button]')].find(e => e.textContent.trim().replace(/[\u2605\u2606]$/, '').replace(/\s*V\d$/, '').endsWith(n));
+      if (!el) return 'not found';
+      el.click();
+    }
     await new Promise(r => setTimeout(r, 1500));
     const ts = []; await new Promise(res => { const t0 = performance.now(); (function f(t){ ts.push(t); if (t - t0 < 5000) requestAnimationFrame(f); else res(); })(t0); });
     const d = ts.slice(1).map((t,i) => t - ts[i]).sort((a,b)=>a-b);

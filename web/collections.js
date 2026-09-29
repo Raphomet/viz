@@ -43,6 +43,20 @@ window.VIZ_COLLECTIONS = (function () {
     rendered: 'spikes', typegeo: 'spikes', _selftest: 'spikes'
   };
 
+  // A V2 files under its family, so its own id and order never decide. Only
+  // when its original failed to load does it stand alone; then it files where
+  // the original would have, not under New.
+  function viaFamily(def) {
+    return def && typeof def.versionOf === 'string' && def.versionOf !== def.id ? def.versionOf : null;
+  }
+
+  // The originals' orders, for a V2 whose original did not load this time.
+  var v1Orders = {
+    text: 1, arcs: 2, rings: 3, jags: 4, parametric: 5, toph: 6, planets: 7, flyover: 8, dotmatrix: 9,
+    current: 102, attractor: 104, interference: 106, murmuration: 208, sumi: 302, scanlines: 304,
+    chladni: 305, physarum: 306, zen: 405, koi: 404, grunge: 503, vorticism: 506, lowpoly: 520
+  };
+
   var ranges = [
     { from: 1, to: 99, id: 'originals' },
     { from: 100, to: 199, id: 'batch01' },
@@ -61,8 +75,14 @@ window.VIZ_COLLECTIONS = (function () {
 
   // `order` is passed separately because a scene may reuse this.order for its
   // own state once running (Abyss does); the browser records it at register.
-  function of(def, order) {
+  function of(def, order, originalOrder) {
     if (def && Object.prototype.hasOwnProperty.call(ids, def.id)) return ids[def.id];
+    var fam = viaFamily(def);
+    if (fam) {
+      if (Object.prototype.hasOwnProperty.call(ids, fam)) return ids[fam];
+      if (originalOrder !== undefined) return of({ id: fam }, originalOrder);
+      if (Object.prototype.hasOwnProperty.call(v1Orders, fam)) return of({ id: fam }, v1Orders[fam]);
+    }
     var o = Number(order !== undefined ? order : def && def.order);
     for (var i = 0; i < ranges.length; i++) if (o >= ranges[i].from && o <= ranges[i].to) return ranges[i].id;
     return 'new';
