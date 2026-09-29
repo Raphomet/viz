@@ -271,3 +271,16 @@ offsetting is broken (miter offsets zig-zag, round joins grow spokes). Use
 **fontkit 2.0.4** (MIT), not opentype.js: opentype.js 2.0.0 misplaces
 variable-font outlines away from the default width (60 of 900 samples wrong).
 Both load as `+esm` bundles from jsDelivr (107 KB and 235 KB).
+
+## three.js as a first-class scene type (from the Rendered spike, 2026-09-28)
+
+The spike (`web/scenes/rendered.js`) reached the rendered look at 60 fps only by
+rendering at ~2.3 MP and scaling up (16 fps at native 3024×1890). three 0.186.1
+from jsDelivr `+esm` resolves every addon of the same package to one copy of
+three; never mix addons from other packages unless they resolve to that URL.
+To make it a scene type: core owns one pinned loader (`requires: 'three'`) and
+the async lifecycle (a real loading state the harness waits on); one shared
+WebGLRenderer; one compositing path into the p5 canvas; a render-scale policy
+(1080p-equivalent by default, adaptive later); `compileAsync` on enter to hide
+the ~130 ms shader compile; scenes opt out of or feed the shared Finish.
+Cost: ~296 KB compressed download; ~280 ms hitch on first switch.
